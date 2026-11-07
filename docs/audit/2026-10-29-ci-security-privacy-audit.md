@@ -81,7 +81,7 @@ Sent off the device:
 
 | Destination | Data | Trigger |
 | --- | --- | --- |
-| api.github.com, fahimofficial.github.io | none beyond the HTTP request | Update check, **automatic at startup when "auto update" is on** (default off) |
+| api.github.com, simplyfahimofficial.github.io | none beyond the HTTP request | Update check, **automatic at startup when "auto update" is on** (default off) |
 | IntroDB, TheIntroDB, AniSkip, Jikan, anime-skip, Wyzie/TMDB | title parsed from the media, IMDb/TMDB IDs, season/episode | **Automatic during playback, on by default** (`enable_introdb = true`) |
 | Subtitle providers (SubDL, SubSource, Jimaku, BetaSeries, Subs.ro, scrapers) | search query or file title, IMDb ID, season/episode, user API key | User search |
 | OpenAI, Groq, OpenRouter, Together, Anthropic, OpenCode | **extracted media audio** or subtitle text, user API key | User starts AI subtitles or translation |

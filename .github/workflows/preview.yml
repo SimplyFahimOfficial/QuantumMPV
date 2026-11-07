@@ -56,7 +56,7 @@ jobs:
         shell: bash
         env:
           EVENT_NAME: ${{ github.event_name }}
-          PREVIEW_MANIFEST_URL: https://fahimofficial.github.io/QuantumMPV/latest.json
+          PREVIEW_MANIFEST_URL: https://simplyfahimofficial.github.io/QuantumMPV/latest.json
         run: |
           set -euo pipefail
 
@@ -263,7 +263,7 @@ jobs:
       - name: Stage GitHub Pages preview site
         if: steps.activity.outputs.should_build == 'true'
         env:
-          SITE_BASE_URL: https://fahimofficial.github.io/QuantumMPV
+          SITE_BASE_URL: https://simplyfahimofficial.github.io/QuantumMPV
         shell: bash
         run: |
           set -euo pipefail

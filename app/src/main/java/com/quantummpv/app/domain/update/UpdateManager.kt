@@ -331,8 +331,8 @@ class UpdateManager(
   }
 
   private companion object {
-    const val STABLE_RELEASE_URL = "https://api.github.com/repos/Fahimofficial/QuantumMPV/releases/latest"
-    const val PREVIEW_RELEASE_URL = "https://fahimofficial.github.io/QuantumMPV/latest.json"
+    const val STABLE_RELEASE_URL = "https://api.github.com/repos/SimplyFahimOfficial/QuantumMPV/releases/latest"
+    const val PREVIEW_RELEASE_URL = "https://simplyfahimofficial.github.io/QuantumMPV/latest.json"
     const val LEGACY_IGNORED_VERSION_KEY = "ignored_version"
     const val UPDATES_DIRECTORY = "updates"
     const val PARTIAL_SUFFIX = ".part"

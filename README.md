@@ -5,7 +5,7 @@
 <h1 align="center">QuantumMPV</h1>
 
 <p align="center">
-  <a href="https://github.com/Fahimofficial/QuantumMPV/releases">
+  <a href="https://github.com/SimplyFahimOfficial/QuantumMPV/releases">
     <img src="https://img.shields.io/badge/Download-Releases-blue?style=for-the-badge&logo=github" alt="Download QuantumMPV releases" height="40" />
   </a>
 </p>
@@ -35,8 +35,8 @@
 <p align="center">
   <img src="https://img.shields.io/badge/Platform-Android-brightgreen.svg" />
   <img src="https://img.shields.io/badge/License-AGPL_v3-blue.svg" />
-  <img src="https://img.shields.io/github/v/release/Fahimofficial/QuantumMPV.svg?logo=github&label=Release&cacheSeconds=3600" />
-  <img src="https://img.shields.io/github/downloads/Fahimofficial/QuantumMPV/total?logo=github&cacheSeconds=3600" />
+  <img src="https://img.shields.io/github/v/release/SimplyFahimOfficial/QuantumMPV.svg?logo=github&label=Release&cacheSeconds=3600" />
+  <img src="https://img.shields.io/github/downloads/SimplyFahimOfficial/QuantumMPV/total?logo=github&cacheSeconds=3600" />
 </p>
 
 ---
@@ -367,10 +367,10 @@ _Just a Pro tip if your battery consumption stays within 200 mAh and belwo 0.9W 
 
 ---
 <div align="center">
-  <a href="https://github.com/Fahimofficial/QuantumMPV/releases">
+  <a href="https://github.com/SimplyFahimOfficial/QuantumMPV/releases">
     <img src="https://img.shields.io/badge/Download-Stable_Release-blue?style=for-the-badge&logo=github" alt="Stable Release">
   </a>
-  <!-- <a href="https://fahimofficial.github.io/QuantumMPV/">
+  <!-- <a href="https://simplyfahimofficial.github.io/QuantumMPV/">
     <img src="https://img.shields.io/badge/Download-Preview_Build-orange?style=for-the-badge&logo=github" alt="Preview Build">
   </a> -->
 </div>
@@ -379,7 +379,7 @@ _Just a Pro tip if your battery consumption stays within 200 mAh and belwo 0.9W 
   <i>Note: Previews may be unstable and are intended for testing purposes only.</i>
 </div> -->
 
-For help, reproducible bug reports, or feature suggestions, start with the [support guide](SUPPORT.md) and [existing issues](https://github.com/Fahimofficial/QuantumMPV/issues).
+For help, reproducible bug reports, or feature suggestions, start with the [support guide](SUPPORT.md) and [existing issues](https://github.com/SimplyFahimOfficial/QuantumMPV/issues).
 
 ---
 
@@ -419,7 +419,7 @@ For help, reproducible bug reports, or feature suggestions, start with the [supp
 
 ## Support
 
-Use the [issue tracker](https://github.com/Fahimofficial/QuantumMPV/issues) for reproducible bug reports and feature requests. Contributions, testing, documentation, and translations are welcome through pull requests.
+Use the [issue tracker](https://github.com/SimplyFahimOfficial/QuantumMPV/issues) for reproducible bug reports and feature requests. Contributions, testing, documentation, and translations are welcome through pull requests.
 
 ---
 
@@ -468,13 +468,13 @@ Thank you to the player projects, music apps, libraries, and individual contribu
 
 See the complete [credits and citation information](CITATION.md), including the upstream [mpvRx project](https://github.com/Riteshp2001/mpvRx), inspiration projects, third-party libraries, and individual contributors.
 
-[All QuantumMPV contributors](https://github.com/Fahimofficial/QuantumMPV/graphs/contributors)
+[All QuantumMPV contributors](https://github.com/SimplyFahimOfficial/QuantumMPV/graphs/contributors)
 
 > Special thanks to [SunnyVishnu3](https://github.com/SunnyVishnu3) for the `yt-dlp` native integration and SDK 29+ bypass logic.
 
 ## Community
 
-[Get help](SUPPORT.md) · [Report a bug](https://github.com/Fahimofficial/QuantumMPV/issues/new?template=bug_report.md) · [Suggest a feature](https://github.com/Fahimofficial/QuantumMPV/issues/new?template=feature_request.md) · [Code of conduct](CODE_OF_CONDUCT.md)
+[Get help](SUPPORT.md) · [Report a bug](https://github.com/SimplyFahimOfficial/QuantumMPV/issues/new?template=bug_report.md) · [Suggest a feature](https://github.com/SimplyFahimOfficial/QuantumMPV/issues/new?template=feature_request.md) · [Code of conduct](CODE_OF_CONDUCT.md)
 
 ---
 
@@ -486,11 +486,11 @@ Distributed under **GNU Affero General Public License v3.0 (AGPL-3.0-or-later)**
 
 ## Star History
 
-<a href="https://www.star-history.com/#Fahimofficial/QuantumMPV&type=date&legend=top-left">
+<a href="https://www.star-history.com/#SimplyFahimOfficial/QuantumMPV&type=date&legend=top-left">
  <picture>
-   <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/svg?repos=Fahimofficial/QuantumMPV&type=date&theme=dark&legend=top-left" />
-   <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/svg?repos=Fahimofficial/QuantumMPV&type=date&legend=top-left" />
-   <img alt="Star History Chart" src="https://api.star-history.com/svg?repos=Fahimofficial/QuantumMPV&type=date&legend=top-left" />
+   <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/svg?repos=SimplyFahimOfficial/QuantumMPV&type=date&theme=dark&legend=top-left" />
+   <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/svg?repos=SimplyFahimOfficial/QuantumMPV&type=date&legend=top-left" />
+   <img alt="Star History Chart" src="https://api.star-history.com/svg?repos=SimplyFahimOfficial/QuantumMPV&type=date&legend=top-left" />
  </picture>
 </a>
 

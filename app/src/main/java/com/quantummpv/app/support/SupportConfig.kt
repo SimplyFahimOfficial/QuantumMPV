@@ -26,10 +26,10 @@ object SupportConfig {
   const val UPI_CURRENCY = "INR"
 
   const val WEBSITE_URL = "https://SimplyFahim.pages.dev"
-  const val GITHUB_PROFILE_URL = "https://github.com/Fahimofficial/"
+  const val GITHUB_PROFILE_URL = "https://github.com/SimplyFahimOfficial/"
 
   /** This app's own public repository. Each app links to its own repository, never a shared one. */
-  const val PROJECT_REPOSITORY_URL = "https://github.com/Fahimofficial/QuantumMPV"
+  const val PROJECT_REPOSITORY_URL = "https://github.com/SimplyFahimOfficial/QuantumMPV"
   const val PROJECT_LICENSE = "AGPL-3.0-or-later"
 
   /** `upi://pay?pa=SimplyFahim@sbi&pn=SimplyFahim&cu=INR`, with no amount so the payer chooses it. */
