@@ -8,6 +8,9 @@
   <a href="https://github.com/SimplyFahimOfficial/QuantumMPV/releases">
     <img src="https://img.shields.io/badge/Download-Releases-blue?style=for-the-badge&logo=github" alt="Download QuantumMPV releases" height="40" />
   </a>
+  <a href="https://t.me/Quantummpv">
+    <img src="https://img.shields.io/badge/Telegram-Join_the_group-26A5E4?style=for-the-badge&logo=telegram&logoColor=white" alt="Join the QuantumMPV Telegram group (@Quantummpv)" height="40" />
+  </a>
 </p>
 
 > [!TIP]
