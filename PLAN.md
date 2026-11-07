@@ -42,3 +42,19 @@ Existing image available for the UPI card: `docs/assets/support/upi-qr.png` (dec
 Anchors to keep working: `#support`, `#simplyfahimsbi`, and `#support-development` (linked from `.github/FUNDING.yml` and `SUPPORT.md`, which currently has no target; Phase 4 adds one).
 
 Out of scope: the `[!TIP] Support QuantumMPV` callout at the top and the separate `## Community` section stay unchanged, apart from the username replacement.
+
+## Inventory check after Phase 4
+
+Checked against GitHub's own Markdown renderer (`POST /markdown`, gfm mode):
+
+| # | Item | Still present |
+|---|---|---|
+| 1 | `Support` heading (anchor `#support`) | Yes, unchanged |
+| 2 | Issue tracker sentence, word for word | Yes |
+| 3 | Issue tracker link | Yes (new owner name) |
+| 4 | Ko-fi badge image, same URL and alt text | Yes, now in the Ko-fi card |
+| 5 | `https://ko-fi.com/simplyfahim` | Yes |
+| 6 | `` `SimplyFahim@sbi` `` heading (anchor `#simplyfahimsbi`) | Yes, now an H3 inside the UPI card. The anchor is the same. |
+| 7 | "UPI ID · Select and copy" | Yes |
+
+Added: `#support-development` anchor, banner and card SVGs (light/dark), the QR image, the Telegram hero card and badge, and Instagram and email badges. The personal Telegram badge is left commented out until `TODO_PERSONAL_TELEGRAM_USERNAME` is filled in.

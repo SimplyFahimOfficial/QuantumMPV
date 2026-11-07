@@ -422,7 +422,63 @@ For help, reproducible bug reports, or feature suggestions, start with the [supp
 
 ## Support
 
+<a id="support-development"></a>
+
+<div align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="docs/assets/support/support-banner-dark.svg" />
+    <img src="docs/assets/support/support-banner-light.svg" width="100%" alt="Support" />
+  </picture>
+</div>
+
 Use the [issue tracker](https://github.com/SimplyFahimOfficial/QuantumMPV/issues) for reproducible bug reports and feature requests. Contributions, testing, documentation, and translations are welcome through pull requests.
+
+<table>
+  <tr>
+    <td width="50%" align="center" valign="top">
+      <picture>
+        <source media="(prefers-color-scheme: dark)" srcset="docs/assets/support/support-upi-dark.svg" />
+        <img src="docs/assets/support/support-upi-light.svg" width="100%" alt="UPI" />
+      </picture>
+      <br />
+      <img src="docs/assets/support/upi-qr.png" width="200" alt="UPI QR code for SimplyFahim@sbi, payee SimplyFahim" />
+
+### `SimplyFahim@sbi`
+
+**UPI ID · Select and copy**
+
+</td>
+    <td width="50%" align="center" valign="top">
+      <picture>
+        <source media="(prefers-color-scheme: dark)" srcset="docs/assets/support/support-kofi-dark.svg" />
+        <img src="docs/assets/support/support-kofi-light.svg" width="100%" alt="Ko-fi" />
+      </picture>
+      <br /><br />
+      <a href="https://ko-fi.com/simplyfahim"><img src="https://img.shields.io/badge/Support_on-Ko--fi-FF5E5B?style=for-the-badge" height="40" alt="Support SimplyFahim on Ko-fi" /></a>
+    </td>
+  </tr>
+</table>
+
+<div align="center">
+  <a href="https://t.me/Quantummpv">
+    <picture>
+      <source media="(prefers-color-scheme: dark)" srcset="docs/assets/support/support-telegram-dark.svg" />
+      <img src="docs/assets/support/support-telegram-light.svg" width="100%" alt="Community: join the QuantumMPV Telegram group (@Quantummpv) for release updates, help and feedback" />
+    </picture>
+  </a>
+  <br />
+  <a href="https://t.me/Quantummpv"><img src="https://img.shields.io/badge/Telegram-Join_the_group-26A5E4?style=for-the-badge&logo=telegram&logoColor=white" height="40" alt="Join the QuantumMPV Telegram group (@Quantummpv)" /></a>
+</div>
+
+<p align="center">
+  <sub><b>Personal contact</b></sub>
+  <br />
+  <a href="https://instagram.com/SimplyFahimofficial"><img src="https://img.shields.io/badge/Instagram-%40SimplyFahimofficial-C13584?style=flat-square&logo=instagram&logoColor=white" height="22" alt="Instagram @SimplyFahimofficial" /></a>
+  <a href="mailto:SimplyFahim@astermail.com?subject=QuantumMPV%20feedback"><img src="https://img.shields.io/badge/Email-SimplyFahim%40astermail.com-4B5563?style=flat-square" height="22" alt="Email SimplyFahim@astermail.com" /></a>
+  <!-- TODO_PERSONAL_TELEGRAM_USERNAME: add a personal Telegram badge here once the username is set in SupportConfig.kt:
+  <a href="https://t.me/TODO_PERSONAL_TELEGRAM_USERNAME"><img src="https://img.shields.io/badge/Telegram-%40TODO_PERSONAL_TELEGRAM_USERNAME-229ED9?style=flat-square&logo=telegram&logoColor=white" height="22" alt="Personal Telegram @TODO_PERSONAL_TELEGRAM_USERNAME" /></a>
+  -->
+</p>
 
 ---
 
@@ -496,10 +552,3 @@ Distributed under **GNU Affero General Public License v3.0 (AGPL-3.0-or-later)**
    <img alt="Star History Chart" src="https://api.star-history.com/svg?repos=SimplyFahimOfficial/QuantumMPV&type=date&legend=top-left" />
  </picture>
 </a>
-
----
-[![Support SimplyFahim on Ko-fi](https://img.shields.io/badge/Support_on-Ko--fi-FF5E5B?style=for-the-badge)](https://ko-fi.com/simplyfahim)
-
-## `SimplyFahim@sbi`
-
-**UPI ID · Select and copy**

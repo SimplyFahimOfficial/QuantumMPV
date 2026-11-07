@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="240" viewBox="0 0 1200 240" role="img" aria-labelledby="t">
+<!-- QuantumMPV README asset. Brand marks: Telegram and Ko-fi from Simple Icons (CC0-1.0); rupee glyph from Material Symbols (Apache-2.0). -->
+<title id="t">Support</title>
+<style>
+  .sweep { animation: sweep 7s ease-in-out infinite; }
+  .nudge { animation: nudge 2.4s ease-in-out infinite; }
+  @keyframes sweep { 0%, 55% { transform: translateX(-420px); } 100% { transform: translateX(1200px); } }
+  @keyframes nudge { 0%, 70%, 100% { transform: translateX(0); } 85% { transform: translateX(6px); } }
+  @media (prefers-reduced-motion: reduce) { .sweep, .nudge { animation: none; } }
+</style>
+<defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#7c3aed"/><stop offset=".55" stop-color="#db2777"/><stop offset="1" stop-color="#0891b2"/></linearGradient><linearGradient id="sw" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#fff" stop-opacity="0"/><stop offset=".5" stop-color="#fff" stop-opacity=".22"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></linearGradient><clipPath id="c"><rect x="2" y="2" width="1196" height="236" rx="36"/></clipPath></defs>
+<rect x="2" y="2" width="1196" height="236" rx="36" fill="url(#g)"/>
+<g clip-path="url(#c)">
+  <circle cx="1080" cy="40" r="150" fill="#0891b2" opacity="0.35"/>
+  <circle cx="150" cy="230" r="120" fill="#db2777" opacity="0.3"/>
+  <rect class="sweep" x="0" y="0" width="360" height="240" fill="url(#sw)" transform="translate(-420 0)"/>
+</g>
+<text x="600" y="82" text-anchor="middle" font-family="Inter, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="24" font-weight="700" letter-spacing="6" fill="#ffffff" opacity=".9">QUANTUMMPV</text>
+<text x="600" y="176" text-anchor="middle" font-family="Inter, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="104" font-weight="900" letter-spacing="-2" fill="#ffffff">Support</text>
+</svg>
