@@ -1763,7 +1763,7 @@
   <string name="ui_core_open_source_dependencies_used_by_mpvrx">Core open source dependencies used by QuantumMPV.</string>
   <!-- Support My Work screen. Payment details live in support/SupportConfig.kt, not here. -->
   <string name="support_title">Support My Work</string>
-  <string name="support_entry_summary">Ko-fi, UPI and project links</string>
+  <string name="support_entry_summary">UPI, Ko-fi, Telegram group and project links</string>
   <string name="support_intro">Your support helps me maintain existing applications, improve features and continue developing independent open-source projects. Every contribution is voluntary and appreciated.</string>
   <string name="support_section_payment">Payment options</string>
   <string name="support_kofi_title">Ko-fi</string>
@@ -1778,7 +1778,7 @@
   <string name="support_upi_id_copied">UPI ID copied</string>
   <string name="support_open_upi_app">Open UPI app</string>
   <string name="support_choose_upi_app">Pay with</string>
-  <string name="support_no_upi_app">No UPI app is installed on this device. Scan the QR code from another phone, or copy the UPI ID.</string>
+  <string name="support_no_upi_app">No UPI app is installed on this device, so the UPI ID was copied. Scan the QR code from another phone, or paste the ID in a UPI app.</string>
   <string name="support_share_qr">Share QR</string>
   <string name="support_save_qr">Save QR</string>
   <string name="support_qr_saved">QR code saved</string>
@@ -1794,6 +1794,20 @@
   <string name="support_profile_title">More projects on GitHub</string>
   <string name="support_project_info">%1$s is free and open-source software, licensed under %2$s. Version %3$s.</string>
   <string name="support_link_open_failed">No app found to open this link</string>
+  <string name="support_link_copied_instead">No app found to open this link, so it was copied to the clipboard</string>
+  <string name="support_section_community">Community</string>
+  <string name="support_community_title">%1$s Telegram group</string>
+  <string name="support_community_summary">Get release updates, ask for help and share feedback with other users.</string>
+  <string name="support_community_cta">Join the group</string>
+  <string name="support_community_description">%1$s Telegram group, %2$s. Join for updates, help and feedback.</string>
+  <string name="support_section_personal">Personal contact</string>
+  <string name="support_contact_instagram">Instagram</string>
+  <string name="support_contact_email">Email</string>
+  <string name="support_contact_telegram">Telegram</string>
+  <string name="support_contact_description">%1$s, %2$s</string>
+  <string name="support_contact_open">Open</string>
+  <string name="support_copy">Copy</string>
+  <string name="support_value_copied">Copied %1$s</string>
   <string name="ui_already_using_latest_version">Already using latest version</string>
   <string name="ui_install_and_update_yt_dlp_for_streaming_support">Install and update yt-dlp for streaming support</string>
   <string name="ui_instructions_for_ai_file_renaming">Instructions for AI file renaming...</string>

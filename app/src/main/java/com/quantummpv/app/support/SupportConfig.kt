@@ -32,6 +32,24 @@ object SupportConfig {
   const val PROJECT_REPOSITORY_URL = "https://github.com/SimplyFahimOfficial/QuantumMPV"
   const val PROJECT_LICENSE = "AGPL-3.0-or-later"
 
+  /** Community group, the primary contact. Shown as the large card on the Support screen. */
+  const val TELEGRAM_GROUP_USERNAME = "Quantummpv"
+
+  // Personal contact, shown as smaller tiles under the group card.
+  const val INSTAGRAM_HANDLE = "SimplyFahimofficial"
+  val CONTACT_EMAILS: List<String> = listOf("SimplyFahim@astermail.com")
+  const val EMAIL_SUBJECT = "QuantumMPV feedback"
+
+  /** TODO_PERSONAL_TELEGRAM_USERNAME: set your Telegram username here (without @). Blank hides the tile. */
+  const val PERSONAL_TELEGRAM_USERNAME = ""
+
+  val telegramGroupUrl: String = SupportLinks.telegram(TELEGRAM_GROUP_USERNAME)
+  val instagramUrl: String = SupportLinks.instagram(INSTAGRAM_HANDLE)
+  val personalTelegramUrl: String? =
+    PERSONAL_TELEGRAM_USERNAME.takeIf { it.isNotBlank() }?.let(SupportLinks::telegram)
+
+  fun emailUri(address: String): String = SupportLinks.mailto(address, EMAIL_SUBJECT)
+
   /** `upi://pay?pa=SimplyFahim@sbi&pn=SimplyFahim&cu=INR`, with no amount so the payer chooses it. */
   val upiPaymentUri: String =
     UpiPaymentUri.build(
