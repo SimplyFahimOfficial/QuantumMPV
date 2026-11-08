@@ -22,7 +22,7 @@ object SupportConfig {
   const val KOFI_URL = "https://ko-fi.com/simplyfahim"
 
   const val UPI_ID = "SimplyFahim@sbi"
-  const val UPI_PAYEE_NAME = "SimplyFahim"
+  const val UPI_PAYEE_NAME = "Md Fahim"
   const val UPI_CURRENCY = "INR"
 
   const val WEBSITE_URL = "https://SimplyFahim.pages.dev"
@@ -37,7 +37,7 @@ object SupportConfig {
 
   // Personal contact, shown as smaller tiles under the group card.
   const val INSTAGRAM_HANDLE = "SimplyFahimofficial"
-  val CONTACT_EMAILS: List<String> = listOf("SimplyFahim@astermail.com")
+  val CONTACT_EMAILS: List<String> = listOf("SimplyFahim@tuta.io", "simplyfahimofficial@gmail.com")
   const val EMAIL_SUBJECT = "QuantumMPV feedback"
 
   /** TODO_PERSONAL_TELEGRAM_USERNAME: set your Telegram username here (without @). Blank hides the tile. */
@@ -50,7 +50,7 @@ object SupportConfig {
 
   fun emailUri(address: String): String = SupportLinks.mailto(address, EMAIL_SUBJECT)
 
-  /** `upi://pay?pa=SimplyFahim@sbi&pn=SimplyFahim&cu=INR`, with no amount so the payer chooses it. */
+  /** `upi://pay?pa=SimplyFahim@sbi&pn=Md%20Fahim&cu=INR`, with no amount so the payer chooses it. */
   val upiPaymentUri: String =
     UpiPaymentUri.build(
       payeeAddress = UPI_ID,

@@ -37,11 +37,11 @@ Donation block at the end of the README (after Star History):
 6. Heading: `` `SimplyFahim@sbi` `` (anchor `#simplyfahimsbi`)
 7. Text: "**UPI ID · Select and copy**"
 
-Existing image available for the UPI card: `docs/assets/support/upi-qr.png` (decodes to `upi://pay?pa=SimplyFahim@sbi&pn=SimplyFahim&cu=INR`).
+Existing image available for the UPI card: `docs/assets/support/upi-qr.png` (decodes to `upi://pay?pa=SimplyFahim@sbi&pn=Md%20Fahim&cu=INR`, payee Md Fahim).
 
-Anchors to keep working: `#support`, `#simplyfahimsbi`, and `#support-development` (linked from `.github/FUNDING.yml` and `SUPPORT.md`, which currently has no target; Phase 4 adds one).
+Anchors to keep working: `#support`, `#simplyfahimsbi`, and the legacy `#support-development` alias. `.github/FUNDING.yml` and `SUPPORT.md` link to the current `#support` heading.
 
-Out of scope: the `[!TIP] Support QuantumMPV` callout at the top and the separate `## Community` section stay unchanged, apart from the username replacement.
+The `[!TIP] Support QuantumMPV` callout stays at the top with the verified Md Fahim payee, and the separate `## Community` section remains unchanged.
 
 ## Inventory check after Phase 4
 
@@ -54,7 +54,7 @@ Checked against GitHub's own Markdown renderer (`POST /markdown`, gfm mode):
 | 3 | Issue tracker link | Yes (new owner name) |
 | 4 | Ko-fi badge image, same URL and alt text | Yes, now in the Ko-fi card |
 | 5 | `https://ko-fi.com/simplyfahim` | Yes |
-| 6 | `` `SimplyFahim@sbi` `` heading (anchor `#simplyfahimsbi`) | Yes, now an H3 inside the UPI card. The anchor is the same. |
+| 6 | `` `SimplyFahim@sbi` `` heading (anchor `#simplyfahimsbi`) | Yes, now an H3 outside the HTML table so GitHub can generate the permalink. |
 | 7 | "UPI ID · Select and copy" | Yes |
 
 Added: `#support-development` anchor, banner and card SVGs (light/dark), the QR image, the Telegram hero card and badge, and Instagram and email badges. The personal Telegram badge is left commented out until `TODO_PERSONAL_TELEGRAM_USERNAME` is filled in.

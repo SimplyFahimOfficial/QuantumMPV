@@ -11,10 +11,11 @@ class SupportConfigTest {
   fun `official support details are exact`() {
     assertEquals("https://ko-fi.com/simplyfahim", SupportConfig.KOFI_URL)
     assertEquals("SimplyFahim@sbi", SupportConfig.UPI_ID)
-    assertEquals("SimplyFahim", SupportConfig.UPI_PAYEE_NAME)
+    assertEquals("Md Fahim", SupportConfig.UPI_PAYEE_NAME)
     assertEquals("INR", SupportConfig.UPI_CURRENCY)
     assertEquals("https://SimplyFahim.pages.dev", SupportConfig.WEBSITE_URL)
     assertEquals("https://github.com/SimplyFahimOfficial/", SupportConfig.GITHUB_PROFILE_URL)
+    assertEquals(listOf("SimplyFahim@tuta.io", "simplyfahimofficial@gmail.com"), SupportConfig.CONTACT_EMAILS)
   }
 
   @Test
@@ -25,9 +26,9 @@ class SupportConfigTest {
 
   @Test
   fun `upi uri has payee, name and currency but no amount`() {
-    assertEquals("upi://pay?pa=SimplyFahim@sbi&pn=SimplyFahim&cu=INR", SupportConfig.upiPaymentUri)
+    assertEquals("upi://pay?pa=SimplyFahim@sbi&pn=Md%20Fahim&cu=INR", SupportConfig.upiPaymentUri)
     val params = UpiPaymentUri.parse(SupportConfig.upiPaymentUri)!!
-    assertEquals(mapOf("pa" to "SimplyFahim@sbi", "pn" to "SimplyFahim", "cu" to "INR"), params)
+    assertEquals(mapOf("pa" to "SimplyFahim@sbi", "pn" to "Md Fahim", "cu" to "INR"), params)
     assertNull(params["am"])
   }
 

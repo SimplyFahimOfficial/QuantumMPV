@@ -19,7 +19,7 @@
 >
 > **[Ko-fi · ko-fi.com/simplyfahim](https://ko-fi.com/simplyfahim)**
 >
-> **UPI ID: `SimplyFahim@sbi`** (payee SimplyFahim). In the app: **Settings → Support my work** shows a QR code generated on your device.
+> **UPI ID: `SimplyFahim@sbi`** (payee **Md Fahim**). In the app: **Settings → Support my work** shows a QR code generated on your device.
 >
 > More projects: [SimplyFahim.pages.dev](https://SimplyFahim.pages.dev)
 >
@@ -445,9 +445,11 @@ Use the [issue tracker](https://github.com/SimplyFahimOfficial/QuantumMPV/issues
         <img src="docs/assets/support/support-upi-light.svg" width="100%" alt="UPI" />
       </picture>
       <br />
-      <img src="docs/assets/support/upi-qr.png" width="200" alt="UPI QR code for SimplyFahim@sbi, payee SimplyFahim" />
+      <a href="https://simplyfahim.pages.dev/pay/"><img src="docs/assets/support/upi-qr.png" width="200" alt="UPI QR code to pay Md Fahim, UPI ID SimplyFahim@sbi. Tap to open payment options." /></a>
 
-**UPI ID · Select and copy**
+<p><strong>Payee: Md Fahim</strong><br />
+<strong>UPI ID · Select and copy</strong></p>
+<a href="https://simplyfahim.pages.dev/pay/"><img src="https://img.shields.io/badge/Pay_with-UPI-009E3B?style=for-the-badge&amp;logo=googlepay&amp;logoColor=white" height="40" alt="Pay with UPI" /></a>
 
 </td>
     <td width="50%" align="center" valign="top">
@@ -476,7 +478,8 @@ Use the [issue tracker](https://github.com/SimplyFahimOfficial/QuantumMPV/issues
   <sub><b>Personal contact</b></sub>
   <br />
   <a href="https://instagram.com/SimplyFahimofficial"><img src="https://img.shields.io/badge/Instagram-%40SimplyFahimofficial-C13584?style=flat-square&logo=instagram&logoColor=white" height="22" alt="Instagram @SimplyFahimofficial" /></a>
-  <a href="mailto:SimplyFahim@astermail.com?subject=QuantumMPV%20feedback"><img src="https://img.shields.io/badge/Email-SimplyFahim%40astermail.com-4B5563?style=flat-square" height="22" alt="Email SimplyFahim@astermail.com" /></a>
+  <a href="mailto:SimplyFahim@tuta.io?subject=QuantumMPV%20feedback"><img src="https://img.shields.io/badge/Email-SimplyFahim%40tuta.io-4B5563?style=flat-square" height="22" alt="Email SimplyFahim@tuta.io" /></a>
+  <a href="mailto:simplyfahimofficial@gmail.com?subject=QuantumMPV%20feedback"><img src="https://img.shields.io/badge/Email-Gmail-4B5563?style=flat-square" height="22" alt="Email simplyfahimofficial@gmail.com" /></a>
   <!-- TODO_PERSONAL_TELEGRAM_USERNAME: add a personal Telegram badge here once the username is set in SupportConfig.kt:
   <a href="https://t.me/TODO_PERSONAL_TELEGRAM_USERNAME"><img src="https://img.shields.io/badge/Telegram-%40TODO_PERSONAL_TELEGRAM_USERNAME-229ED9?style=flat-square&logo=telegram&logoColor=white" height="22" alt="Personal Telegram @TODO_PERSONAL_TELEGRAM_USERNAME" /></a>
   -->
