@@ -435,6 +435,8 @@ For help, reproducible bug reports, or feature suggestions, start with the [supp
 
 Use the [issue tracker](https://github.com/SimplyFahimOfficial/QuantumMPV/issues) for reproducible bug reports and feature requests. Contributions, testing, documentation, and translations are welcome through pull requests.
 
+### `SimplyFahim@sbi`
+
 <table>
   <tr>
     <td width="50%" align="center" valign="top">
@@ -444,8 +446,6 @@ Use the [issue tracker](https://github.com/SimplyFahimOfficial/QuantumMPV/issues
       </picture>
       <br />
       <img src="docs/assets/support/upi-qr.png" width="200" alt="UPI QR code for SimplyFahim@sbi, payee SimplyFahim" />
-
-### `SimplyFahim@sbi`
 
 **UPI ID · Select and copy**
 
