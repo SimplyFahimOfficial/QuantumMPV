@@ -378,6 +378,8 @@ _Just a Pro tip if your battery consumption stays within 200 mAh and belwo 0.9W 
   </a> -->
 </div>
 
+> **Updating an older preview install?** The preview feed used by older builds moved when the GitHub username changed. If in-app update checking fails, open [GitHub Releases](https://github.com/SimplyFahimOfficial/QuantumMPV/releases), choose the newest release marked **Pre-release**, download the APK for your device, and install it over the existing app. Preview and stable builds use the same signing key; do not uninstall first, so Android can preserve your app data.
+
 <!-- <div align="center">
   <i>Note: Previews may be unstable and are intended for testing purposes only.</i>
 </div> -->

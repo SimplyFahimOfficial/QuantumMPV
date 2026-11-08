@@ -81,7 +81,7 @@ Sent off the device:
 
 | Destination | Data | Trigger |
 | --- | --- | --- |
-| api.github.com, simplyfahimofficial.github.io | none beyond the HTTP request | Update check, **automatic at startup when "auto update" is on** (default off) |
+| api.github.com, fahimofficial.github.io | none beyond the HTTP request | Update check, **automatic at startup when "auto update" is on** (default off) |
 | IntroDB, TheIntroDB, AniSkip, Jikan, anime-skip, Wyzie/TMDB | title parsed from the media, IMDb/TMDB IDs, season/episode | **Automatic during playback, on by default** (`enable_introdb = true`) |
 | Subtitle providers (SubDL, SubSource, Jimaku, BetaSeries, Subs.ro, scrapers) | search query or file title, IMDb ID, season/episode, user API key | User search |
 | OpenAI, Groq, OpenRouter, Together, Anthropic, OpenCode | **extracted media audio** or subtitle text, user API key | User starts AI subtitles or translation |
@@ -91,6 +91,8 @@ Sent off the device:
 | Google Play services (Cast SDK) | Cast discovery, Play services telemetry | CastContext initialised when the Cast button is composed |
 | User-configured servers (Jellyfin, Navidrome, Audiobookshelf, Seerr, SMB/FTP/SFTP/WebDAV) | credentials, playback requests | User |
 | Android cloud backup / device transfer | the Room database (history, server list, encrypted secrets) | Android Auto Backup (`allowBackup` defaults to true) |
+
+**Later update (2026-11-08):** After the GitHub username change, current preview builds use `https://simplyfahimofficial.github.io/QuantumMPV/latest.json`. The legacy `fahimofficial.github.io` feed now returns 404; existing preview installs may need the manual upgrade route documented in the README.
 
 There are no analytics or crash-upload SDKs: Firebase, Sentry, ACRA and Bugsnag
 are absent. `crashx` stores reports locally and shares them only through the

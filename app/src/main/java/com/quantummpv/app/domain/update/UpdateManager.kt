@@ -107,7 +107,17 @@ class UpdateManager(
       client.newCall(request).execute().use { response ->
         if (!response.isSuccessful) throw IOException("Unexpected code $response")
         val responseBody = response.body.string()
-        json.decodeFromString<Release>(responseBody)
+        val release = json.decodeFromString<Release>(responseBody)
+        if (url != PREVIEW_RELEASE_URL) {
+          release
+        } else {
+          release.copy(
+            assets =
+              release.assets.map { asset ->
+                asset.copy(downloadUrl = normalizePreviewAssetDownloadUrl(asset.downloadUrl))
+              },
+          )
+        }
       }
     }
 
