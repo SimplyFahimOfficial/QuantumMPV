@@ -356,17 +356,17 @@ QuantumMPV pushes the mpv-android experience further with deep customization, th
 
 ## 🔋 Battery Optimization guide for Mpv
 
-First Pro Tip Keep Mpv Conf empty if you are newbie
+Start with the default configuration and add options only when you need them.
 
 - **Use `gpu` not `gpu-next`** — gpu-next is a Vulkan-based renderer that keeps the GPU awake for no reason when playing normal video. The classic `gpu` backend is lighter and uses the OpenGL driver stack, which on most Android devices has better power characteristics.
 - **Disable Vulkan entirely.** Vulkan is great for Video Playback but also Heavy.
 - **Use the `fast` mpv profile.** It's literally built into QuantumMPV use that Mpv Profiles and Set it to Default  or in _mpv.conf_ `profile=fast`
-- **Don't use shaders.** That Anime4K preset you using that's what's eating your battery. Shaders run on the GPU every single frame. If you're watching 24fps content and you have a shader pipeline running, congratulations — you're doing 24 unnecessary GPU compute passes per second for a Minute amount of visible benefit on a phone screen .
-- **Don't use AI-generated configs.** That means you, the person who copied a Reddit config with 200 lines of `scale=ewa_lanczossharp` and `dscale=mitchell` and `cscale=sinc` and a dozen `glsl-shaders` entries. Most  of You have no idea what any of those do. You just made your phone render video like it's preparing for a 4K cinema projection. On a 6-inch screen. Grow some Brains Its your android Phone not some Fuckin.. 4k Television
+- **Consider shader cost.** Effects such as Anime4K process frames during playback and can increase GPU workload and battery use. Disable them or choose a lighter preset when battery life is a priority.
+- **Use custom scaling selectively.** Filters such as `scale=ewa_lanczossharp`, `dscale=mitchell`, and `cscale=sinc`, as well as multiple `glsl-shaders`, can require more GPU work than default settings. Add them incrementally and compare battery use on your device.
 
-**My POV:** mpv's default config with `profile=fast` and the `gpu` backend plays video with negligible battery impact — often **less** than OEM players because mpv doesn't have a billion proprietary DRM modules, analytics SDKs, and ad frameworks burning CPU in the background. The next time your battery drops more than 20-25% watching a 2-hour movie, don't blame mpv. Blame the 14 shaders you blindly copy-pasted.
+mpv's default config with `profile=fast` and the `gpu` backend can be a lower-workload starting point. Battery use varies by device, video, renderer, and configuration, so add custom filters or shaders one at a time and compare their impact during playback.
 
-_Just a Pro tip if your battery consumption stays within 200 mAh and belwo 0.9W ( See Page 6 of QuantumMPV - video player More Settings -> Page6) useage than ur Mpv Conf are Proper for Video watching thats what i have experimented and telling rest all i don't know About in detail technicality's if anyone wanna tell me In depth guide then keep it to yourself i dont wanna listen_
+_The battery readings noted here come from my own testing and may vary by device, video, and configuration. Playback measurements are available on Page 6 under More Settings._
 
 ---
 <div align="center">
@@ -378,7 +378,7 @@ _Just a Pro tip if your battery consumption stays within 200 mAh and belwo 0.9W 
   </a> -->
 </div>
 
-> **Updating an older preview install?** The preview feed used by older builds moved when the GitHub username changed. If in-app update checking fails, open [GitHub Releases](https://github.com/SimplyFahimOfficial/QuantumMPV/releases), choose the newest release marked **Pre-release**, download the APK for your device, and install it over the existing app. Preview and stable builds use the same signing key; do not uninstall first, so Android can preserve your app data.
+> **Updating an older preview install?** If in-app update checking fails, open the [current preview manifest](https://simplyfahimofficial.github.io/QuantumMPV/latest.json), choose the `assets` entry matching your app flavor and device ABI, and download its APK. If an asset URL still uses `fahimofficial.github.io` and returns 404, replace only that hostname with `simplyfahimofficial.github.io`. Install the APK over the existing app. Preview and stable builds use the same signing key; do not uninstall first, so Android can preserve your app data.
 
 <!-- <div align="center">
   <i>Note: Previews may be unstable and are intended for testing purposes only.</i>
@@ -395,10 +395,12 @@ For help, reproducible bug reports, or feature suggestions, start with the [supp
 - JDK 17
 - Android SDK with modern build tools installed
 - Git
+- Python 3
 
 ### Debug Build
 
 ```powershell
+python tools/verify_native_artifacts.py --download
 ./gradlew.bat :app:assembleStandardDebug
 ```
 
@@ -500,23 +502,25 @@ To cut a signed GitHub release through Actions, configure these secrets (prefera
 | `SIGNING_STORE_PASSWORD` | Password for the keystore |
 | `KEY_PASSWORD` | Password for the signing key |
 
-Then bump the version in a pull request with `python3 tools/prepare_release.py X.Y.Z` (this updates `versionName` and `releaseVersionCode` in `app/build.gradle.kts`), add a `## X.Y.Z` section at the top of `CHANGELOG.md`, and merge it after CI passes. Run the **Prepare Release** workflow, or create a tag on that master commit and push it:
+Then bump the version in a pull request with `python3 tools/prepare_release.py X.Y.Z` (this updates `versionName` and `releaseVersionCode` in `app/build.gradle.kts`), add a `## X.Y.Z` section at the top of `CHANGELOG.md`, and merge it after CI passes. Run the **Prepare Release** workflow, or create a tag on that master commit and push it. Replace `X.Y.Z` below with the prepared `versionName`:
 
 ```bash
-git tag -a v1.3.1 -m "Release version 1.3.1"
-git push origin v1.3.1
+VERSION=X.Y.Z
+git tag -a "v${VERSION}" -m "Release version ${VERSION}"
+git push origin "v${VERSION}"
 ```
 
-Preview releases use the same flow with preview tags such as:
+Preview releases use the prepared `versionName`; replace the `X.Y.Z` placeholder below with that version:
 
 ```bash
-git tag -a v1.3.1-preview.1 -m "Preview release"
-git push origin v1.3.1-preview.1
+git tag -a "vX.Y.Z-preview.1" -m "Preview release X.Y.Z"
+git push origin "vX.Y.Z-preview.1"
 ```
 
 ---
 
 ## Credits & Third-Party Licenses
+
 ### QuantumMPV credits
 QuantumMPV is an independent continuation and rebrand of the mpvRx codebase, maintained by **FAHIM**. The project name, logo, repository, and current maintainership belong to **FAHIM**; upstream projects and community contributions remain credited below.
 

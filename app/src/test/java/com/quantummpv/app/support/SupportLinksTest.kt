@@ -38,10 +38,16 @@ class SupportLinksTest {
   fun `configured contact links are exact`() {
     assertEquals("https://t.me/Quantummpv", SupportConfig.telegramGroupUrl)
     assertEquals("https://instagram.com/SimplyFahimofficial", SupportConfig.instagramUrl)
-    assertEquals(listOf("SimplyFahim@astermail.com"), SupportConfig.CONTACT_EMAILS)
     assertEquals(
-      "mailto:SimplyFahim@astermail.com?subject=QuantumMPV%20feedback",
-      SupportConfig.emailUri(SupportConfig.CONTACT_EMAILS.single()),
+      listOf("SimplyFahim@tuta.io", "simplyfahimofficial@gmail.com"),
+      SupportConfig.CONTACT_EMAILS,
+    )
+    assertEquals(
+      listOf(
+        "mailto:SimplyFahim@tuta.io?subject=QuantumMPV%20feedback",
+        "mailto:simplyfahimofficial@gmail.com?subject=QuantumMPV%20feedback",
+      ),
+      SupportConfig.CONTACT_EMAILS.map { SupportConfig.emailUri(it) },
     )
     // Personal Telegram is optional: blank hides the tile, anything else must be a valid username.
     assertEquals(
