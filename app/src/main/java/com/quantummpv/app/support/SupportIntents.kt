@@ -17,8 +17,11 @@ import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.net.Uri
 import android.os.Build
+import android.widget.Toast
 import androidx.core.content.FileProvider
 import androidx.core.net.toUri
+import com.quantummpv.app.R
+import com.quantummpv.app.utils.clipboard.SafeClipboard
 import java.io.File
 import java.io.IOException
 import java.io.OutputStream
@@ -28,25 +31,39 @@ object SupportIntents {
   private const val SHARE_DIR = "shared"
   const val QR_FILE_NAME = "SimplyFahim-UPI-QR.png"
 
-  /** Opens an http(s) link in the user's browser. Returns false when nothing can handle it. */
-  fun openUrl(
+  /**
+   * Opens an https link with ACTION_VIEW (browser, or the Telegram/Instagram app if it claims the
+   * link) or a `mailto:` link with ACTION_SENDTO. When no app can handle it, copies [copyValue] and
+   * says so in a toast, so the user can still reach the contact. Returns true when an app opened.
+   */
+  fun openLink(
     context: Context,
-    url: String,
+    link: String,
+    copyValue: String = link,
   ): Boolean {
-    val uri = url.toUri()
-    if (uri.scheme != "https" && uri.scheme != "http") return false
+    val uri = link.toUri()
     val intent =
-      Intent(Intent.ACTION_VIEW, uri)
-        .addCategory(Intent.CATEGORY_BROWSABLE)
-        .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-    return try {
-      context.startActivity(intent)
-      true
-    } catch (_: ActivityNotFoundException) {
-      false
-    } catch (_: SecurityException) {
-      false
+      when (uri.scheme) {
+        "https", "http" -> Intent(Intent.ACTION_VIEW, uri).addCategory(Intent.CATEGORY_BROWSABLE)
+        "mailto" -> Intent(Intent.ACTION_SENDTO, uri)
+        else -> null
+      }
+    val opened =
+      intent != null &&
+        try {
+          context.startActivity(intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+          true
+        } catch (_: ActivityNotFoundException) {
+          false
+        } catch (_: SecurityException) {
+          false
+        }
+    if (!opened) {
+      val copied = runCatching { SafeClipboard.copyPlainText(context, "support_link", copyValue, showToast = false) }.isSuccess
+      val message = if (copied) R.string.support_link_copied_instead else R.string.support_link_open_failed
+      Toast.makeText(context, message, Toast.LENGTH_LONG).show()
     }
+    return opened
   }
 
   private fun upiIntent(): Intent = Intent(Intent.ACTION_VIEW, SupportConfig.upiPaymentUri.toUri())

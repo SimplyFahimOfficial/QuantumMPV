@@ -160,6 +160,7 @@ object Icons {
     val LockOpen by lazy(LazyThreadSafetyMode.NONE) { AppIcon(MaterialSymbols.RoundedFilled.Lock_open) }
     val ListAlt by lazy(LazyThreadSafetyMode.NONE) { AppIcon(MaterialSymbols.RoundedFilled.List_alt) }
     val Lyrics by lazy(LazyThreadSafetyMode.NONE) { AppIcon(LyricsVector) }
+    val Mail by lazy(LazyThreadSafetyMode.NONE) { AppIcon(MaterialSymbols.RoundedFilled.Mail) }
     val Memory by lazy(LazyThreadSafetyMode.NONE) { AppIcon(MaterialSymbols.RoundedFilled.Memory) }
     val Mic by lazy(LazyThreadSafetyMode.NONE) { AppIcon(MaterialSymbols.RoundedFilled.Mic) }
     val Person by lazy(LazyThreadSafetyMode.NONE) { AppIcon(MaterialSymbols.RoundedFilled.Person) }
@@ -388,6 +389,7 @@ object Icons {
     val LockOpen get() = Shared.LockOpen
     val ListAlt get() = Shared.ListAlt
     val Lyrics get() = Shared.Lyrics
+    val Mail get() = Shared.Mail
     val Memory get() = Shared.Memory
     val Mic get() = Shared.Mic
     val Person get() = Shared.Person

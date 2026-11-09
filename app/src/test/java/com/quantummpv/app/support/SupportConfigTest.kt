@@ -14,12 +14,13 @@ class SupportConfigTest {
     assertEquals("Md Fahim", SupportConfig.UPI_PAYEE_NAME)
     assertEquals("INR", SupportConfig.UPI_CURRENCY)
     assertEquals("https://SimplyFahim.pages.dev", SupportConfig.WEBSITE_URL)
-    assertEquals("https://github.com/Fahimofficial/", SupportConfig.GITHUB_PROFILE_URL)
+    assertEquals("https://github.com/SimplyFahimOfficial/", SupportConfig.GITHUB_PROFILE_URL)
+    assertEquals(listOf("SimplyFahim@tuta.io", "simplyfahimofficial@gmail.com"), SupportConfig.CONTACT_EMAILS)
   }
 
   @Test
   fun `repository link points at this app's own repository`() {
-    assertEquals("https://github.com/Fahimofficial/QuantumMPV", SupportConfig.PROJECT_REPOSITORY_URL)
+    assertEquals("https://github.com/SimplyFahimOfficial/QuantumMPV", SupportConfig.PROJECT_REPOSITORY_URL)
     assertFalse(SupportConfig.PROJECT_REPOSITORY_URL == SupportConfig.WEBSITE_URL)
   }
 
@@ -59,6 +60,6 @@ class SupportConfigTest {
   @Test
   fun `display url strips scheme and trailing slash`() {
     assertEquals("ko-fi.com/simplyfahim", SupportConfig.displayUrl(SupportConfig.KOFI_URL))
-    assertEquals("github.com/Fahimofficial", SupportConfig.displayUrl(SupportConfig.GITHUB_PROFILE_URL))
+    assertEquals("github.com/SimplyFahimOfficial", SupportConfig.displayUrl(SupportConfig.GITHUB_PROFILE_URL))
   }
 }

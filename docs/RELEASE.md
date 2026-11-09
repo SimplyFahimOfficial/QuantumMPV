@@ -106,7 +106,7 @@ changes on master and published to GitHub Pages for the in-app preview channel.
 sha256sum -c QuantumMPV-vX.Y.Z-SHA256SUMS.txt
 
 # 2. Build provenance (GitHub CLI 2.49+)
-gh attestation verify QuantumMPV-arm64-v8a-vX.Y.Z.apk --repo Fahimofficial/QuantumMPV
+gh attestation verify QuantumMPV-arm64-v8a-vX.Y.Z.apk --repo SimplyFahimOfficial/QuantumMPV
 
 # 3. Signature and signing certificate
 apksigner verify --print-certs QuantumMPV-arm64-v8a-vX.Y.Z.apk

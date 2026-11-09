@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="560" height="120" viewBox="0 0 560 120" role="img" aria-labelledby="t">
+<!-- QuantumMPV README asset. Brand marks: Telegram and Ko-fi from Simple Icons (CC0-1.0); rupee glyph from Material Symbols (Apache-2.0). -->
+<title id="t">UPI</title>
+<rect x="1.5" y="1.5" width="557" height="117" rx="28" fill="#ffffff" stroke="#e4dcf3" stroke-width="3"/>
+<rect x="24" y="24" width="72" height="72" rx="22" fill="#7c3aed"/>
+<g transform="translate(33.6 33.6) scale(0.055)"><path d="M537,828L291,572q-5,-5 -8,-12.5t-3,-15.5v-24q0,-17 11.5,-28.5T320,480h100q53,0 91.5,-34.5T558,360H280q-17,0 -28.5,-11.5T240,320q0,-17 11.5,-28.5T280,280h266q-17,-35 -50.5,-57.5T420,200H280q-17,0 -28.5,-11.5T240,160q0,-17 11.5,-28.5T280,120h400q17,0 28.5,11.5T720,160q0,17 -11.5,28.5T680,200h-90q14,17 25,37t17,43h48q17,0 28.5,11.5T720,320q0,17 -11.5,28.5T680,360h-41q-8,85 -70,142.5T420,560h-29l204,212q18,19 7.5,43.5T566,840q-8,0 -15.5,-3t-13.5,-9Z" fill="#fff"/></g>
+<text x="120" y="58" font-family="Inter, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="34" font-weight="800" fill="#17131f">UPI</text>
+<text x="120" y="90" font-family="Inter, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="20" font-weight="500" fill="#625c6d">Scan or copy the UPI ID</text>
+</svg>

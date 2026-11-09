@@ -92,6 +92,8 @@ Sent off the device:
 | User-configured servers (Jellyfin, Navidrome, Audiobookshelf, Seerr, SMB/FTP/SFTP/WebDAV) | credentials, playback requests | User |
 | Android cloud backup / device transfer | the Room database (history, server list, encrypted secrets) | Android Auto Backup (`allowBackup` defaults to true) |
 
+**Later update (2026-11-08):** After the GitHub username change, current preview builds use `https://simplyfahimofficial.github.io/QuantumMPV/latest.json`. The legacy `fahimofficial.github.io` feed now returns 404; existing preview installs may need the manual upgrade route documented in the README.
+
 There are no analytics or crash-upload SDKs: Firebase, Sentry, ACRA and Bugsnag
 are absent. `crashx` stores reports locally and shares them only through the
 share sheet. LeakCanary is debug-only.

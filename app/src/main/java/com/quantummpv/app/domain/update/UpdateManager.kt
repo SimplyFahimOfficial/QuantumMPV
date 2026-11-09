@@ -107,7 +107,17 @@ class UpdateManager(
       client.newCall(request).execute().use { response ->
         if (!response.isSuccessful) throw IOException("Unexpected code $response")
         val responseBody = response.body.string()
-        json.decodeFromString<Release>(responseBody)
+        val release = json.decodeFromString<Release>(responseBody)
+        if (url != PREVIEW_RELEASE_URL) {
+          release
+        } else {
+          release.copy(
+            assets =
+              release.assets.map { asset ->
+                asset.copy(downloadUrl = normalizePreviewAssetDownloadUrl(asset.downloadUrl))
+              },
+          )
+        }
       }
     }
 
@@ -331,8 +341,8 @@ class UpdateManager(
   }
 
   private companion object {
-    const val STABLE_RELEASE_URL = "https://api.github.com/repos/Fahimofficial/QuantumMPV/releases/latest"
-    const val PREVIEW_RELEASE_URL = "https://fahimofficial.github.io/QuantumMPV/latest.json"
+    const val STABLE_RELEASE_URL = "https://api.github.com/repos/SimplyFahimOfficial/QuantumMPV/releases/latest"
+    const val PREVIEW_RELEASE_URL = "https://simplyfahimofficial.github.io/QuantumMPV/latest.json"
     const val LEGACY_IGNORED_VERSION_KEY = "ignored_version"
     const val UPDATES_DIRECTORY = "updates"
     const val PARTIAL_SUFFIX = ".part"

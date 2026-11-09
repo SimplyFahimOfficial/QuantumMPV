@@ -26,7 +26,7 @@ checks = {
     "QuantumMPV application id": 'applicationId = "com.quantummpv.app"' in build,
     "QuantumMPV app label": 'android:label="@string/app_name"' in manifest and '<string name="app_name"' in strings and '>QuantumMPV</string>' in strings,
     "QuantumMPV updater assets": 'asset.name.startsWith("QuantumMPV-"' in updater,
-    "QuantumMPV stable endpoint": 'repos/Fahimofficial/QuantumMPV/releases/latest' in updater,
+    "QuantumMPV stable endpoint": 'repos/SimplyFahimOfficial/QuantumMPV/releases/latest' in updater,
     "no upstream asset prefix in updater": 'startsWith("mpvRx-"' not in updater,
     # release.yml must only accept v1.MINOR.PATCH stable tags.
     "v1 release guard": (

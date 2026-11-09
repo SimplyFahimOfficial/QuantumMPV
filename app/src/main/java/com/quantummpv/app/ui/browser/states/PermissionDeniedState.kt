@@ -610,7 +610,7 @@ fun PermissionDeniedState(
   // Explanation Dialog
   if (showExplanationDialog) {
     val uriHandler = LocalUriHandler.current
-    val githubUrl = "https://github.com/Fahimofficial/QuantumMPV"
+    val githubUrl = "https://github.com/SimplyFahimOfficial/QuantumMPV"
 
     AlertDialog(
       onDismissRequest = { showExplanationDialog = false },

@@ -1,170 +1,569 @@
+<p align="center">
+  <img src="docs/quantummpv-logo-rounded.png" width="140" height="140" alt="QuantumMPV logo" />
+</p>
+
+<h1 align="center">QuantumMPV</h1>
+
+<p align="center">
+  <a href="https://github.com/SimplyFahimOfficial/QuantumMPV/releases">
+    <img src="https://img.shields.io/badge/Download-Releases-blue?style=for-the-badge&logo=github" alt="Download QuantumMPV releases" height="40" />
+  </a>
+  <a href="https://t.me/Quantummpv">
+    <img src="https://img.shields.io/badge/Telegram-Join_the_group-26A5E4?style=for-the-badge&logo=telegram&logoColor=white" alt="Join the QuantumMPV Telegram group (@Quantummpv)" height="40" />
+  </a>
+</p>
+
+> [!TIP]
+> **Support QuantumMPV**
+> **If QuantumMPV is useful to you, please consider supporting continued development.**
+>
+> **[Ko-fi · ko-fi.com/simplyfahim](https://ko-fi.com/simplyfahim)**
+>
+> **UPI ID: `SimplyFahim@sbi`** (payee **Md Fahim**). In the app: **Settings → Support my work** shows a QR code generated on your device.
+>
+> More projects: [SimplyFahim.pages.dev](https://SimplyFahim.pages.dev)
+>
+> Use your UPI app to confirm the recipient before sending.
+
+<p align="center">
+  <b>Feature-rich, Efficient Powerful Android video player based on libmpv.</b>
+  <br>
+  <i>No ads. No trackers. No noise. Just a serious video player with a calmer surface and a sharper edge.</i>
+</p>
+
+> [!IMPORTANT]
+> **Active development has resumed**
+
+
+<p align="center">
+  <img src="https://img.shields.io/badge/Platform-Android-brightgreen.svg" />
+  <img src="https://img.shields.io/badge/License-AGPL_v3-blue.svg" />
+  <img src="https://img.shields.io/github/v/release/SimplyFahimOfficial/QuantumMPV.svg?logo=github&label=Release&cacheSeconds=3600" />
+  <img src="https://img.shields.io/github/downloads/SimplyFahimOfficial/QuantumMPV/total?logo=github&cacheSeconds=3600" />
+</p>
+
+---
+
+## Showcase
+
 <div align="center">
+  <img src="fastlane/metadata/android/en-US/images/phoneScreenshots/player-controls.jpg" width="92%" alt="QuantumMPV player controls">
+</div>
 
-<img src="docs/quantummpv-logo-rounded.png" width="128" height="128" alt="QuantumMPV logo">
+<br>
 
-# QuantumMPV
+<div align="center">
+  <img src="fastlane/metadata/android/en-US/images/phoneScreenshots/playlist-window.jpg" width="48%" alt="Playlist window in the player">
+  <img src="fastlane/metadata/android/en-US/images/phoneScreenshots/chapter-navigation.jpg" width="48%" alt="Chapter navigation">
+</div>
 
-**A powerful, feature-rich Android media player built on libmpv.**<br>
-HDR, shaders, Anime4K, smart subtitles, Cast and deep customization. No ads. No trackers.
+<br>
 
-[![Platform: Android 8.0+](https://img.shields.io/badge/Android-8.0%2B-3DDC84?style=for-the-badge&logo=android&logoColor=white)](#-download)
-[![License: AGPL-3.0](https://img.shields.io/badge/License-AGPL--3.0-blue?style=for-the-badge)](LICENSE)
-[![Latest release](https://img.shields.io/github/v/release/Fahimofficial/QuantumMPV?style=for-the-badge&logo=github&label=Release)](https://github.com/Fahimofficial/QuantumMPV/releases/latest)
-[![GitHub stars](https://img.shields.io/github/stars/Fahimofficial/QuantumMPV?style=for-the-badge&logo=github)](https://github.com/Fahimofficial/QuantumMPV/stargazers)
-
-[Website](https://quantummpv.vercel.app/) · [Download](#-download) · [Features](#-features) · [Build](#-build-from-source) · [Credits](#-credits) · [Contact](#-contact) · [Support](#-support-the-project)
-
+<div align="center">
+  <img src="fastlane/metadata/android/en-US/images/phoneScreenshots/folderscreen.jpg" width="31%" alt="QuantumMPV folder list">
+  <img src="fastlane/metadata/android/en-US/images/phoneScreenshots/pip.png" width="31%" alt="Picture-in-picture playback">
+  <img src="fastlane/metadata/android/en-US/images/phoneScreenshots/about-screen.jpg" width="31%" alt="QuantumMPV About screen">
 </div>
 
 ---
 
-## ✨ Features
+## Features
 
-- 🎬 **mpv at the core.** libmpv playback with Vulkan or OpenGL rendering, `mpv.conf` / `input.conf` editors, mpv profiles, and Lua and JavaScript scripts with a built-in code editor.
-- 🌈 **HDR and shaders.** An [hdr-toys](https://github.com/natural-harmonia-gropius/hdr-toys) tone-mapping pipeline (PQ, HLG, BT.2020), GPU debanding, ambient glow, video filter presets and automatic black-bar cropping.
-- 🧩 **Anime4K upscaling.** Built-in quality presets with a 4K/8K guard and thermal-aware downgrading.
-- 💬 **Subtitles.** Dual subtitles, full styling, online search (Wyzie and SubtitleHub), a font manager, and AI translation or speech-to-subtitle generation with your own provider key (OpenAI, Anthropic, Groq, OpenRouter, Together, OpenCode).
-- 🖐️ **Gestures and controls.** Configurable double-tap zones, swipe seek, long-press speed, pinch zoom, volume boost, and a fully customizable control layout with your own buttons.
-- 🎵 **Music.** Local library, now-playing view, LRCLIB lyrics, an equalizer and audio visualizers, plus Jellyfin, Navidrome/Subsonic and Audiobookshelf.
-- 🌐 **Network and streaming.** SMB, FTP, SFTP and WebDAV, Jellyfin, Syncplay rooms, yt-dlp streaming and downloads, and magnet/torrent streaming.
-- 📺 **Google Cast** with local-file casting, picture-in-picture, background playback and a sleep timer.
-- 🎨 **Make it yours.** 30+ color themes including Material You and AMOLED black, a custom theme editor, wallpapers and Material 3 Expressive motion.
-- 🔒 **Private by design.** No analytics or ads, a PIN/biometric secure folder, and crash reports that stay on your device.
+QuantumMPV pushes the mpv-android experience further with deep customization, thermal-aware performance, and unique quality-of-life features. Here's what sets it apart:
 
-<details>
-<summary><b>🔋 Battery tips</b></summary>
+<details close>
+<summary><b>🎨 Theme & Visual System</b></summary>
 
-- Start with an empty `mpv.conf` and the built-in `fast` profile.
-- Prefer the `gpu` renderer over `gpu-next`, and try OpenGL before Vulkan.
-- Shaders (Anime4K, ambient, HDR toys) run on every frame. Turn them off when you don't need them.
-- The stats overlay (page 6) shows live battery draw, so you can see what a setting costs.
+| Feature | Description |
+|---|---|
+| **25+ Color Themes** | Default, Dynamic (Material You), Catppuccin, Nord, Tokyo Night, Rose Pine, Gruvbox, Dracula, and many more |
+| **AMOLED Pure Black Mode** | Every theme has a dedicated variant with pure black backgrounds |
+| **Player Controls Animation** | 5 animation styles: Default, Elastic Bounce, Cinematic Scale, Slide Up, Minimal Fade |
+| **Always Dark Mode** | Option to keep player controls in dark theme regardless of app theme |
+| **Themed Player Controls** | Adaptive controls that match your app theme or system accent |
+| **Material 3 Expressive UI** | Expressive components, spring-based navigation, responsive grids, and polished predictive-back motion |
 
 </details>
 
-## 📸 Screenshots
+<details close>
+<summary><b>🖐️ Gesture System</b></summary>
 
-<div align="center">
-  <img src="fastlane/metadata/android/en-US/images/phoneScreenshots/player-controls.jpg" width="92%" alt="Player controls over a playing video">
-  <br><br>
-  <img src="fastlane/metadata/android/en-US/images/phoneScreenshots/playlist-window.jpg" width="46%" alt="Playlist window in the player">
-  <img src="fastlane/metadata/android/en-US/images/phoneScreenshots/chapter-navigation.jpg" width="46%" alt="Chapter navigation">
-  <br><br>
-  <img src="fastlane/metadata/android/en-US/images/phoneScreenshots/folderscreen.jpg" width="23%" alt="Folder list">
-  <img src="fastlane/metadata/android/en-US/images/phoneScreenshots/music-player.jpg" width="23%" alt="Music player">
-  <img src="fastlane/metadata/android/en-US/images/phoneScreenshots/pip.png" width="23%" alt="Picture-in-picture playback">
-  <img src="fastlane/metadata/android/en-US/images/phoneScreenshots/about-screen.jpg" width="23%" alt="About screen">
-</div>
-
-## 📥 Download
-
-Get the latest APK from [GitHub Releases](https://github.com/Fahimofficial/QuantumMPV/releases/latest). Android 8.0 (API 26) or newer is required. Each release includes a `QuantumMPV-<tag>-SHA256SUMS.txt` checksum file.
-
-| APK | Choose it when |
+| Feature | Description |
 |---|---|
-| `QuantumMPV-arm64-v8a` | You have a modern phone (most devices) |
-| `QuantumMPV-armeabi-v7a` | You have an older 32-bit ARM device |
-| `QuantumMPV-x86_64` / `QuantumMPV-x86` | You use an Intel/AMD device or an emulator |
-| `QuantumMPV-universal` | You're unsure (works everywhere, larger download) |
-| `QuantumMPV-no-vulkan` | Your GPU has Vulkan problems (OpenGL only, universal) |
-| `QuantumMPV-fongmi` | You want the alternate mpv build with MediaCodec-Vulkan (universal) |
+| **Refined Tap Logic** | Configurable double-tap seek zones (left/center/right) with independently assignable actions |
+| **Multi-Tap Continuous Seeking** | Triple/quadruple tap to keep seeking further without lifting |
+| **Horizontal Swipe to Seek** | Swipe across video to seek with live time/delta overlay |
+| **Long-Press Dynamic Speed** | Long-press activates configurable speed boost; swipe left/right to adjust across 8 presets |
+| **Subtitle Drag Gesture** | Long-press center screen to drag subtitles vertically when active |
+| **Subtitle Zoom & Dialogue Seek** | Pinch subtitle text to resize it and swipe across subtitles to seek between dialogue lines |
+| **Pinch-to-Zoom with Pan** | Pinch to zoom (-1x to 3x) with simultaneous pan and single-finger pan after zoom |
+| **Volume Boost via Gesture** | Vertical swipe volume can exceed 100% into configurable boost range |
+| **Swap Volume/Brightness Sides** | Option to swap which screen side controls volume vs brightness |
 
-Pre-release builds are marked as such on the Releases page. The app can check GitHub for updates in **Settings → About**.
+</details>
 
-## 🔨 Build from source
+<details>
+<summary><b>📺 HDR & Video Pipeline</b></summary>
 
-**Requirements:** JDK 17, Android SDK platform 37, NDK `27.3.13750724`, CMake `3.22.1`, Python 3 and Git.
-
-```bash
-git clone https://github.com/Fahimofficial/QuantumMPV.git
-cd QuantumMPV
-
-python3 tools/verify_native_artifacts.py --download   # fetch the pinned, checksum-verified mpv AARs
-./gradlew :app:assembleStandardDebug                  # APK in app/build/outputs/apk/standard/debug/
-./gradlew :app:testStandardDebugUnitTest              # unit tests
-```
-
-| Flavor | Renderer | Native library |
-|---|---|---|
-| `standard` | Vulkan + OpenGL | `mpvlib` (FFmpeg 9.0) |
-| `noVulkan` | OpenGL only | `mpvlib-no-vulkan` (FFmpeg 9.0) |
-| `fongmi` | Vulkan + MediaCodec-Vulkan | `mpvlib-fongmi` |
-
-Release builds, signing and the store pipeline are covered in [docs/RELEASE.md](docs/RELEASE.md) and [docs/CI_CD.md](docs/CI_CD.md). Want to contribute? Read [CONTRIBUTING.md](CONTRIBUTING.md) first.
-
-## 🧰 Tech stack
-
-| Area | Technology |
+| Feature | Description |
 |---|---|
-| Language | Kotlin 2.4 (JVM 17), C/C++ via NDK |
-| UI | Jetpack Compose, Material 3 Expressive, Navigation 3, Haze |
-| Playback | libmpv ([mpvlibAndroid](https://github.com/Riteshp2001/mpvlibAndroid)), FFmpeg, libplacebo, Media3 |
-| Data | Room, kotlinx.serialization |
-| DI | Koin |
-| Networking | OkHttp, smbj, Apache Commons Net, JSch, Sardine, NanoHTTPD, libtorrent4j |
-| Other | Google Cast, WorkManager, ZXing, Sora Editor, QuickJS-NG |
-| Build | Gradle 9.8, AGP 9.5, KSP, Baseline Profiles |
+| **Shader-Based HDR Pipeline** | Powered by [hdr-toys](https://github.com/natural-harmonia-gropius/hdr-toys) — 77 bundled GLSL shaders |
+| **Four HDR Modes** | BT.2100 PQ (HDR10), BT.2100 HLG, BT.2020 gamut mapping, Linear HDR |
+| **SDR-to-HDR Boost** | Boost SDR content into HDR range when using Linear HDR pipeline |
+| **GPU Deband** | CPU (gradfun) or GPU deband with configurable iterations, threshold, range, grain |
+| **Smart Render Backend** | Auto-selects between OpenGL/Vulkan and gpu/gpu-next based on device support |
+| **Automatic Black-Bar Cropping** | Optional analysis detects and removes encoded black borders on supported videos |
 
-## 🙏 Credits
+</details>
 
-QuantumMPV is an independent continuation of [**mpvRx**](https://github.com/Riteshp2001/mpvRx) by Ritesh Pandit, maintained by **FAHIM**. It stands on the work of these projects:
+<details close>
+<summary><b>🔥 Thermal & Battery Management</b></summary>
 
-- [**mpv**](https://github.com/mpv-player/mpv), the media player engine behind everything here
-- [**mpv-android**](https://github.com/mpv-android/mpv-android), [**mpvKt**](https://github.com/abdallahmehiz/mpvKt), [**mpvEx**](https://github.com/marlboro-advance/mpvEx) and [**MpvRex**](https://github.com/sfsakhawat999/mpvRex), the Android players this lineage grew from
-- [**mpvlibAndroid**](https://github.com/Riteshp2001/mpvlibAndroid) for the prebuilt libmpv libraries
-- [**hdr-toys**](https://github.com/natural-harmonia-gropius/hdr-toys), [**Anime4K**](https://github.com/bloc97/Anime4K) and [**ArtCNN**](https://github.com/Artoriuz/ArtCNN) for shaders
-- [**FFmpeg**](https://ffmpeg.org/), [**libplacebo**](https://code.videolan.org/videolan/libplacebo), [**yt-dlp**](https://github.com/yt-dlp/yt-dlp) and [**libtorrent4j**](https://github.com/aldenml/libtorrent4j)
-- [SunnyVishnu3](https://github.com/SunnyVishnu3) for the yt-dlp native integration
+| Feature | Description |
+|---|---|
+| **ThermalMonitor** | Samples thermal headroom every 10s during playback |
+| **Adaptive Shader Budget** | Ambient shader budget auto-capped based on thermal headroom |
+| **Anime4K Proactive Throttling** | Auto-downgrades Anime4K quality when thermal headroom drops below 40% |
+| **Background Poll Optimization** | Position poll interval doubles when controls are hidden, cutting JNI wake-ups 50% |
+| **Stats Poll Backoff** | Stats page poll loop backs off from 1s to 2s when playback is paused |
 
-The complete list of projects, libraries, services and contributors is in [CITATION.md](CITATION.md) and on the [contributors page](https://github.com/Fahimofficial/QuantumMPV/graphs/contributors).
+</details>
 
-## 📄 License
+<details close>
+<summary><b>🧩 Anime4K & Upscaling</b></summary>
 
-QuantumMPV is free software under the [GNU Affero General Public License v3.0 or later](LICENSE). Third-party components keep their own licenses.
+| Feature | Description |
+|---|---|
+| **7 Preset Quality Tiers** | Off, A, B, C, A+, B+, C+ with clean switching |
+| **Quality Tiers in Decoder Settings** | Fast / Balanced / High quality choices |
+| **4K/8K Safety Guard** | Auto-disables Anime4K for high-resolution content |
+| **Thermal-Guarded Selection** | Auto-downgrades quality tier under thermal pressure before frame drops |
 
-## 📬 Contact
+</details>
 
-<div align="center">
+<details close>
+<summary><b>💡 Ambient Mode</b></summary>
 
-<a href="https://instagram.com/SimplyFahimofficial"><img src="https://img.shields.io/badge/Instagram-@SimplyFahimofficial-E4405F?style=for-the-badge&logo=instagram&logoColor=white" alt="Instagram: @SimplyFahimofficial"></a>
-<a href="mailto:SimplyFahim@tuta.io"><img src="https://img.shields.io/badge/Tuta_Mail-SimplyFahim@tuta.io-850122?style=for-the-badge&logo=tuta&logoColor=white" alt="Tuta Mail: SimplyFahim@tuta.io"></a>
-<a href="mailto:simplyfahimofficial@gmail.com"><img src="https://img.shields.io/badge/Gmail-simplyfahimofficial@gmail.com-EA4335?style=for-the-badge&logo=gmail&logoColor=white" alt="Gmail: simplyfahimofficial@gmail.com"></a>
-<br>
-<a href="https://SimplyFahim.pages.dev"><img src="https://img.shields.io/badge/Website-SimplyFahim.pages.dev-111827?style=for-the-badge&logo=googlechrome&logoColor=white" alt="Website: SimplyFahim.pages.dev"></a>
-<a href="https://github.com/Fahimofficial"><img src="https://img.shields.io/badge/GitHub-Fahimofficial-24292F?style=for-the-badge&logo=github&logoColor=white" alt="GitHub: Fahimofficial"></a>
+| Feature | Description |
+|---|---|
+| **Two Visual Modes** | GLOW and FRAME_EXTEND — both rendered via custom GLSL at runtime |
+| **15+ Configurable Parameters** | Blur samples, glow intensity, saturation, warmth, vignette, dither noise, and more |
+| **Shader Recompilation Caching** | Skips recompilation when parameters match last compiled version |
 
-</div>
+</details>
+
+<details close>
+<summary><b>📝 Subtitle System</b></summary>
+
+| Feature | Description |
+|---|---|
+| **Dual Subtitle Support** | Primary + secondary with auto-offset to prevent overlap |
+| **ASS Override Modes** | Smart force/scale handling for secondary subtitles |
+| **Comprehensive Styling** | Font, size, bold, italic, border, shadow, colors, justification, scale by window |
+| **Three Online Search Modes** | Wyzie, SubtitleHub (6 aggregated sources), and Hybrid (both merged) |
+| **TMDB Integration** | Full media search with season/episode browsing for subtitles |
+| **Subtitle Font Manager** | Choose a font directory, reload fonts, clear the cache, and select a default subtitle font |
+| **Speech-to-Subtitle Generation** | Experimental subtitle generation from the active audio using supported cloud or offline Whisper providers |
+| **Explicit Subtitle Off** | Disable subtitles directly without cycling through every available track |
+
+</details>
+
+<details close>
+<summary><b>🎮 Player Controls</b></summary>
+
+| Feature | Description |
+|---|---|
+| **Fully Customizable Layout** | Four configurable zones (top-left/right, bottom-left/right) + portrait bottom row |
+| **25+ Button Types** | Cast, Mirror, Vertical Flip, A-B Loop, Custom Skip, Background Playback, Ambient, and more |
+| **Custom User Buttons** | Create arbitrary buttons executing Lua, JavaScript, or mpv commands |
+| **Landscape/Portrait Adaptive Layouts** | Completely different control layouts per orientation |
+| **One-Tap Control Unlock** | When playback controls are locked, tap the unlock button at the top-left or top-right according to the side you touch |
+| **Double-Back Unlock** | While controls are locked, the first Back press shows a reminder; a second quick press unlocks them |
+| **Hide Button Backgrounds** | Transparent buttons with only icons visible |
+| **Centralized "More Sheet"** | Quick access to all player buttons and custom controls |
+| **In-Player Settings** | Toggle 10+ settings (gestures, PiP, UI behavior) without leaving playback |
+
+</details>
+
+<details close>
+<summary><b>📺 Google Cast</b></summary>
+
+| Feature | Description |
+|---|---|
+| **Native Cast Button** | Standard stateful Google Cast route icon in both portrait and landscape player controls |
+| **Device Discovery** | Google Cast framework discovery and native device chooser for Chromecast and Cast-enabled TVs |
+| **Position Handoff** | Transfers the current title, play state, duration, and playback position to the receiver |
+| **Local File Casting** | Tokenized temporary LAN server exposes `file://` and `content://` media with byte-range seeking and CORS headers |
+| **Remote Stream Casting** | Direct handoff for receiver-accessible HTTP and HTTPS media URLs |
+| **Expanded Remote Controls** | Cast SDK controller, notification, lock-screen actions, reconnection, and receiver volume controls |
+| **Return to Phone** | Restores local playback at the receiver's latest position when the Cast session ends |
+
+> Cast uses Google's Default Media Receiver. The TV/Chromecast must support the media container and codecs; mpv-only formats are not transcoded automatically.
+
+</details>
+
+<details close>
+<summary><b>🧭 Smart Orientation</b></summary>
+
+| Feature | Description |
+|---|---|
+| **8 Orientation Modes** | Free, Video (auto aspect ratio), Portrait, Reverse Portrait, Sensor Portrait, Landscape, Reverse Landscape, Sensor Landscape |
+| **Persistent Per-Video** | Orientation remembered per-video across sessions |
+
+</details>
+
+<details close>
+<summary><b>🔍 File Browser & Navigation</b></summary>
+
+| Feature | Description |
+|---|---|
+| **Dual Browser Modes** | Album View (folder grid) and Tree View (file manager hierarchy) |
+| **Folder Pinning** | Pin frequently accessed folders to top |
+| **Single-Child Auto-Flatten** | Folders with one subfolder auto-flatten for faster browsing |
+| **Auto-Scroll to Last Played** | Opens to the last played video position |
+| **Recursive File/Folder Counts** | Shows total video count, duration, size computed recursively |
+| **"NEW" Badges** | Configurable threshold for new video indicators |
+| **Grid/List Layout** | Per-orientation column count settings |
+| **Multi-Protocol Network** | Built-in SMB, FTP, and WebDAV clients |
+| **Syncplay Rooms** | Join a Syncplay server room to synchronize pause, resume, seeking, and playback position with other viewers |
+| **Responsive & Dual-Pane Layouts** | Automatic grid sizing plus optional folder/settings dual-pane views on tablets |
+| **Audio Library Mode** | MediaStore and filesystem audio browsing with square artwork, metadata titles, and mixed sibling playlists |
+| **Home-First Back Navigation** | Main tabs return to Home before Back exits the app; selection, search, and nested screens handle Back first |
+| **Swipeable Main Tabs** | Swipe between main destinations with a sliding dock highlight; nested category tabs remain selectable by tapping |
+</details>
+
+<details close>
+<summary><b>🎵 Music Library & Audio Player</b></summary>
+
+| Feature | Description |
+|---|---|
+| **Local Music Library** | Browse songs, albums, artists, and audio playlists with cover art, search, sorting, and grid/list views |
+| **Choose Your Music Source** | Switch the Music tab between local storage, Jellyfin, and Navidrome |
+| **Library Filters** | Exclude selected audio folders and set a minimum track duration |
+| **Dedicated Now Playing View** | Artwork, track metadata, playback controls, and an up-next queue in a music-focused layout |
+| **Lyrics** | View local or embedded lyrics, fetch online lyrics from LRCLIB, and switch between available sources |
+| **Four Audio Visualizers** | Choose Blob, Galaxy, Cuboid, or Particle visualizations, with an optional audio-reactive wavy seekbar |
+| **Audio Playlists & Favorites** | Create local audio playlists, keep favorite tracks together, and start normal or shuffled playback |
+
+</details>
+
+<details close>
+<summary><b>🎧 Navidrome / Subsonic Music Streaming</b></summary>
+
+| Feature | Description |
+|---|---|
+| **Subsonic API Integration** | Stream music from Navidrome and compatible Subsonic servers using token/salt authentication |
+| **Multiple Servers** | Save named servers, switch the active server, and manage connections from the app |
+| **Flexible Sign-In** | Connect with a username and password, or a supported app password/token |
+| **Music Discovery** | Quick mixes, recently added albums, artist browsing, and artwork-rich album and playlist detail views |
+| **Library Search** | Search the server for songs, albums, and artists |
+| **Server Playlists & Favorites** | Browse server playlists and sync favorite songs, albums, and artists; starred songs appear in a Favorites collection |
+| **Play All & Shuffle** | Start an album or playlist as a playback queue with track titles, artists, and cover art |
+| **Display Preferences** | Choose grid/list views and track sorting preferences |
+
+> Requires a music-server account and a reachable server. Available functionality depends on the server's Subsonic API and authentication support.
+
+</details>
+
+<details close>
+<summary><b>🍿 Jellyfin Client (Expressive Cinematic UI)</b></summary>
+
+| Feature | Description |
+|---|---|
+| **Native Server Integration** | Direct connection with Jellyfin accounts, fast token authentication, and multi-server management |
+| **Material 3 Expressive UI** | Cinematic interface with artwork-rich browsing, detail sheets, and dedicated music views |
+| **Featured Hero Banner** | Auto-advancing 16:9 backdrop banner with smooth gradient scrims, ratings, badges, and quick play |
+| **Continue Watching & Recently Watched** | Horizontal resume carousels with relative timestamps and progress bars tracking playback progress |
+| **Library Filter Chips** | Instant switching between Movies, TV Shows, Anime, Music, and BoxSets with dynamic item counts |
+| **Poster & Backdrop Cards** | 2:3 vertical posters and 16:9 backdrop cards with community ratings, release years, and unplayed badges |
+| **Cinematic Detail Sheet** | Full-bleed modal sheet with backdrops, floating posters, storyline synopsis, and season/episode picker |
+| **Server-Synced Favorites** | Heart action synced bidirectionally with your Jellyfin server account (`UserData.IsFavorite`) |
+| **Direct & Transcoded Streaming** | High-performance direct stream playback with audio track and subtitle stream switching |
+
+</details>
+
+<details close>
+<summary><b>⚡ Unified Media & Torrent Streaming</b></summary>
+
+| Feature | Description |
+|---|---|
+| **Sequential Torrent Engine** | Powered by high-speed native Go bridge (`anacrolix/torrent`) with sequential piece prioritization |
+| **Instant Streaming** | Stream magnet links, `.torrent` files, direct web streams (HLS, MP4), and YouTube URLs |
+| **Cinematic Discovery** | Hero banner carousel, Continue Watching row, and 2:3 vertical poster cards for saved media |
+| **Automated TMDB Enrichment** | Fetches posters, backdrops, storyline synopsis, release years, and media types via Wyzie/TMDB |
+| **Cinematic Media Details** | Modal bottom sheet with floating poster, metadata badges, "Watch Now / Resume", and "Copy Magnet" |
+| **Intelligent Episode Parser** | Robust parser supporting anime numbering, season/episode formats (S01E02, 1x02), and quality tags |
+| **Episode Search & Sorting** | Filter and sort episodes within multi-file torrents with watched status checkmarks |
+| **Unified Media Hub** | Save direct streams, YouTube links, and torrents into your collection with one-tap ingestion |
+
+</details>
+
+<details close>
+<summary><b>🤖 AI Integration</b></summary>
+
+| Feature | Description |
+|---|---|
+| **Provider Support** | OpenAI, Anthropic, Groq, OpenRouter, Together, and OpenCode Zen with provider-specific models and API protocols |
+| **AI Subtitle Translation** | Translate subtitles with custom prompts |
+| **AI Subtitle Formatting** | Reformat subtitle styling with custom prompts |
+| **AI File Renaming** | Bulk rename video files with custom rename prompts |
+| **Reasoning-Safe Parsing** | Removes reasoning blocks and code fences while accepting structured provider responses and citations |
+| **Speech Providers** | Cloud transcription plus experimental offline Whisper subtitle generation |
+
+</details>
+
+<details close>
+<summary><b>📜 Scripting & Editor</b></summary>
+
+| Feature | Description |
+|---|---|
+| **Dual Language** | Lua (.lua) and JavaScript (.js) script support |
+| **Sora Code Editor** | Built-in editor with TextMate syntax highlighting |
+| **Runtime Script Loading** | Enable/disable scripts without restarting |
+| **Lua Module Support** | Recursive `script-modules/` synchronization enables custom scripts to use `require()` helpers |
+| **Config Editor** | Built-in editor for mpv.conf and input.conf |
+
+</details>
+
+<details close>
+<summary><b>⚙️ Utilities</b></summary>
+
+| Feature | Description |
+|---|---|
+| **Stats Page 6** | Live system monitor: FPS, dropped frames, codecs, network sparkline, battery |
+| **Video Compressor** | Built-in FFmpeg-based compression with presets |
+| **12 Video Filter Presets** | Vivid, Cinematic, Dramatic, Ghibli Style, Neon Pop, Deep Black, and more |
+| **Custom Skip Segments** | Intro/outro/recap/credits/preview detection from IntroDB, TIDB, AniSkip, Anime Skip |
+| **A-B Loop** | In-player looping with visual markers on seekbar |
+| **Frame Navigation** | Frame-by-frame forward/backward with frame number display |
+| **Sleep Timer** | Built-in with quick presets (15/30/45/60 min) |
+| **Adaptive Background Playback** | Auto-PiP on Home, auto-resume after screen unlock |
+| **Unified Background Playback** | One persistent audio/video switch; Back can return to browser lists without stopping the current media |
+| **Notification Styles** | None, Media, or Progress with Chapters (Android 16+) |
+| **Safe Area / Window Offset** | Prevents camera notch overlap |
+| **Display Cutout Mode** | Full-bleed on notch devices |
+| **Remember Brightness** | Persists brightness level set during playback |
+| **M3U Playlist Support** | Parse and play local M3U playlists |
+| **yt-dlp Integration** | High-performance streaming support for YouTube, Twitch, Bilibili, and more via a native Python bridge (SDK 29+ bypass) |
+| **yt-dlp Quality Controls** | Independent codec, resolution, FPS, HDR, container, and audio-bitrate preferences |
+| **Dynamic Refresh Rate** | Matches supported display refresh rates to the current video's frame rate for smoother motion |
+| **Secure Folder** | PIN-protected access with optional biometrics, media move/restore actions, and a hideable entry point |
+| **Screenshot Templates** | Filename placeholders for source name, playback position, and millisecond-accurate timestamps |
+
+</details>
 
 ---
 
+## 🔋 Battery Optimization guide for Mpv
+
+Start with the default configuration and add options only when you need them.
+
+- **Use `gpu` not `gpu-next`** — gpu-next is a Vulkan-based renderer that keeps the GPU awake for no reason when playing normal video. The classic `gpu` backend is lighter and uses the OpenGL driver stack, which on most Android devices has better power characteristics.
+- **Disable Vulkan entirely.** Vulkan is great for Video Playback but also Heavy.
+- **Use the `fast` mpv profile.** It's literally built into QuantumMPV use that Mpv Profiles and Set it to Default  or in _mpv.conf_ `profile=fast`
+- **Consider shader cost.** Effects such as Anime4K process frames during playback and can increase GPU workload and battery use. Disable them or choose a lighter preset when battery life is a priority.
+- **Use custom scaling selectively.** Filters such as `scale=ewa_lanczossharp`, `dscale=mitchell`, and `cscale=sinc`, as well as multiple `glsl-shaders`, can require more GPU work than default settings. Add them incrementally and compare battery use on your device.
+
+mpv's default config with `profile=fast` and the `gpu` backend can be a lower-workload starting point. Battery use varies by device, video, renderer, and configuration, so add custom filters or shaders one at a time and compare their impact during playback.
+
+_The battery readings noted here come from my own testing and may vary by device, video, and configuration. Playback measurements are available on Page 6 under More Settings._
+
+---
 <div align="center">
+  <a href="https://github.com/SimplyFahimOfficial/QuantumMPV/releases">
+    <img src="https://img.shields.io/badge/Download-Stable_Release-blue?style=for-the-badge&logo=github" alt="Stable Release">
+  </a>
+  <!-- <a href="https://simplyfahimofficial.github.io/QuantumMPV/">
+    <img src="https://img.shields.io/badge/Download-Preview_Build-orange?style=for-the-badge&logo=github" alt="Preview Build">
+  </a> -->
+</div>
 
-## 💚 Support the Project
+> **Updating an older preview install?** If in-app update checking fails, open the [current preview manifest](https://simplyfahimofficial.github.io/QuantumMPV/latest.json), choose the `assets` entry matching your app flavor and device ABI, and download its APK. If an asset URL still uses `fahimofficial.github.io` and returns 404, replace only that hostname with `simplyfahimofficial.github.io`. Install the APK over the existing app. Preview and stable builds use the same signing key; do not uninstall first, so Android can preserve your app data.
 
-QuantumMPV is free and always will be. If it makes your movie nights better, a small donation keeps development going.
+<!-- <div align="center">
+  <i>Note: Previews may be unstable and are intended for testing purposes only.</i>
+</div> -->
 
-<a href="https://simplyfahim.pages.dev/pay/"><img src="docs/assets/support/upi-qr.png" width="220" alt="UPI QR code to pay Md Fahim, UPI ID SimplyFahim@sbi. Tap to open UPI payment options."></a>
+For help, reproducible bug reports, or feature suggestions, start with the [support guide](SUPPORT.md) and [existing issues](https://github.com/SimplyFahimOfficial/QuantumMPV/issues).
 
-### 👆 **Tap the QR to open UPI payment options**
+---
+
+## Build
+
+### Requirements
+
+- JDK 17
+- Android SDK with modern build tools installed
+- Git
+- Python 3
+
+### Debug Build
+
+```powershell
+python tools/verify_native_artifacts.py --download
+./gradlew.bat :app:assembleStandardDebug
+```
+
+### Release Variants
+
+| Variant | Description |
+|---|---|
+| `standard` | Main release with in-app update support |
+| `noVulkan` | Vulkan-free native distribution, packaged as a universal APK |
+| `fongmi` | Alternate native distribution with MediaCodec/Vulkan support, packaged as a universal APK |
+
+### APK Variants
+
+| Variant | Description |
+|---|---|
+| `universal` | Works on all supported devices |
+| `arm64-v8a` | Recommended for most current Android devices |
+| `armeabi-v7a` | For older 32-bit ARM devices |
+| `x86` | For 32-bit Intel and AMD Android devices |
+| `x86_64` | For 64-bit Intel and AMD Android devices |
+
+---
+
+## Support
+
+<a id="support-development"></a>
+
+<div align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="docs/assets/support/support-banner-dark.svg" />
+    <img src="docs/assets/support/support-banner-light.svg" width="100%" alt="Support" />
+  </picture>
+</div>
+
+Use the [issue tracker](https://github.com/SimplyFahimOfficial/QuantumMPV/issues) for reproducible bug reports and feature requests. Contributions, testing, documentation, and translations are welcome through pull requests.
+
+### `SimplyFahim@sbi`
 
 <table>
-<tr>
-<td align="center">
+  <tr>
+    <td width="50%" align="center" valign="top">
+      <picture>
+        <source media="(prefers-color-scheme: dark)" srcset="docs/assets/support/support-upi-dark.svg" />
+        <img src="docs/assets/support/support-upi-light.svg" width="100%" alt="UPI" />
+      </picture>
+      <br />
+      <a href="https://simplyfahim.pages.dev/pay/"><img src="docs/assets/support/upi-qr.png" width="200" alt="UPI QR code to pay Md Fahim, UPI ID SimplyFahim@sbi. Tap to open payment options." /></a>
 
-**Payee:** Md Fahim<br>
-**UPI ID**
-
-```
-SimplyFahim@sbi
-```
+<p><strong>Payee: Md Fahim</strong><br />
+<strong>UPI ID · Select and copy</strong></p>
+<a href="https://simplyfahim.pages.dev/pay/"><img src="https://img.shields.io/badge/Pay_with-UPI-009E3B?style=for-the-badge&amp;logo=googlepay&amp;logoColor=white" height="40" alt="Pay with UPI" /></a>
 
 </td>
-</tr>
+    <td width="50%" align="center" valign="top">
+      <picture>
+        <source media="(prefers-color-scheme: dark)" srcset="docs/assets/support/support-kofi-dark.svg" />
+        <img src="docs/assets/support/support-kofi-light.svg" width="100%" alt="Ko-fi" />
+      </picture>
+      <br /><br />
+      <a href="https://ko-fi.com/simplyfahim"><img src="https://img.shields.io/badge/Support_on-Ko--fi-FF5E5B?style=for-the-badge" height="40" alt="Support SimplyFahim on Ko-fi" /></a>
+    </td>
+  </tr>
 </table>
 
-<a href="https://simplyfahim.pages.dev/pay/"><img src="https://img.shields.io/badge/Pay_with-UPI-009E3B?style=for-the-badge&logo=googlepay&logoColor=white" height="44" alt="Pay with UPI"></a>
-&nbsp;
-<a href="https://ko-fi.com/simplyfahim"><img src="https://img.shields.io/badge/Support_me_on-Ko--fi-FF5E5B?style=for-the-badge&logo=kofi&logoColor=white" height="44" alt="Support me on Ko-fi"></a>
-
-<sub>You choose the amount. Check that your UPI app shows <b>Md Fahim</b> before you pay.</sub>
-
+<div align="center">
+  <a href="https://t.me/Quantummpv">
+    <picture>
+      <source media="(prefers-color-scheme: dark)" srcset="docs/assets/support/support-telegram-dark.svg" />
+      <img src="docs/assets/support/support-telegram-light.svg" width="100%" alt="Community: join the QuantumMPV Telegram group (@Quantummpv) for release updates, help and feedback" />
+    </picture>
+  </a>
+  <br />
+  <a href="https://t.me/Quantummpv"><img src="https://img.shields.io/badge/Telegram-Join_the_group-26A5E4?style=for-the-badge&logo=telegram&logoColor=white" height="40" alt="Join the QuantumMPV Telegram group (@Quantummpv)" /></a>
 </div>
+
+<p align="center">
+  <sub><b>Personal contact</b></sub>
+  <br />
+  <a href="https://instagram.com/SimplyFahimofficial"><img src="https://img.shields.io/badge/Instagram-%40SimplyFahimofficial-C13584?style=flat-square&logo=instagram&logoColor=white" height="22" alt="Instagram @SimplyFahimofficial" /></a>
+  <a href="mailto:SimplyFahim@tuta.io?subject=QuantumMPV%20feedback"><img src="https://img.shields.io/badge/Email-SimplyFahim%40tuta.io-4B5563?style=flat-square" height="22" alt="Email SimplyFahim@tuta.io" /></a>
+  <a href="mailto:simplyfahimofficial@gmail.com?subject=QuantumMPV%20feedback"><img src="https://img.shields.io/badge/Email-Gmail-4B5563?style=flat-square" height="22" alt="Email simplyfahimofficial@gmail.com" /></a>
+  <!-- TODO_PERSONAL_TELEGRAM_USERNAME: add a personal Telegram badge here once the username is set in SupportConfig.kt:
+  <a href="https://t.me/TODO_PERSONAL_TELEGRAM_USERNAME"><img src="https://img.shields.io/badge/Telegram-%40TODO_PERSONAL_TELEGRAM_USERNAME-229ED9?style=flat-square&logo=telegram&logoColor=white" height="22" alt="Personal Telegram @TODO_PERSONAL_TELEGRAM_USERNAME" /></a>
+  -->
+</p>
+
+---
+
+## Release Notes For Maintainers
+
+The full procedure, required secrets and verification steps are in [docs/RELEASE.md](docs/RELEASE.md); the CI/CD architecture is described in [docs/CI_CD.md](docs/CI_CD.md).
+
+To cut a signed GitHub release through Actions, configure these secrets (preferably as environment secrets of the `production` and `preview` environments):
+
+| Secret Name | Description |
+|---|---|
+| `SIGNING_KEYSTORE` | Base64-encoded keystore file (`.jks` or `.keystore`) |
+| `SIGNING_KEY_ALIAS` | Key alias inside the keystore |
+| `SIGNING_STORE_PASSWORD` | Password for the keystore |
+| `KEY_PASSWORD` | Password for the signing key |
+
+Then bump the version in a pull request with `python3 tools/prepare_release.py X.Y.Z` (this updates `versionName` and `releaseVersionCode` in `app/build.gradle.kts`), rename the existing `## Unreleased` heading in `CHANGELOG.md` to `## X.Y.Z` (do not add a new version heading above it), and merge after CI passes. Run the **Prepare Release** workflow, or create a tag on that master commit and push it. Replace `X.Y.Z` below with the prepared `versionName`:
+
+```bash
+git fetch origin master
+VERSION=X.Y.Z
+RELEASE_COMMIT=origin/master
+git tag -a "v${VERSION}" "$RELEASE_COMMIT" -m "Release version ${VERSION}"
+git push origin "v${VERSION}"
+```
+
+Confirm `RELEASE_COMMIT` is the prepared merge commit from fetched `master`; if `master` has advanced, use that commit's SHA instead of `origin/master`. The release workflow verifies that the tagged commit is on `master`, its `versionName` and first changelog heading match, and its required checks passed.
+
+Preview releases use the prepared `versionName`; replace the `X.Y.Z` placeholder below with that version:
+
+```bash
+git tag -a "vX.Y.Z-preview.N" -m "Preview release X.Y.Z"
+git push origin "vX.Y.Z-preview.N"
+```
+
+Replace `N` with the next unused preview sequence number for that version, following the **Prepare Release** workflow.
+
+---
+
+## Credits & Third-Party Licenses
+
+### QuantumMPV credits
+QuantumMPV is an independent continuation and rebrand of the mpvRx codebase, maintained by **FAHIM**. The project name, logo, repository, and current maintainership belong to **FAHIM**; upstream projects and community contributions remain credited below.
+
+### Built with open source
+Thank you to the player projects, music apps, libraries, and individual contributors whose work makes QuantumMPV possible.
+
+| Explore the credits | Includes |
+|---|---|
+| [Playback & player projects](CITATION.md#playback--player-projects) | mpv-android, mpvExtended, mpvKt, MpvRex, Next Player |
+| [Music & media apps](CITATION.md#music--media-apps) | PixelPlayer, Gramophone, AFinity, Chora |
+| [Video processing & streaming](CITATION.md#video-processing--streaming) | hdr-toys, anacrolix/torrent |
+> Special thanks to [SunnyVishnu3](https://github.com/SunnyVishnu3) for the `yt-dlp` native integration and SDK 29+ bypass logic.
+
+See the complete [credits and citation information](CITATION.md), including the upstream [mpvRx project](https://github.com/Riteshp2001/mpvRx), inspiration projects, third-party libraries, and individual contributors.
+
+[All QuantumMPV contributors](https://github.com/SimplyFahimOfficial/QuantumMPV/graphs/contributors)
+
+> Special thanks to [SunnyVishnu3](https://github.com/SunnyVishnu3) for the `yt-dlp` native integration and SDK 29+ bypass logic.
+
+## Community
+
+[Get help](SUPPORT.md) · [Report a bug](https://github.com/SimplyFahimOfficial/QuantumMPV/issues/new?template=bug_report.md) · [Suggest a feature](https://github.com/SimplyFahimOfficial/QuantumMPV/issues/new?template=feature_request.md) · [Code of conduct](CODE_OF_CONDUCT.md)
+
+---
+
+## License
+
+Distributed under **GNU Affero General Public License v3.0 (AGPL-3.0-or-later)**. See `LICENSE` for more information.
+
+---
+
+## Star History
+
+<a href="https://www.star-history.com/#SimplyFahimOfficial/QuantumMPV&type=date&legend=top-left">
+ <picture>
+   <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/svg?repos=SimplyFahimOfficial/QuantumMPV&type=date&theme=dark&legend=top-left" />
+   <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/svg?repos=SimplyFahimOfficial/QuantumMPV&type=date&legend=top-left" />
+   <img alt="Star History Chart" src="https://api.star-history.com/svg?repos=SimplyFahimOfficial/QuantumMPV&type=date&legend=top-left" />
+ </picture>
+</a>

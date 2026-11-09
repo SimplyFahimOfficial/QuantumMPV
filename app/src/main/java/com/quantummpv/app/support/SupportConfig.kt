@@ -26,11 +26,29 @@ object SupportConfig {
   const val UPI_CURRENCY = "INR"
 
   const val WEBSITE_URL = "https://SimplyFahim.pages.dev"
-  const val GITHUB_PROFILE_URL = "https://github.com/Fahimofficial/"
+  const val GITHUB_PROFILE_URL = "https://github.com/SimplyFahimOfficial/"
 
   /** This app's own public repository. Each app links to its own repository, never a shared one. */
-  const val PROJECT_REPOSITORY_URL = "https://github.com/Fahimofficial/QuantumMPV"
+  const val PROJECT_REPOSITORY_URL = "https://github.com/SimplyFahimOfficial/QuantumMPV"
   const val PROJECT_LICENSE = "AGPL-3.0-or-later"
+
+  /** Community group, the primary contact. Shown as the large card on the Support screen. */
+  const val TELEGRAM_GROUP_USERNAME = "Quantummpv"
+
+  // Personal contact, shown as smaller tiles under the group card.
+  const val INSTAGRAM_HANDLE = "SimplyFahimofficial"
+  val CONTACT_EMAILS: List<String> = listOf("SimplyFahim@tuta.io", "simplyfahimofficial@gmail.com")
+  const val EMAIL_SUBJECT = "QuantumMPV feedback"
+
+  /** TODO_PERSONAL_TELEGRAM_USERNAME: set your Telegram username here (without @). Blank hides the tile. */
+  const val PERSONAL_TELEGRAM_USERNAME = ""
+
+  val telegramGroupUrl: String = SupportLinks.telegram(TELEGRAM_GROUP_USERNAME)
+  val instagramUrl: String = SupportLinks.instagram(INSTAGRAM_HANDLE)
+  val personalTelegramUrl: String? =
+    PERSONAL_TELEGRAM_USERNAME.takeIf { it.isNotBlank() }?.let(SupportLinks::telegram)
+
+  fun emailUri(address: String): String = SupportLinks.mailto(address, EMAIL_SUBJECT)
 
   /** `upi://pay?pa=SimplyFahim@sbi&pn=Md%20Fahim&cu=INR`, with no amount so the payer chooses it. */
   val upiPaymentUri: String =

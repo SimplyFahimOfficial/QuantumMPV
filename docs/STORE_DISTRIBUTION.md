@@ -29,7 +29,7 @@ attribute.environment=assertion.environment
 ```
 
 Restrict the provider condition to
-`assertion.repository == 'Fahimofficial/QuantumMPV'`,
+`assertion.repository == 'SimplyFahimOfficial/QuantumMPV'`,
 `assertion.ref == 'refs/heads/master'`, and
 `assertion.environment == 'play-store'`. Grant `roles/iam.workloadIdentityUser` to the
 Google service account for a `principalSet` restricted to this repository. The

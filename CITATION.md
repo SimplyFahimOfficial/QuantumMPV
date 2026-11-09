@@ -8,13 +8,13 @@ FAHIM
 
 ## Citing QuantumMPV
 
-When mentioning, reviewing, or building on QuantumMPV, link to the [project repository](https://github.com/Fahimofficial/QuantumMPV). Include the release tag or commit you used so others can identify the same version.
+When mentioning, reviewing, or building on QuantumMPV, link to the [project repository](https://github.com/SimplyFahimOfficial/QuantumMPV). Include the release tag or commit you used so others can identify the same version.
 
 Suggested plain-text reference:
 
 ```text
 QuantumMPV contributors. QuantumMPV — Android video and music player.
-https://github.com/Fahimofficial/QuantumMPV
+https://github.com/SimplyFahimOfficial/QuantumMPV
 Version: <release tag or commit hash>
 ```
 
@@ -142,12 +142,12 @@ QuantumMPV's own source is AGPL-3.0-or-later, as declared by the SPDX header in 
 |---|---|
 | [SunnyVishnu3](https://github.com/SunnyVishnu3) | `yt-dlp` native integration and SDK 29+ bypass logic |
 
-Thank you also to everyone contributing code, translations, documentation, bug reports, and testing. The [GitHub contributor history](https://github.com/Fahimofficial/QuantumMPV/graphs/contributors) records repository contributions.
+Thank you also to everyone contributing code, translations, documentation, bug reports, and testing. The [GitHub contributor history](https://github.com/SimplyFahimOfficial/QuantumMPV/graphs/contributors) records repository contributions.
 
 ## Keeping credits accurate
 
 Preserve upstream copyright and license notices when adapting code or assets. These acknowledgments supplement, rather than replace, the [project license](LICENSE) and notices accompanying third-party work.
 
-If a credit is missing or incorrect, [open an issue](https://github.com/Fahimofficial/QuantumMPV/issues/new) or a pull request with the relevant source link and the attribution to add or correct.
+If a credit is missing or incorrect, [open an issue](https://github.com/SimplyFahimOfficial/QuantumMPV/issues/new) or a pull request with the relevant source link and the attribution to add or correct.
 
 [Back to the README](README.md#acknowledgements)

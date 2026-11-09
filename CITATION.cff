@@ -5,7 +5,7 @@ title: "QuantumMPV"
 abstract: "An open-source Android video and music player built on libmpv."
 authors:
   - name: "FAHIM"
-repository-code: "https://github.com/Fahimofficial/QuantumMPV"
+repository-code: "https://github.com/SimplyFahimOfficial/QuantumMPV"
 url: "https://quantummpv.vercel.app/"
 license: AGPL-3.0-or-later
 keywords:
