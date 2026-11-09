@@ -502,20 +502,26 @@ To cut a signed GitHub release through Actions, configure these secrets (prefera
 | `SIGNING_STORE_PASSWORD` | Password for the keystore |
 | `KEY_PASSWORD` | Password for the signing key |
 
-Then bump the version in a pull request with `python3 tools/prepare_release.py X.Y.Z` (this updates `versionName` and `releaseVersionCode` in `app/build.gradle.kts`), add a `## X.Y.Z` section at the top of `CHANGELOG.md`, and merge it after CI passes. Run the **Prepare Release** workflow, or create a tag on that master commit and push it. Replace `X.Y.Z` below with the prepared `versionName`:
+Then bump the version in a pull request with `python3 tools/prepare_release.py X.Y.Z` (this updates `versionName` and `releaseVersionCode` in `app/build.gradle.kts`), rename the existing `## Unreleased` heading in `CHANGELOG.md` to `## X.Y.Z` (do not add a new version heading above it), and merge after CI passes. Run the **Prepare Release** workflow, or create a tag on that master commit and push it. Replace `X.Y.Z` below with the prepared `versionName`:
 
 ```bash
+git fetch origin master
 VERSION=X.Y.Z
-git tag -a "v${VERSION}" -m "Release version ${VERSION}"
+RELEASE_COMMIT=origin/master
+git tag -a "v${VERSION}" "$RELEASE_COMMIT" -m "Release version ${VERSION}"
 git push origin "v${VERSION}"
 ```
+
+Confirm `RELEASE_COMMIT` is the prepared merge commit from fetched `master`; if `master` has advanced, use that commit's SHA instead of `origin/master`. The release workflow verifies that the tagged commit is on `master`, its `versionName` and first changelog heading match, and its required checks passed.
 
 Preview releases use the prepared `versionName`; replace the `X.Y.Z` placeholder below with that version:
 
 ```bash
-git tag -a "vX.Y.Z-preview.1" -m "Preview release X.Y.Z"
-git push origin "vX.Y.Z-preview.1"
+git tag -a "vX.Y.Z-preview.N" -m "Preview release X.Y.Z"
+git push origin "vX.Y.Z-preview.N"
 ```
+
+Replace `N` with the next unused preview sequence number for that version, following the **Prepare Release** workflow.
 
 ---
 
