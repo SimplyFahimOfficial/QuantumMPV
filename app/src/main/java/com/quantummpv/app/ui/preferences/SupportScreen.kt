@@ -41,6 +41,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
@@ -189,77 +190,67 @@ object SupportScreen : Screen {
             }.then(searchHighlight)
             .verticalScroll(scrollState),
       ) {
-        // Introduction
-        PreferenceCard(emphasis = true) {
-          Row(modifier = Modifier.padding(16.dp), verticalAlignment = Alignment.Top) {
-            Icon(
-              imageVector = Icons.RoundedFilled.Favorite,
-              contentDescription = null,
-              tint = cs.primary,
-              modifier = Modifier.padding(top = 2.dp).size(24.dp),
-            )
-            Spacer(Modifier.size(12.dp))
-            Text(
-              text = stringResource(R.string.support_intro),
-              style = MaterialTheme.typography.bodyLarge,
-              color = cs.onSurface,
-            )
-          }
+        // Introduction: plain text under the title rather than a card, so the whole screen fits without scrolling.
+        Row(modifier = Modifier.padding(horizontal = 24.dp), verticalAlignment = Alignment.Top) {
+          Icon(
+            imageVector = Icons.RoundedFilled.Favorite,
+            contentDescription = null,
+            tint = cs.primary,
+            modifier = Modifier.padding(top = 1.dp).size(16.dp),
+          )
+          Spacer(Modifier.size(10.dp))
+          Text(
+            text = stringResource(R.string.support_intro),
+            style = MaterialTheme.typography.bodySmall,
+            color = cs.onSurfaceVariant,
+          )
         }
 
-        // Payment options
-        PreferenceSectionHeader(
-          title = stringResource(R.string.support_section_payment),
-          modifier = Modifier.semantics { heading() },
+        // Same look as SettingsSectionHeader, with less vertical space.
+        Text(
+          text = stringResource(R.string.support_section_payment),
+          style = MaterialTheme.typography.labelLarge,
+          color = cs.primary,
+          modifier = Modifier.padding(start = 24.dp, end = 24.dp, top = 8.dp).semantics { heading() },
         )
 
+        // UPI and More Ways to Pay share one card; the QR sits beside the payee details.
         PreferenceCard(modifier = Modifier.animateContentSize()) {
-          Column(modifier = Modifier.padding(16.dp)) {
+          Column(modifier = Modifier.padding(horizontal = 16.dp)) {
             MethodHeader(
               icon = Icons.RoundedFilled.MonetizationOn,
               tint = cs.tertiary,
               title = stringResource(R.string.support_upi_title),
-              subtitle = SupportConfig.UPI_ID,
+              subtitle = stringResource(R.string.support_upi_summary),
             )
             Spacer(Modifier.height(10.dp))
-            Text(
-              text = stringResource(R.string.support_upi_summary),
-              style = MaterialTheme.typography.bodyMedium,
-              color = cs.onSurfaceVariant,
-            )
-            Spacer(Modifier.height(16.dp))
 
-            QrPanel(
-              bitmap = qrBitmap,
-              reduceMotion = reduceMotion,
-              onClick = { showLargeQr = true },
-              modifier = Modifier.align(Alignment.CenterHorizontally),
-            )
-
-            Spacer(Modifier.height(16.dp))
-            DetailRow(label = stringResource(R.string.support_upi_payee_label), value = SupportConfig.UPI_PAYEE_NAME)
-            PreferenceDivider(Modifier.padding(vertical = 2.dp))
-            val copied = stringResource(R.string.support_upi_id_copied)
-            DetailRow(
-              label = stringResource(R.string.support_upi_id_label),
-              value = SupportConfig.UPI_ID,
-              trailing = {
-                IconButton(
+            Row(horizontalArrangement = Arrangement.spacedBy(14.dp), verticalAlignment = Alignment.CenterVertically) {
+              QrPanel(
+                bitmap = qrBitmap,
+                reduceMotion = reduceMotion,
+                onClick = { showLargeQr = true },
+                modifier = Modifier.weight(0.47f, fill = false).widthIn(max = 200.dp),
+              )
+              Column(modifier = Modifier.weight(0.53f), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                DetailRow(label = stringResource(R.string.support_upi_payee_label), value = SupportConfig.UPI_PAYEE_NAME)
+                DetailRow(label = stringResource(R.string.support_upi_id_label), value = SupportConfig.UPI_ID)
+                val copied = stringResource(R.string.support_upi_id_copied)
+                FilledTonalButton(
                   onClick = {
                     SafeClipboard.copyPlainText(context, "simplyfahim_upi_id", SupportConfig.UPI_ID, showToast = false)
                     notify(copied)
                   },
+                  contentPadding = ButtonDefaults.ButtonWithIconContentPadding,
                 ) {
-                  Icon(
-                    imageVector = Icons.RoundedFilled.ContentCopy,
-                    contentDescription = stringResource(R.string.support_copy_upi_id),
-                    tint = cs.primary,
-                  )
+                  Icon(Icons.RoundedFilled.ContentCopy, contentDescription = null, modifier = Modifier.size(18.dp))
+                  Spacer(Modifier.size(8.dp))
+                  Text(stringResource(R.string.support_copy_upi_id))
                 }
-              },
-            )
+              }
+            }
 
-            Spacer(Modifier.height(14.dp))
+            Spacer(Modifier.height(8.dp))
             val chooseApp = stringResource(R.string.support_choose_upi_app)
             val noUpiApp = stringResource(R.string.support_no_upi_app)
             Button(
@@ -276,7 +267,7 @@ object SupportScreen : Screen {
             ) {
               Text(stringResource(R.string.support_open_upi_app), fontWeight = FontWeight.SemiBold)
             }
-            Spacer(Modifier.height(10.dp))
+            Spacer(Modifier.height(8.dp))
             Row(horizontalArrangement = Arrangement.spacedBy(10.dp), modifier = Modifier.fillMaxWidth()) {
               val shareText =
                 stringResource(R.string.support_share_qr_text, SupportConfig.UPI_ID, SupportConfig.UPI_PAYEE_NAME)
@@ -312,16 +303,15 @@ object SupportScreen : Screen {
                 Text(stringResource(R.string.support_save_qr))
               }
             }
-            Spacer(Modifier.height(14.dp))
+            Spacer(Modifier.height(10.dp))
             Text(
               text = stringResource(R.string.support_upi_safety_note, SupportConfig.UPI_PAYEE_NAME),
               style = MaterialTheme.typography.bodySmall,
               color = cs.onSurfaceVariant,
             )
+            Spacer(Modifier.height(8.dp))
           }
-        }
-
-        PreferenceCard {
+          PreferenceDivider()
           SupportLinkRow(
             icon = Icons.RoundedFilled.Payments,
             title = stringResource(R.string.support_more_ways_title),
@@ -338,10 +328,8 @@ object SupportScreen : Screen {
           text = stringResource(R.string.support_optional_note),
           style = MaterialTheme.typography.bodySmall,
           color = cs.onSurfaceVariant,
-          modifier = Modifier.padding(horizontal = 24.dp, vertical = 12.dp),
+          modifier = Modifier.padding(start = 24.dp, end = 24.dp, top = 4.dp, bottom = 4.dp),
         )
-
-        Spacer(Modifier.height(24.dp))
       }
     }
 
@@ -388,8 +376,6 @@ private fun QrPanel(
     color = Color.White,
     modifier =
       modifier
-        .widthIn(max = 260.dp)
-        .fillMaxWidth()
         .aspectRatio(1f)
         .clickable(role = Role.Image, onClickLabel = stringResource(R.string.support_qr_enlarged_title), onClick = onClick)
         .semantics(mergeDescendants = true) {},
@@ -412,7 +398,7 @@ private fun QrPanel(
           bitmap = remember(current) { current.asImageBitmap() },
           contentDescription = description,
           filterQuality = FilterQuality.None,
-          modifier = Modifier.padding(8.dp),
+          modifier = Modifier.padding(4.dp),
         )
       }
     }
@@ -423,17 +409,10 @@ private fun QrPanel(
 private fun DetailRow(
   label: String,
   value: String,
-  trailing: (@Composable () -> Unit)? = null,
 ) {
-  Row(
-    modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp).semantics(mergeDescendants = true) {},
-    verticalAlignment = Alignment.CenterVertically,
-  ) {
-    Column(Modifier.weight(1f)) {
-      Text(label, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.outline)
-      Text(value, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
-    }
-    trailing?.invoke()
+  Column(modifier = Modifier.fillMaxWidth().semantics(mergeDescendants = true) {}) {
+    Text(label, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.outline)
+    Text(value, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
   }
 }
 
