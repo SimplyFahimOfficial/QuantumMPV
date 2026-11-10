@@ -174,7 +174,7 @@ class AppearancePreferences(
   val profileName = preferenceStore.getString("profile_name", "")
   val profileImagePath = preferenceStore.getString("profile_image_path", "")
 
-  /** Optional dock overflow shortcuts; Settings and Support are always shown and never stored here. */
+  /** Optional dock overflow shortcuts; Settings and Help & Support are always shown and never stored here. */
   val moreMenuShortcuts =
     preferenceStore.getStringSet("more_menu_shortcuts", MoreMenuShortcut.DEFAULT.mapTo(HashSet()) { it.name })
   val showNetworkTab = preferenceStore.getBoolean("show_network_tab", false)
@@ -232,7 +232,7 @@ class AppearancePreferences(
       .toList()
 }
 
-/** Optional rows of the dock's More menu, shown below the fixed Settings and Support rows in this order. */
+/** Optional rows of the dock's More menu, shown below the fixed Settings and Help & Support rows in this order. */
 enum class MoreMenuShortcut {
   APPEARANCE,
   PLAYER,

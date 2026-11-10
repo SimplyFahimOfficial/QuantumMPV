@@ -2724,7 +2724,7 @@
   <string name="pref_more_menu_fixed_summary">Always shown</string>
   <string name="pref_more_menu_optional_header">Optional shortcuts</string>
   <string name="pref_more_menu_reset">Reset to default</string>
-  <string name="pref_more_menu_reset_summary">Show Settings, Support and Appearance only</string>
+  <string name="pref_more_menu_reset_summary">Show Settings, Help &amp; Support and Appearance only</string>
 
   <!-- Profile hub (ported from mpvRx) -->
   <string name="ui_profile">Profile</string>
