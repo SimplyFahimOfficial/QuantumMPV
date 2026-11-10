@@ -1161,7 +1161,7 @@ private fun mainTabLabel(tab: MainScreen.MainTab): String =
     MainScreen.MainTab.JELLYFIN -> stringResource(R.string.ui_jellyfin)
   }
 
-/** Settings and Support: always first in the More menu and not configurable. */
+/** Settings and Help & Support: always first in the More menu and not configurable. */
 @Composable
 private fun fixedMoreMenuItems(open: (Screen) -> Unit): List<com.quantummpv.app.ui.browser.components.FloatingMenuItem> =
   listOf(
@@ -1173,9 +1173,9 @@ private fun fixedMoreMenuItems(open: (Screen) -> Unit): List<com.quantummpv.app.
     ),
     com.quantummpv.app.ui.browser.components.FloatingMenuItem(
       key = "support",
-      icon = Icons.RoundedFilled.Favorite,
-      label = stringResource(R.string.more_menu_support),
-      onClick = { open(com.quantummpv.app.ui.preferences.SupportScreen) },
+      icon = Icons.RoundedFilled.HelpOutline,
+      label = stringResource(R.string.help_support_title),
+      onClick = { open(com.quantummpv.app.ui.preferences.HelpSupportScreen) },
     ),
   )
 

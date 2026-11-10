@@ -10,16 +10,21 @@
 package com.quantummpv.app.support
 
 /**
- * Single source of truth for the "Support My Work" screen.
+ * Single source of truth for the Help & Support and Support My Work screens.
  *
- * Update links or payment details here only. The screen, the generated UPI QR code, the share
+ * Update links or payment details here only. The screens, the generated UPI QR code, the share
  * text and the intents all read from this object. Nothing here is sent to a server: the app only
  * opens these links in apps the user picks.
  */
 object SupportConfig {
   const val DEVELOPER_NAME = "SimplyFahim"
 
-  const val KOFI_URL = "https://ko-fi.com/simplyfahim"
+  /** This app's page on the developer's website. */
+  const val PROJECT_WEBSITE_URL = "https://simplyfahim.pages.dev/quantummpv"
+
+  // Shared by all of the developer's apps: personal contacts and extra payment methods live there.
+  const val CONTACT_URL = "https://simplyfahim.pages.dev/contactme"
+  const val PAYMENT_OPTIONS_URL = "https://simplyfahim.pages.dev/pay-options"
 
   const val UPI_ID = "SimplyFahim@sbi"
   const val UPI_PAYEE_NAME = "Md Fahim"
@@ -32,7 +37,10 @@ object SupportConfig {
   const val PROJECT_REPOSITORY_URL = "https://github.com/SimplyFahimOfficial/QuantumMPV"
   const val PROJECT_LICENSE = "AGPL-3.0-or-later"
 
-  /** Community group, the primary contact. Shown as the large card on the Support screen. */
+  /** The public issue tracker, where bug reports and feature requests go. */
+  const val ISSUES_URL = "$PROJECT_REPOSITORY_URL/issues"
+
+  /** This app's community group, the first place to ask for help. */
   const val TELEGRAM_GROUP_USERNAME = "Quantummpv"
 
   // Personal contact, shown as smaller tiles under the group card.
@@ -58,6 +66,6 @@ object SupportConfig {
       currency = UPI_CURRENCY,
     )
 
-  /** Strips the scheme and trailing slash for display, e.g. `ko-fi.com/simplyfahim`. */
+  /** Strips the scheme and trailing slash for display, e.g. `github.com/SimplyFahimOfficial`. */
   fun displayUrl(url: String): String = url.substringAfter("://").trimEnd('/')
 }

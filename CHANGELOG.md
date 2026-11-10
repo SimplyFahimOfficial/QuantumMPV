@@ -18,7 +18,8 @@
 - **Lists**: Removing or re-sorting items in Recents and Playlists animates rows into place instead of jumping. Thumbnails that take time to load fade in.
 - **Design system**: QuantumMPV now follows a documented visual language ("Quiet Geometry", see docs/design). Player panels share one header with a standard-size, labelled close button; player sheets show a drag handle for their swipe-to-dismiss; player buttons give the same press feedback as the dock.
 - **Reduced motion**: Screen transitions now cross-fade under Reduced motion and are removed when motion is Off.
-- **Support My Work**: About now opens a dedicated Support My Work screen with Ko-fi, a UPI QR code generated on the device (scan, enlarge, share or save), Copy UPI ID and Open UPI app, kept separate from the project's GitHub repository and the developer's website. The UPI ID is now `SimplyFahim@sbi` with payee Md Fahim, and the old bundled QR image and unused upstream Ko-fi/PayPal/UPI strings are gone.
+- **Help & Support**: Settings has a new Help & Support page, next to About, with the Telegram community, Report a Bug (GitHub issues), the project website and Contact Developer. The More menu's Support item now opens it.
+- **Support My Work**: Help & Support and About open a dedicated Support My Work screen with a UPI QR code generated on the device (scan, enlarge, share or save), Copy UPI ID, Pay with UPI and More Ways to Pay, kept separate from help and project links. The UPI ID is now `SimplyFahim@sbi` with payee Md Fahim, and the old bundled QR image and unused upstream Ko-fi/PayPal/UPI strings are gone.
 
 ### Fixes
 

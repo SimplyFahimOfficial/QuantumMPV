@@ -403,6 +403,12 @@ object PreferencesScreen : Screen {
               icon = Icons.RoundedFilled.Info,
               screen = AboutScreen,
             ),
+            SettingsDestination(
+              title = stringResource(R.string.help_support_title),
+              summary = stringResource(R.string.help_support_summary),
+              icon = Icons.RoundedFilled.HelpOutline,
+              screen = HelpSupportScreen,
+            ),
           ),
       ),
     )
