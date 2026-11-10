@@ -12,13 +12,11 @@ class SupportConfigTest {
     assertEquals("SimplyFahim@sbi", SupportConfig.UPI_ID)
     assertEquals("Md Fahim", SupportConfig.UPI_PAYEE_NAME)
     assertEquals("INR", SupportConfig.UPI_CURRENCY)
-    assertEquals("https://SimplyFahim.pages.dev", SupportConfig.WEBSITE_URL)
-    assertEquals("https://github.com/SimplyFahimOfficial/", SupportConfig.GITHUB_PROFILE_URL)
-    assertEquals(listOf("SimplyFahim@tuta.io", "simplyfahimofficial@gmail.com"), SupportConfig.CONTACT_EMAILS)
   }
 
   @Test
   fun `help and support links are exact`() {
+    assertEquals("https://t.me/Quantummpv", SupportConfig.TELEGRAM_GROUP_URL)
     assertEquals("https://simplyfahim.pages.dev/quantummpv", SupportConfig.PROJECT_WEBSITE_URL)
     assertEquals("https://github.com/SimplyFahimOfficial/QuantumMPV/issues", SupportConfig.ISSUES_URL)
     assertEquals("https://simplyfahim.pages.dev/contactme", SupportConfig.CONTACT_URL)
@@ -28,7 +26,7 @@ class SupportConfigTest {
   @Test
   fun `repository link points at this app's own repository`() {
     assertEquals("https://github.com/SimplyFahimOfficial/QuantumMPV", SupportConfig.PROJECT_REPOSITORY_URL)
-    assertFalse(SupportConfig.PROJECT_REPOSITORY_URL == SupportConfig.WEBSITE_URL)
+    assertFalse(SupportConfig.PROJECT_REPOSITORY_URL == SupportConfig.PROJECT_WEBSITE_URL)
   }
 
   @Test
@@ -51,12 +49,11 @@ class SupportConfigTest {
   }
 
   @Test
-  fun `old project-specific donation details are gone`() {
+  fun `old donation details and retired routes are gone`() {
     val all =
       listOf(
         SupportConfig.UPI_ID,
         SupportConfig.upiPaymentUri,
-        SupportConfig.WEBSITE_URL,
         SupportConfig.PROJECT_WEBSITE_URL,
         SupportConfig.CONTACT_URL,
         SupportConfig.PAYMENT_OPTIONS_URL,
@@ -64,10 +61,5 @@ class SupportConfigTest {
     listOf("adityanarvekar", "aadinarvekar", "aadiinarvekar", "paypal", "@Sbi", "vercel.app", "ko-fi", "/pay/").forEach {
       assertFalse("found $it", all.contains(it))
     }
-  }
-
-  @Test
-  fun `display url strips scheme and trailing slash`() {
-    assertEquals("github.com/SimplyFahimOfficial", SupportConfig.displayUrl(SupportConfig.GITHUB_PROFILE_URL))
   }
 }

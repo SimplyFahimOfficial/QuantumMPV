@@ -26,26 +26,24 @@ import java.io.File
 import java.io.IOException
 import java.io.OutputStream
 
-/** Android side of the Support My Work screen: links, UPI intents and QR image export. */
+/** Android side of the Help & Support and Support My Work screens: links, UPI intents and QR image export. */
 object SupportIntents {
   private const val SHARE_DIR = "shared"
   const val QR_FILE_NAME = "SimplyFahim-UPI-QR.png"
 
   /**
-   * Opens an https link with ACTION_VIEW (browser, or the Telegram/Instagram app if it claims the
-   * link) or a `mailto:` link with ACTION_SENDTO. When no app can handle it, copies [copyValue] and
-   * says so in a toast, so the user can still reach the contact. Returns true when an app opened.
+   * Opens an https link with ACTION_VIEW (browser, or the Telegram or GitHub app if it claims the
+   * link). When no app can handle it, copies the link and says so in a toast, so the user can
+   * still paste it somewhere. Returns true when an app opened.
    */
   fun openLink(
     context: Context,
     link: String,
-    copyValue: String = link,
   ): Boolean {
     val uri = link.toUri()
     val intent =
       when (uri.scheme) {
         "https", "http" -> Intent(Intent.ACTION_VIEW, uri).addCategory(Intent.CATEGORY_BROWSABLE)
-        "mailto" -> Intent(Intent.ACTION_SENDTO, uri)
         else -> null
       }
     val opened =
@@ -59,7 +57,7 @@ object SupportIntents {
           false
         }
     if (!opened) {
-      val copied = runCatching { SafeClipboard.copyPlainText(context, "support_link", copyValue, showToast = false) }.isSuccess
+      val copied = runCatching { SafeClipboard.copyPlainText(context, "support_link", link, showToast = false) }.isSuccess
       val message = if (copied) R.string.support_link_copied_instead else R.string.support_link_open_failed
       Toast.makeText(context, message, Toast.LENGTH_LONG).show()
     }

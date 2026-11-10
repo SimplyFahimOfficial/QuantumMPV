@@ -17,8 +17,6 @@ package com.quantummpv.app.support
  * opens these links in apps the user picks.
  */
 object SupportConfig {
-  const val DEVELOPER_NAME = "SimplyFahim"
-
   /** This app's page on the developer's website. */
   const val PROJECT_WEBSITE_URL = "https://simplyfahim.pages.dev/quantummpv"
 
@@ -30,33 +28,14 @@ object SupportConfig {
   const val UPI_PAYEE_NAME = "Md Fahim"
   const val UPI_CURRENCY = "INR"
 
-  const val WEBSITE_URL = "https://SimplyFahim.pages.dev"
-  const val GITHUB_PROFILE_URL = "https://github.com/SimplyFahimOfficial/"
-
   /** This app's own public repository. Each app links to its own repository, never a shared one. */
   const val PROJECT_REPOSITORY_URL = "https://github.com/SimplyFahimOfficial/QuantumMPV"
-  const val PROJECT_LICENSE = "AGPL-3.0-or-later"
 
   /** The public issue tracker, where bug reports and feature requests go. */
   const val ISSUES_URL = "$PROJECT_REPOSITORY_URL/issues"
 
   /** This app's community group, the first place to ask for help. */
-  const val TELEGRAM_GROUP_USERNAME = "Quantummpv"
-
-  // Personal contact, shown as smaller tiles under the group card.
-  const val INSTAGRAM_HANDLE = "SimplyFahimofficial"
-  val CONTACT_EMAILS: List<String> = listOf("SimplyFahim@tuta.io", "simplyfahimofficial@gmail.com")
-  const val EMAIL_SUBJECT = "QuantumMPV feedback"
-
-  /** TODO_PERSONAL_TELEGRAM_USERNAME: set your Telegram username here (without @). Blank hides the tile. */
-  const val PERSONAL_TELEGRAM_USERNAME = ""
-
-  val telegramGroupUrl: String = SupportLinks.telegram(TELEGRAM_GROUP_USERNAME)
-  val instagramUrl: String = SupportLinks.instagram(INSTAGRAM_HANDLE)
-  val personalTelegramUrl: String? =
-    PERSONAL_TELEGRAM_USERNAME.takeIf { it.isNotBlank() }?.let(SupportLinks::telegram)
-
-  fun emailUri(address: String): String = SupportLinks.mailto(address, EMAIL_SUBJECT)
+  const val TELEGRAM_GROUP_URL = "https://t.me/Quantummpv"
 
   /** `upi://pay?pa=SimplyFahim@sbi&pn=Md%20Fahim&cu=INR`, with no amount so the payer chooses it. */
   val upiPaymentUri: String =
@@ -65,7 +44,4 @@ object SupportConfig {
       payeeName = UPI_PAYEE_NAME,
       currency = UPI_CURRENCY,
     )
-
-  /** Strips the scheme and trailing slash for display, e.g. `github.com/SimplyFahimOfficial`. */
-  fun displayUrl(url: String): String = url.substringAfter("://").trimEnd('/')
 }

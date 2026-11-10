@@ -106,7 +106,7 @@ object HelpSupportScreen : Screen {
             title = stringResource(R.string.help_telegram_title),
             subtitle = stringResource(R.string.help_telegram_summary),
             external = true,
-            onClick = { open(SupportConfig.telegramGroupUrl) },
+            onClick = { open(SupportConfig.TELEGRAM_GROUP_URL) },
           )
           PreferenceDivider()
           SupportLinkRow(
