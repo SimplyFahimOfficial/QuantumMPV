@@ -986,7 +986,7 @@ class PlayerViewModel : ViewModel(),
       ?: PlaybackSession.getPropertyString("metadata/by-key/album_artist")
       ?: ""
 
-    val duration = PlaybackSession.getPropertyInt("duration") ?: 0
+    val duration = PlaybackSession.getPropertyDouble("duration")?.toInt() ?: 0
     val request = LyricsLoadRequest(path, title, artist, duration)
     if (!forceRefresh && request == lastLyricsLoadRequest) return
     lastLyricsLoadRequest = request
@@ -1065,7 +1065,7 @@ class PlayerViewModel : ViewModel(),
           ?: PlaybackSession.getPropertyString("metadata/by-key/ARTIST")
           ?: PlaybackSession.getPropertyString("metadata/by-key/album_artist")
           ?: ""
-        val duration = PlaybackSession.getPropertyInt("duration") ?: 0
+        val duration = PlaybackSession.getPropertyDouble("duration")?.toInt() ?: 0
 
         val online = lyricsRepository.fetchOnlineLyrics(title, artist, duration)
 
@@ -4549,7 +4549,7 @@ val isBrightnessSliderShown = MutableStateFlow(false)
     cancelSeekPreview()
     viewModelScope.launch(Dispatchers.IO) {
       val maxDuration =
-        (PlaybackSession.getPropertyInt("duration") ?: duration ?: _preciseDuration.value.toInt())
+        (PlaybackSession.getPropertyDouble("duration")?.toInt() ?: duration ?: _preciseDuration.value.toInt())
           .coerceAtLeast(0)
       var clampedPosition =
         if (maxDuration > 0) position.coerceIn(0, maxDuration) else position.coerceAtLeast(0)

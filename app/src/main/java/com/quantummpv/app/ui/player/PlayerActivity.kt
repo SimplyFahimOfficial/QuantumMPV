@@ -3328,7 +3328,7 @@ class PlayerActivity :
     if (extras == null) return
 
     extras.getInt("position", POSITION_NOT_SET).takeIf { it != POSITION_NOT_SET }?.let {
-      PlaybackSession.setPropertyInt("time-pos", it / MILLISECONDS_TO_SECONDS)
+      PlaybackSession.setPropertyDouble("time-pos", it / MILLISECONDS_TO_SECONDS.toDouble())
     }
 
     setHttpHeadersFromExtras(extras)
@@ -5713,7 +5713,9 @@ private suspend fun restorePlaybackPosition(state: PlaybackStateEntity?) {
             if (requestGeneration != mediaRequestGeneration) {
               -1L
             } else {
-              if (requiresYtdlp) PlaybackSession.setPropertyString("ytdl-format", ytdlFormat.orEmpty())
+              // shortcut: a null override keeps whatever format is active, so a per-video override stays
+              // until the core restarts; upgrade by restoring the configured format when it is null.
+              if (requiresYtdlp && ytdlFormat != null) PlaybackSession.setPropertyString("ytdl-format", ytdlFormat)
               nativeLoad()
             }
           }
@@ -8230,7 +8232,7 @@ private suspend fun restorePlaybackPosition(state: PlaybackStateEntity?) {
     if (!isReady || fileName.isBlank()) return
     if (isMiniPlayerEnabled()) return
 
-    val currentVid = PlaybackSession.getPropertyInt("vid") ?: -1
+    val currentVid = PlaybackSession.getPropertyString("vid")?.toIntOrNull() ?: -1
     if (currentVid > 0) {
       lastVid = currentVid
       PlaybackSession.setPropertyString("vid", "no")

@@ -191,6 +191,7 @@ object PlaybackSession : MPVLib.EventObserver {
   private var loadedAudiobookEnded = false
   private var speedBeforeAudiobook: Float? = null
   private var defaultUserAgent: String? = null
+  private var defaultHttpHeaderFields: String? = null
   private var pendingPositionRestoreGeneration = 0L
   private var pendingPositionRestoreOverride: Pair<Long, PlaybackPositionRestoreOverride>? = null
   private var initialPositionGeneration = 0L
@@ -265,6 +266,7 @@ object PlaybackSession : MPVLib.EventObserver {
         desiredPaused = true
         loadedGeneration = 0L
         defaultUserAgent = null
+        defaultHttpHeaderFields = null
         pendingPositionRestoreGeneration = 0L
         pendingPositionRestoreOverride = null
         initialPositionGeneration = 0L
@@ -288,6 +290,7 @@ object PlaybackSession : MPVLib.EventObserver {
           // Preserve the effective default after mpv.conf has been parsed. Per-media request
           // headers may temporarily override it, but must not leak into the next item.
           defaultUserAgent = MPVLib.getPropertyString("user-agent")
+          defaultHttpHeaderFields = MPVLib.getPropertyString("http-header-fields").orEmpty()
           postInitOptions()
           MPVLib.getPropertyString("vo")
             ?.takeIf { it.isNotBlank() && it != "null" }
@@ -317,6 +320,7 @@ object PlaybackSession : MPVLib.EventObserver {
           desiredPaused = true
           loadedGeneration = 0L
           defaultUserAgent = null
+          defaultHttpHeaderFields = null
           pendingPositionRestoreGeneration = 0L
           pendingPositionRestoreOverride = null
           initialPositionGeneration = 0L
@@ -606,6 +610,7 @@ object PlaybackSession : MPVLib.EventObserver {
     desiredPaused = true
     loadedGeneration = 0L
     defaultUserAgent = null
+    defaultHttpHeaderFields = null
     pendingPositionRestoreGeneration = 0L
     pendingPositionRestoreOverride = null
     initialPositionGeneration = 0L
@@ -895,9 +900,14 @@ object PlaybackSession : MPVLib.EventObserver {
       val userAgent = PlaybackHttpHeaders.userAgent(resolvedItem.headers)
       val headerFields = PlaybackHttpHeaders.toMpvHeaderFields(resolvedItem.headers)
       // URL-specific headers are request metadata, not a global mpv preference. Always apply the
-      // media UA, then restore the post-mpv.conf default for a headerless item.
+      // media UA and headers, then restore the post-mpv.conf defaults for a headerless item. A
+      // headerless item must get the mpv.conf headers back, not an empty list, or a Referer or
+      // Authorization from the previous stream is replaced by nothing instead of by the user's default.
       MPVLib.setPropertyString("user-agent", userAgent ?: defaultUserAgent.orEmpty())
-      MPVLib.setPropertyString("http-header-fields", headerFields)
+      MPVLib.setPropertyString(
+        "http-header-fields",
+        if (resolvedItem.headers.isEmpty()) defaultHttpHeaderFields.orEmpty() else headerFields,
+      )
       MPVLib.setPropertyString("force-media-title", "")
 
       if (!_state.value.surfaceAttached) {
@@ -1205,7 +1215,7 @@ object PlaybackSession : MPVLib.EventObserver {
     withCore(Unit) {
       if (property == "vid") {
         if (value == "no" && _state.value.phase in setOf(PlaybackPhase.READY, PlaybackPhase.BACKGROUND)) {
-          val activeVid = MPVLib.getPropertyInt("vid") ?: -1
+          val activeVid = MPVLib.getPropertyString("vid")?.toIntOrNull() ?: -1
           if (activeVid > 0) {
             suspendedVideoTrack = SuspendedVideoTrack(activeVid, _state.value.generation)
           }
@@ -1390,7 +1400,7 @@ object PlaybackSession : MPVLib.EventObserver {
             // started without video. Repair a disabled selection before exposing READY so an
             // attached player cannot remain on a black frame with audio.
             if (current.surfaceAttached && current.currentItem?.isDefinitelyAudioOnly() != true) {
-              val selectedVideoTrack = MPVLib.getPropertyInt("vid")
+              val selectedVideoTrack = MPVLib.getPropertyString("vid")?.toIntOrNull()
               if (selectedVideoTrack == null || selectedVideoTrack <= 0) {
                 MPVLib.setPropertyString("vid", "auto")
               }
@@ -1496,6 +1506,7 @@ object PlaybackSession : MPVLib.EventObserver {
             desiredPaused = true
             loadedGeneration = 0L
             defaultUserAgent = null
+            defaultHttpHeaderFields = null
             pendingPositionRestoreGeneration = 0L
             pendingPositionRestoreOverride = null
             initialPositionGeneration = 0L
