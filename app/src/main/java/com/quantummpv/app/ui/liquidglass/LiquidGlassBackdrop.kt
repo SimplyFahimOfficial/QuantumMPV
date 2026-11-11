@@ -19,6 +19,7 @@ import androidx.compose.ui.Modifier
 import com.kyant.backdrop.Backdrop
 import com.kyant.backdrop.backdrops.LayerBackdrop
 import com.kyant.backdrop.backdrops.layerBackdrop
+import com.kyant.backdrop.backdrops.rememberCombinedBackdrop
 import com.kyant.backdrop.backdrops.rememberLayerBackdrop
 import com.quantummpv.app.preferences.AppearancePreferences
 import com.quantummpv.app.preferences.preference.collectAsState
@@ -30,6 +31,12 @@ import org.koin.compose.koinInject
  * to siblings of the captured content, never to the content itself.
  */
 val LocalLiquidGlassBackdrop = staticCompositionLocalOf<Backdrop?> { null }
+
+/**
+ * The custom wallpaper, recorded by [com.quantummpv.app.ui.theme.AppWallpaperHost] while Liquid Glass is on, or
+ * null without one. Pages are transparent over a wallpaper, so glass needs it as well as the page content.
+ */
+val LocalAppBackgroundBackdrop = staticCompositionLocalOf<Backdrop?> { null }
 
 /** Blur is a RenderEffect, so Liquid Glass needs Android 12; the lens refraction needs Android 13. */
 val liquidGlassSupported: Boolean get() = Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
@@ -44,14 +51,16 @@ fun liquidGlassEnabled(): Boolean {
 /**
  * Records [content] into a layer for glass to sample. Unlike a plain layer it first fills with the
  * theme background, because transparent pages would otherwise let sharp text show through the blur.
+ * With a wallpaper the wallpaper is that background instead, so no fill is drawn over it.
  * Returns null when Liquid Glass is off, in which case [Modifier.captureLiquidGlass] does nothing.
  */
 @Composable
 fun rememberLiquidGlassCapture(): LayerBackdrop? {
   val background = MaterialTheme.colorScheme.background
+  val hasWallpaper = LocalAppBackgroundBackdrop.current != null
   val layer =
     rememberLayerBackdrop {
-      drawRect(background)
+      if (!hasWallpaper) drawRect(background)
       drawContent()
     }
   return layer.takeIf { liquidGlassEnabled() }
@@ -59,11 +68,16 @@ fun rememberLiquidGlassCapture(): LayerBackdrop? {
 
 fun Modifier.captureLiquidGlass(layer: LayerBackdrop?): Modifier = if (layer != null) layerBackdrop(layer) else this
 
-/** Makes [backdrop] available to the glass surfaces inside [content] (or removes it when null). */
+/**
+ * Makes [backdrop] available to the glass surfaces inside [content] (or removes it when null), with the
+ * wallpaper underneath when there is one.
+ */
 @Composable
 fun ProvideLiquidGlassBackdrop(
   backdrop: Backdrop?,
   content: @Composable () -> Unit,
 ) {
-  CompositionLocalProvider(LocalLiquidGlassBackdrop provides backdrop, content = content)
+  val wallpaper = LocalAppBackgroundBackdrop.current
+  val scene = if (backdrop != null && wallpaper != null) rememberCombinedBackdrop(wallpaper, backdrop) else backdrop
+  CompositionLocalProvider(LocalLiquidGlassBackdrop provides scene, content = content)
 }
