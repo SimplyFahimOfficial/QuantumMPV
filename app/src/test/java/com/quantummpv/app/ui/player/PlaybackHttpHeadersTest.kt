@@ -5,7 +5,7 @@ import org.junit.Test
 
 class PlaybackHttpHeadersTest {
   @Test
-  fun parsesEscapedMpvHeaderFields() {
+  fun preservesNativeMpvHeaderEntries() {
     assertEquals(
       linkedMapOf(
         "Authorization" to "Bearer token",
@@ -13,7 +13,37 @@ class PlaybackHttpHeadersTest {
         "X-Path" to "a\\b",
       ),
       PlaybackHttpHeaders.fromMpvHeaderFields(
-        "Authorization: Bearer token,X-Values: one\\,two,X-Path: a\\\\b",
+        listOf(
+          "Authorization: Bearer token",
+          "X-Values: one,two",
+          "X-Path: a\\b",
+        ),
+      ),
+    )
+  }
+
+  @Test
+  fun generatedUserAgentWinsWhenNoConfiguredDefaultExists() {
+    assertEquals(
+      "generated-android-agent",
+      PlaybackHttpHeaders.effectiveUserAgent(
+        itemHeaders = mapOf("User-Agent" to "generated-android-agent"),
+        defaultUserAgent = null,
+        defaultHeaders = emptyMap(),
+        hasCallerSuppliedHeaders = false,
+      ),
+    )
+  }
+
+  @Test
+  fun configuredUserAgentWinsOverGeneratedFallback() {
+    assertEquals(
+      "configured-agent",
+      PlaybackHttpHeaders.effectiveUserAgent(
+        itemHeaders = mapOf("User-Agent" to "generated-android-agent"),
+        defaultUserAgent = "configured-agent",
+        defaultHeaders = emptyMap(),
+        hasCallerSuppliedHeaders = false,
       ),
     )
   }

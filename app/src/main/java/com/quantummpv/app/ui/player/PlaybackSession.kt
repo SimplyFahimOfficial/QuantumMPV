@@ -31,6 +31,8 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.withTimeoutOrNull
+import kotlinx.serialization.json.Json
+import org.koin.core.context.GlobalContext
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.CopyOnWriteArraySet
 import java.util.concurrent.atomic.AtomicLong
@@ -192,7 +194,8 @@ object PlaybackSession : MPVLib.EventObserver {
   private var loadedAudiobookEnded = false
   private var speedBeforeAudiobook: Float? = null
   private var defaultUserAgent: String? = null
-  private var defaultHttpHeaderFields: String? = null
+  private var defaultHttpHeaderFields: List<String> = emptyList()
+  private val json by lazy { GlobalContext.get().get<Json>() }
   private var pendingPositionRestoreGeneration = 0L
   private var pendingPositionRestoreOverride: Pair<Long, PlaybackPositionRestoreOverride>? = null
   private var initialPositionGeneration = 0L
@@ -267,7 +270,7 @@ object PlaybackSession : MPVLib.EventObserver {
         desiredPaused = true
         loadedGeneration = 0L
         defaultUserAgent = null
-        defaultHttpHeaderFields = null
+        defaultHttpHeaderFields = emptyList()
         pendingPositionRestoreGeneration = 0L
         pendingPositionRestoreOverride = null
         initialPositionGeneration = 0L
@@ -291,7 +294,12 @@ object PlaybackSession : MPVLib.EventObserver {
           // Preserve the effective default after mpv.conf has been parsed. Per-media request
           // headers may temporarily override it, but must not leak into the next item.
           defaultUserAgent = MPVLib.getPropertyString("user-agent")
-          defaultHttpHeaderFields = MPVLib.getPropertyString("http-header-fields").orEmpty()
+          defaultHttpHeaderFields =
+            runCatching {
+              MPVLib.getPropertyNode("http-header-fields")?.toObject<List<String>>(json).orEmpty()
+            }.onFailure { error ->
+              Log.w(TAG, "Failed to read default HTTP headers from native MPV property", error)
+            }.getOrDefault(emptyList())
           postInitOptions()
           MPVLib.getPropertyString("vo")
             ?.takeIf { it.isNotBlank() && it != "null" }
@@ -321,7 +329,7 @@ object PlaybackSession : MPVLib.EventObserver {
           desiredPaused = true
           loadedGeneration = 0L
           defaultUserAgent = null
-          defaultHttpHeaderFields = null
+          defaultHttpHeaderFields = emptyList()
           pendingPositionRestoreGeneration = 0L
           pendingPositionRestoreOverride = null
           initialPositionGeneration = 0L
@@ -611,7 +619,7 @@ object PlaybackSession : MPVLib.EventObserver {
     desiredPaused = true
     loadedGeneration = 0L
     defaultUserAgent = null
-    defaultHttpHeaderFields = null
+    defaultHttpHeaderFields = emptyList()
     pendingPositionRestoreGeneration = 0L
     pendingPositionRestoreOverride = null
     initialPositionGeneration = 0L
@@ -1503,7 +1511,7 @@ object PlaybackSession : MPVLib.EventObserver {
             desiredPaused = true
             loadedGeneration = 0L
             defaultUserAgent = null
-            defaultHttpHeaderFields = null
+            defaultHttpHeaderFields = emptyList()
             pendingPositionRestoreGeneration = 0L
             pendingPositionRestoreOverride = null
             initialPositionGeneration = 0L
@@ -1800,16 +1808,13 @@ object PlaybackSession : MPVLib.EventObserver {
       defaultHeaders = PlaybackHttpHeaders.fromMpvHeaderFields(defaultHttpHeaderFields),
     )
 
-  private fun effectiveRequestUserAgent(item: PlaybackItem): String? {
-    if (hasCallerSuppliedNetworkHeaders(item)) {
-      return PlaybackHttpHeaders.userAgent(item.headers)
-        ?: defaultUserAgent?.takeIf(String::isNotBlank)
-    }
-    val defaultHeaders = PlaybackHttpHeaders.fromMpvHeaderFields(defaultHttpHeaderFields)
-    return defaultUserAgent?.takeIf(String::isNotBlank)
-      ?: PlaybackHttpHeaders.userAgent(defaultHeaders)
-      ?: PlaybackHttpHeaders.userAgent(item.headers)
-  }
+  private fun effectiveRequestUserAgent(item: PlaybackItem): String? =
+    PlaybackHttpHeaders.effectiveUserAgent(
+      itemHeaders = item.headers,
+      defaultUserAgent = defaultUserAgent,
+      defaultHeaders = PlaybackHttpHeaders.fromMpvHeaderFields(defaultHttpHeaderFields),
+      hasCallerSuppliedHeaders = hasCallerSuppliedNetworkHeaders(item),
+    )
 
   private fun hasCallerSuppliedNetworkHeaders(item: PlaybackItem): Boolean =
     item.callerSuppliedHeaders.isNotEmpty() &&

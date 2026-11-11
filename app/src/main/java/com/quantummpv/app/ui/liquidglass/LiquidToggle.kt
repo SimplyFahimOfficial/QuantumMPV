@@ -81,7 +81,6 @@ fun LiquidToggle(
   val animationScope = rememberCoroutineScope()
   var didDrag by remember { mutableStateOf(false) }
   var fraction by remember { mutableFloatStateOf(if (selected()) 1f else 0f) }
-  var selectedAtDragStart by remember { mutableStateOf(selected()) }
   val dampedDragAnimation = remember(animationScope, enabled, isLtr, dragWidth, reduceMotion) {
     DampedDragAnimation(
       animationScope = animationScope,
@@ -90,9 +89,6 @@ fun LiquidToggle(
       visibilityThreshold = 0.001f,
       initialScale = 1f,
       pressedScale = if (reduceMotion) 1f else 1.5f,
-      onDragStarted = {
-        selectedAtDragStart = currentSelected.value()
-      },
       onDragStopped = {
         if (!enabled) return@DampedDragAnimation
         if (didDrag) {
@@ -109,7 +105,7 @@ fun LiquidToggle(
           }
       },
       onDragCancelled = {
-        val target = if (selectedAtDragStart) 1f else 0f
+        val target = if (currentSelected.value()) 1f else 0f
         fraction = target
         didDrag = false
         animateToValue(target)

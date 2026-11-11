@@ -5451,7 +5451,11 @@ private suspend fun restorePlaybackPosition(state: PlaybackStateEntity?) {
     val requestedPlaylistIndex = playlistIndex
     val requestedQueueItem = PlaybackSession.queue.value.items.getOrNull(requestedPlaylistIndex)
     val requestGeneration = mediaRequestGeneration
-    val requestedSource = originalUri ?: extractUriFromIntent(sourceIntent)?.toString() ?: playableUri
+    val requestedSource =
+      originalUri
+        ?: requestedQueueItem?.originalUri
+        ?: extractUriFromIntent(sourceIntent)?.toString()
+        ?: playableUri
     val requestedCallerHeaders =
       PlaybackHttpHeaders.merge(
         PlaybackHttpHeaders.fromFlatPairs(sourceIntent.extras?.getStringArray("headers")),

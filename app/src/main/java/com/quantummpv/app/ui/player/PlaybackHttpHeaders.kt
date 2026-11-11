@@ -44,29 +44,21 @@ internal object PlaybackHttpHeaders {
 
   fun userAgent(headers: Map<String, String>): String? = value(headers, "User-Agent")
 
-  fun fromMpvHeaderFields(value: String?): Map<String, String> {
-    if (value.isNullOrBlank()) return emptyMap()
+  fun effectiveUserAgent(
+    itemHeaders: Map<String, String>,
+    defaultUserAgent: String?,
+    defaultHeaders: Map<String, String>,
+    hasCallerSuppliedHeaders: Boolean,
+  ): String? {
+    val configuredUserAgent = defaultUserAgent?.takeIf(String::isNotBlank)
+    if (hasCallerSuppliedHeaders) return userAgent(itemHeaders) ?: configuredUserAgent
+    return configuredUserAgent ?: userAgent(defaultHeaders) ?: userAgent(itemHeaders)
+  }
+
+  fun fromMpvHeaderFields(values: List<String>?): Map<String, String> {
+    if (values.isNullOrEmpty()) return emptyMap()
     val fields = linkedMapOf<String, String>()
-    val field = StringBuilder()
-    var escaped = false
-    val entries = mutableListOf<String>()
-    value.forEach { character ->
-      when {
-        escaped -> {
-          field.append(character)
-          escaped = false
-        }
-        character == '\\' -> escaped = true
-        character == ',' -> {
-          entries += field.toString()
-          field.clear()
-        }
-        else -> field.append(character)
-      }
-    }
-    if (escaped) field.append('\\')
-    entries += field.toString()
-    entries.forEach { entry ->
+    values.forEach { entry ->
       val separator = entry.indexOf(':')
       if (separator > 0) put(fields, entry.substring(0, separator), entry.substring(separator + 1))
     }

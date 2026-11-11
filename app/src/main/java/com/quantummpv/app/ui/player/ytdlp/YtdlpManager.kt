@@ -481,7 +481,8 @@ object YtdlpManager {
         javascriptRuntime = "quickjs:$quickJsPath",
       )
     val resolvedOptions = YtdlpOptionsBuilder.build(settings)
-    val ua = ytdlPreferences.customUserAgent.get().ifBlank { YtdlpOptionsBuilder.DEFAULT_USER_AGENT }
+    val customUserAgent = ytdlPreferences.customUserAgent.get().trim()
+    val ua = customUserAgent.ifBlank { YtdlpOptionsBuilder.DEFAULT_USER_AGENT }
     // Keep mpv's delay-loaded all-format path enabled for every audio preference. Disabling it for
     // the default Auto mode was a post-v1.4.1 regression: split video/audio URLs then depended on a
     // single eagerly selected result and some supported sites failed before mpv could choose tracks.
@@ -543,8 +544,11 @@ object YtdlpManager {
       PlaybackSession.setOptionString("ytdl-format", ytdlFormat)
     }
 
-    // Global User-Agent to avoid blocks at the network level
-    PlaybackSession.setOptionString("user-agent", ua)
+    // Keep the yt-dlp Windows fallback scoped to yt-dlp. Applying it globally would override the
+    // generated Android User-Agent used for direct network playback when no custom value is set.
+    if (customUserAgent.isNotBlank()) {
+      PlaybackSession.setOptionString("user-agent", customUserAgent)
+    }
 
     Log.d(TAG, "Setting ytdl-format to: $ytdlFormat")
     Log.d(TAG, "Setting ytdl-raw-options to: ${resolvedOptions.rawOptions}")
