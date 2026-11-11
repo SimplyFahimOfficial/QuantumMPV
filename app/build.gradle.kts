@@ -290,6 +290,8 @@ dependencies {
   implementation(libs.androidx.ui.graphics)
   implementation(libs.haze.core)
   implementation(libs.haze.glass)
+  implementation(libs.kyant.backdrop)
+  implementation(libs.kyant.shapes)
   implementation(libs.androidx.material3.android)
   implementation(libs.google.material)
   implementation(libs.androidx.compose.material)

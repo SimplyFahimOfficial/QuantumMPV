@@ -1624,6 +1624,16 @@ object SearchablePreferences {
         SearchEntrySpec(R.string.pref_seerr_server_management, listOf("seerr", "jellyseerr", "overseerr", "requests", "server", "api")),
       )
 
+      add(
+        SearchablePreference(
+          titleRes = R.string.pref_liquid_glass_title,
+          summaryRes = R.string.pref_liquid_glass_entry_summary,
+          keywords = listOf("liquid", "glass", "blur", "refraction", "lens", "frost", "experimental", "dock", "mini player"),
+          category = "Appearance",
+          screen = LiquidGlassPreferencesScreen,
+        ),
+      )
+
       // About
       add(
         SearchablePreference(

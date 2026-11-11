@@ -78,8 +78,19 @@ def main() -> int:
     )
     # Pill renderers (dock + legacy bar), the overflow menu and the search circle must all follow
     # the same surface style so the floating dock never mixes solid and glass surfaces.
-    if len(re.findall(r'glass\s*=\s*glassBottomNavigation', main_screen)) != 4:
-        raise AssertionError("global/legacy surface style must reach every navigation dock renderer")
+    require(
+        r'val liquidGlassCapture = rememberLiquidGlassCapture\(\)\s+val glassDock = glassBottomNavigation \|\| liquidGlassCapture != null',
+        main_screen,
+        "experimental Liquid Glass turns the dock into glass on top of the surface-style setting",
+    )
+    if len(re.findall(r'glass\s*=\s*glassDock', main_screen)) != 4:
+        raise AssertionError("global/legacy surface style and Liquid Glass must reach every navigation dock renderer")
+    if "glass = glassBottomNavigation" in main_screen:
+        raise AssertionError("a dock renderer bypasses the Liquid Glass override")
+    # Glass may sample the page content only from siblings of it: never provide the backdrop to the content.
+    require(r'\.captureLiquidGlass\(liquidGlassCapture\)', main_screen, "page content is recorded for the dock to refract")
+    require(r'ProvideLiquidGlassBackdrop\(liquidGlassCapture\) \{\s+com\.quantummpv\.app\.ui\.browser\.components\.FloatingGlassMenuPanel',
+            main_screen, "overflow menu is a sibling of the recorded content")
     require(r'anchorItemIndex = 5,[\s\S]{0,250}pref_tree_flatten_depth_title', searchable_preferences,
             "file-browser search results target the shifted card")
     require(r'anchorItemIndex = 7,[\s\S]{0,250}pref_appearance_thumbnail_position_title', searchable_preferences,

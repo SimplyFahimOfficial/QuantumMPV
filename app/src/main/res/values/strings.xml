@@ -2688,6 +2688,34 @@
   <string name="refraction_experimental_summary">Advanced refraction (may impact performance)</string>
 
   <string name="pref_section_glass_surface">Surface Appearance</string>
+  <!-- Liquid Glass (experimental) -->
+  <string name="pref_liquid_glass_title">Liquid Glass</string>
+  <string name="pref_liquid_glass_entry_summary">Experimental. Real blur and lens refraction on the navigation dock and mini player.</string>
+  <string name="pref_experimental_badge">Experimental</string>
+  <string name="pref_liquid_glass_experimental_note">Records the screen behind the glass every frame, so it can use more battery. Applies to the navigation dock, its menu and the mini player.</string>
+  <string name="pref_liquid_glass_enable_title">Use Liquid Glass</string>
+  <string name="pref_liquid_glass_enable_summary">Replaces the dock and mini player surfaces with refracting glass.</string>
+  <string name="pref_liquid_glass_enable_unavailable">Needs Android 12 or newer.</string>
+  <string name="pref_liquid_glass_material">Material</string>
+  <string name="pref_liquid_glass_frost">Frost</string>
+  <string name="pref_liquid_glass_optics">Optics</string>
+  <string name="pref_liquid_glass_opacity">Opacity</string>
+  <string name="pref_liquid_glass_refraction_height">Refraction height</string>
+  <string name="pref_liquid_glass_refraction_amount">Refraction strength</string>
+  <string name="pref_liquid_glass_depth">Depth effect</string>
+  <string name="pref_liquid_glass_chromatic">Chromatic aberration</string>
+  <string name="pref_liquid_glass_lens_unavailable">Refraction needs Android 13 or newer. Blur and tint still apply.</string>
+  <string name="pref_liquid_glass_colors">Colors</string>
+  <string name="pref_liquid_glass_vibrancy">Vibrancy</string>
+  <string name="pref_liquid_glass_highlights">Highlights</string>
+  <string name="pref_liquid_glass_highlight_style">Highlight style</string>
+  <string name="pref_liquid_glass_highlight_strength">Highlight strength</string>
+  <string name="pref_liquid_glass_highlight_width">Highlight width</string>
+  <string name="pref_liquid_glass_highlight_blur">Highlight softness</string>
+  <string name="pref_liquid_glass_component_default">Per surface</string>
+  <string name="pref_liquid_glass_highlight_ambient">Ambient</string>
+  <string name="pref_liquid_glass_highlight_plain">Plain</string>
+  <string name="pref_liquid_glass_preview_toggle">Preview toggle</string>
   <string name="pref_glass_surface_style_title">Surface style</string>
   <string name="pref_glass_surface_style_summary">Choose the style for supported surfaces, including bottom navigation and confirmation dialogs.</string>
   <string name="pref_glass_intensity_title">Surface opacity</string>

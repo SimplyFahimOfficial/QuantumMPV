@@ -114,6 +114,9 @@ import com.quantummpv.app.ui.browser.music.MusicLibraryContent
 import com.quantummpv.app.ui.browser.networkstreaming.NetworkStreamingScreen
 import com.quantummpv.app.ui.icons.Icon
 import com.quantummpv.app.ui.icons.Icons
+import com.quantummpv.app.ui.liquidglass.ProvideLiquidGlassBackdrop
+import com.quantummpv.app.ui.liquidglass.captureLiquidGlass
+import com.quantummpv.app.ui.liquidglass.rememberLiquidGlassCapture
 import com.quantummpv.app.ui.player.NavigationAnimStyle
 import com.quantummpv.app.ui.player.controls.components.rememberTvInitialFocusRequester
 import com.quantummpv.app.ui.player.controls.components.tvFocusHighlight
@@ -244,6 +247,9 @@ object MainScreen : Screen {
       } else {
         surfaceStyle != SurfaceStyle.CLASSIC && surfaceStyle != SurfaceStyle.MINIMAL
       }
+    // Experimental Liquid Glass: record the page content for the dock to refract, and show the dock as glass.
+    val liquidGlassCapture = rememberLiquidGlassCapture()
+    val glassDock = glassBottomNavigation || liquidGlassCapture != null
     val hideNavigationBar = NavigationBarState.shouldHideNavigationBar
     val isPermissionDenied = NavigationBarState.isPermissionDenied
     val isDualPaneFolderSelected = NavigationBarState.isDualPaneFolderSelected
@@ -395,7 +401,7 @@ object MainScreen : Screen {
         selectedTab = selectedTab,
         onTabSelected = onTabSelected,
         pagerState = pagerState,
-        glass = glassBottomNavigation,
+        glass = glassDock,
         modifier = modifier,
       )
     }
@@ -480,7 +486,7 @@ object MainScreen : Screen {
                       scaleX = scale
                       scaleY = scale
                     }
-                  },
+                  }.captureLiquidGlass(liquidGlassCapture),
               key = { page -> visibleTabs[page].name },
               beyondViewportPageCount = 1,
               userScrollEnabled = !isPermissionDenied,
@@ -587,90 +593,94 @@ object MainScreen : Screen {
           menuExpanded = false
           backStack.navigateTo(screen)
         }
-        com.quantummpv.app.ui.browser.components.FloatingGlassMenuPanel(
-          visible = menuExpanded && showDock,
-          primaryItems = fixedMoreMenuItems(openFromMenu),
-          shortcutItems = moreMenuShortcuts.map { moreMenuShortcutItem(it, openFromMenu) },
-          glass = glassBottomNavigation,
-          anchorCenterInRoot = { menuButtonCenter },
-          // The top safe-area inset and bottom clearance bound the panel's height, so short windows
-          // shrink it to the space left above the dock or stacked mini player and its rows scroll.
-          modifier =
-            Modifier
-              .align(Alignment.BottomStart)
-              .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Top))
-              .navigationBarsPadding()
-              .padding(bottom = menuPanelBottomPadding)
-              .offset(x = menuMeasure.start)
-              .width(menuMeasure.width),
-        )
+        ProvideLiquidGlassBackdrop(liquidGlassCapture) {
+          com.quantummpv.app.ui.browser.components.FloatingGlassMenuPanel(
+            visible = menuExpanded && showDock,
+            primaryItems = fixedMoreMenuItems(openFromMenu),
+            shortcutItems = moreMenuShortcuts.map { moreMenuShortcutItem(it, openFromMenu) },
+            glass = glassDock,
+            anchorCenterInRoot = { menuButtonCenter },
+            // The top safe-area inset and bottom clearance bound the panel's height, so short windows
+            // shrink it to the space left above the dock or stacked mini player and its rows scroll.
+            modifier =
+              Modifier
+                .align(Alignment.BottomStart)
+                .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Top))
+                .navigationBarsPadding()
+                .padding(bottom = menuPanelBottomPadding)
+                .offset(x = menuMeasure.start)
+                .width(menuMeasure.width),
+          )
+        }
 
-        // One responsive dock: scrollable navigation pill + embedded overflow, then Search.
-        AnimatedVisibility(
-          visible = showDock,
-          enter = navigationDockEnter(navStyle, duration),
-          exit = navigationDockExit(navStyle, duration),
-          modifier =
-            Modifier
-              .fillMaxWidth()
-              .align(Alignment.BottomStart)
-              .navigationBarsPadding()
-              .padding(bottom = DockBottomPadding),
-        ) {
-          Box(
-              modifier =
-                Modifier
-                  .offset(x = dockStart)
-                  .width(dockWidth)
-                  .height(NavigationDockHeight)
-                  .onGloballyPositioned {
-                    if (!pagerState.isScrollInProgress && pagerState.currentPageOffsetFraction == 0f) {
-                      NavigationBarState.navbarLeftOffset = dockStart
-                      NavigationBarState.navbarWidth = dockWidth
-                    }
-                  },
-            ) {
-              Row(
-                modifier = Modifier.fillMaxSize(),
-                horizontalArrangement = Arrangement.spacedBy(DockItemGap),
-                verticalAlignment = Alignment.CenterVertically,
-              ) {
-                ExpressivePillNavigationBar(
-                  visibleTabs = visibleTabs,
-                  selectedTab = selectedTab,
-                  onTabSelected = {
-                    menuExpanded = false
-                    onTabSelected(it)
-                  },
-                  pagerState = pagerState,
-                  glass = glassBottomNavigation,
-                  showLabels = showNavLabels,
-                  menuExpanded = menuExpanded,
-                  onMenuExpandedChange = { menuExpanded = it },
-                  onMenuButtonPositioned = { menuButtonCenter = it },
-                  modifier = Modifier.width(navWidth),
-                )
-                Box(
-                  modifier = Modifier.size(FloatingSearchButtonSize),
-                  contentAlignment = Alignment.Center,
-                ) {
-                  ContextualSearchSlot(
-                    visible = showContextualSearch,
-                    glass = glassBottomNavigation,
-                    selectedTab = selectedTab,
-                    opensScreen = mainSearchController.opensScreen(selectedTab),
-                    sharedTransitionScope = sharedTransitionScope,
-                    animatedVisibilityScope = animatedVisibilityScope,
-                    onSearchClick = {
-                      menuExpanded = false
-                      // Every tab morphs this button into its search bar: a separate Search screen
-                      // through the navigation transition, an inline bar through DockSearchTopBarSwitcher.
-                      mainSearchController.request(selectedTab)
+        ProvideLiquidGlassBackdrop(liquidGlassCapture) {
+          // One responsive dock: scrollable navigation pill + embedded overflow, then Search.
+          AnimatedVisibility(
+            visible = showDock,
+            enter = navigationDockEnter(navStyle, duration),
+            exit = navigationDockExit(navStyle, duration),
+            modifier =
+              Modifier
+                .fillMaxWidth()
+                .align(Alignment.BottomStart)
+                .navigationBarsPadding()
+                .padding(bottom = DockBottomPadding),
+          ) {
+            Box(
+                modifier =
+                  Modifier
+                    .offset(x = dockStart)
+                    .width(dockWidth)
+                    .height(NavigationDockHeight)
+                    .onGloballyPositioned {
+                      if (!pagerState.isScrollInProgress && pagerState.currentPageOffsetFraction == 0f) {
+                        NavigationBarState.navbarLeftOffset = dockStart
+                        NavigationBarState.navbarWidth = dockWidth
+                      }
                     },
+              ) {
+                Row(
+                  modifier = Modifier.fillMaxSize(),
+                  horizontalArrangement = Arrangement.spacedBy(DockItemGap),
+                  verticalAlignment = Alignment.CenterVertically,
+                ) {
+                  ExpressivePillNavigationBar(
+                    visibleTabs = visibleTabs,
+                    selectedTab = selectedTab,
+                    onTabSelected = {
+                      menuExpanded = false
+                      onTabSelected(it)
+                    },
+                    pagerState = pagerState,
+                    glass = glassDock,
+                    showLabels = showNavLabels,
+                    menuExpanded = menuExpanded,
+                    onMenuExpandedChange = { menuExpanded = it },
+                    onMenuButtonPositioned = { menuButtonCenter = it },
+                    modifier = Modifier.width(navWidth),
                   )
+                  Box(
+                    modifier = Modifier.size(FloatingSearchButtonSize),
+                    contentAlignment = Alignment.Center,
+                  ) {
+                    ContextualSearchSlot(
+                      visible = showContextualSearch,
+                      glass = glassDock,
+                      selectedTab = selectedTab,
+                      opensScreen = mainSearchController.opensScreen(selectedTab),
+                      sharedTransitionScope = sharedTransitionScope,
+                      animatedVisibilityScope = animatedVisibilityScope,
+                      onSearchClick = {
+                        menuExpanded = false
+                        // Every tab morphs this button into its search bar: a separate Search screen
+                        // through the navigation transition, an inline bar through DockSearchTopBarSwitcher.
+                        mainSearchController.request(selectedTab)
+                      },
+                    )
+                  }
                 }
               }
-            }
+          }
         }
       }
     }

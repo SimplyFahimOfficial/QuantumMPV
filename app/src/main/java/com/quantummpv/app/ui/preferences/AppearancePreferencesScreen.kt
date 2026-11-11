@@ -551,6 +551,20 @@ object AppearancePreferencesScreen : Screen {
                 onSliderValueChange = { preferences.glassIntensity.set(it) },
                 sliderValue = glassIntensity,
               )
+
+              PreferenceDivider()
+
+              Preference(
+                modifier = Modifier.settingsSearchTarget(R.string.pref_liquid_glass_title),
+                title = { Text(stringResource(R.string.pref_liquid_glass_title)) },
+                summary = {
+                  Text(
+                    stringResource(R.string.pref_liquid_glass_entry_summary),
+                    color = MaterialTheme.colorScheme.outline,
+                  )
+                },
+                onClick = { backstack.navigateTo(LiquidGlassPreferencesScreen) },
+              )
             }
           }
 
