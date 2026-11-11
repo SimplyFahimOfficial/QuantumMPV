@@ -71,10 +71,13 @@ assert 'getPropertyInt("duration")' not in main_sources
 assert not re.search(r'getPropertyInt\("(vid|secondary-sid)"\)', main_sources)
 player_activity = (root / "app/src/main/java/com/quantummpv/app/ui/player/PlayerActivity.kt").read_text()
 assert 'PlaybackSession.setPropertyDouble("time-pos", it / MILLISECONDS_TO_SECONDS.toDouble())' in player_activity
-assert "if (requiresYtdlp && ytdlFormat != null)" in player_activity
+assert 'if (requiresYtdlp && !MpvConfigOverridePolicy.isOwnedByMpvConf("ytdl-format"))' in player_activity
+assert "ytdlFormat ?: YtdlpOptionsBuilder.configuredFormat(ytdlPreferences)" in player_activity
+assert 'PlaybackSession.setPropertyString("ytdl-format", effectiveFormat)' in player_activity
 assert 'ytdlFormat.orEmpty())' not in player_activity
 assert "defaultHttpHeaderFields = MPVLib.getPropertyString(\"http-header-fields\").orEmpty()" in playback_session
-assert "if (resolvedItem.headers.isEmpty()) defaultHttpHeaderFields.orEmpty() else headerFields" in playback_session
+assert "PlaybackHttpHeaders.forPlaybackItem(" in playback_session
+assert "defaultHeaders = PlaybackHttpHeaders.fromMpvHeaderFields(defaultHttpHeaderFields)" in playback_session
 screenshots = (root / "app/src/main/java/com/quantummpv/app/ui/player/screenshot/ScreenshotSaver.kt").read_text()
 assert "delay(250)" not in screenshots and screenshots.count("awaitScreenshotFile(") >= 3
 
