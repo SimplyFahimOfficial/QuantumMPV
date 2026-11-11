@@ -1,11 +1,12 @@
 package com.quantummpv.app.ui.player.screenshot
 
-import kotlinx.coroutines.delay
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
@@ -28,21 +29,43 @@ class ScreenshotSaverAwaitTest {
   fun waitsForMpvToFinishWritingInsteadOfReturningAPartialImage() =
     runBlocking {
       val file = File(folder.root, "slow.png")
-      // mpv writes a large frame as a burst of chunks; the file must not be returned after the first one.
-      // The chunks arrive faster than the wait's poll interval, which is what a real encode looks like.
+      val firstChunkWritten = CompletableDeferred<Unit>()
+      val continueWriting = CompletableDeferred<Unit>()
+      val keepWriterOpen = CompletableDeferred<Unit>()
+      val firstLengthRead = CompletableDeferred<Unit>()
       val writer =
         launch {
-          for (step in 1..4) {
-            file.appendBytes(ByteArray(1_000))
-            delay(5)
+          file.writeBytes(ByteArray(1_000))
+          firstChunkWritten.complete(Unit)
+          continueWriting.await()
+          file.appendBytes(ByteArray(3_000))
+          keepWriterOpen.await()
+        }
+      firstChunkWritten.await()
+      val observedFile =
+        object : File(file.absolutePath) {
+          override fun length(): Long {
+            firstLengthRead.complete(Unit)
+            return super.length()
           }
         }
+      val writerCoordinator =
+        launch {
+          firstLengthRead.await()
+          continueWriting.complete(Unit)
+        }
 
-      val result = ScreenshotSaver.awaitScreenshotFile(file)
-      writer.join()
-
-      assertNotNull(result)
-      assertEquals("the whole image must have been written", 4_000L, file.length())
+      try {
+        val result = ScreenshotSaver.awaitScreenshotFile(observedFile)
+        assertNotNull(result)
+        assertEquals("the whole image must be present when await returns", 4_000L, file.length())
+        assertTrue("the assertion must run before waiting for the writer", writer.isActive)
+      } finally {
+        continueWriting.complete(Unit)
+        keepWriterOpen.complete(Unit)
+        writer.join()
+        writerCoordinator.join()
+      }
     }
 
   @Test

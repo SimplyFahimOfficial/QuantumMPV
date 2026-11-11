@@ -147,6 +147,22 @@ object YtdlpOptionsBuilder {
   const val DEFAULT_USER_AGENT =
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
 
+  fun configuredFormat(preferences: YtdlPreferences): String =
+    preferences.ytdlFormat.get().takeIf(String::isNotBlank) ?: buildFormat(preferences)
+
+  fun buildFormat(preferences: YtdlPreferences): String =
+    buildFormat(
+      YtdlpOptionSettings(
+        codecPreference = preferences.codecPreference.get(),
+        legacyPreferH264 = preferences.preferH264.get(),
+        maxHeight = preferences.ytdlQuality.get(),
+        maxFps = preferences.maxFps.get(),
+        hdrPreference = preferences.hdrPreference.get(),
+        containerPreference = preferences.containerPreference.get(),
+        audioPreference = preferences.audioPreference.get(),
+      ),
+    )
+
   fun build(settings: YtdlpOptionSettings): YtdlpResolvedOptions {
     val format = buildFormat(settings)
     val rawOptions = linkedMapOf<String, String?>()

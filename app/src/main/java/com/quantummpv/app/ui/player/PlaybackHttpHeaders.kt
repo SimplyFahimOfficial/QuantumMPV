@@ -44,6 +44,47 @@ internal object PlaybackHttpHeaders {
 
   fun userAgent(headers: Map<String, String>): String? = value(headers, "User-Agent")
 
+  fun fromMpvHeaderFields(value: String?): Map<String, String> {
+    if (value.isNullOrBlank()) return emptyMap()
+    val fields = linkedMapOf<String, String>()
+    val field = StringBuilder()
+    var escaped = false
+    val entries = mutableListOf<String>()
+    value.forEach { character ->
+      when {
+        escaped -> {
+          field.append(character)
+          escaped = false
+        }
+        character == '\\' -> escaped = true
+        character == ',' -> {
+          entries += field.toString()
+          field.clear()
+        }
+        else -> field.append(character)
+      }
+    }
+    if (escaped) field.append('\\')
+    entries += field.toString()
+    entries.forEach { entry ->
+      val separator = entry.indexOf(':')
+      if (separator > 0) put(fields, entry.substring(0, separator), entry.substring(separator + 1))
+    }
+    return fields
+  }
+
+  fun forPlaybackItem(
+    itemHeaders: Map<String, String>,
+    callerSuppliedHeaders: Map<String, String>,
+    defaultHeaders: Map<String, String>,
+  ): Map<String, String> =
+    if (callerSuppliedHeaders.isNotEmpty()) {
+      merge(itemHeaders)
+    } else {
+      // Explicit mpv.conf values win over generated Referer/User-Agent fallbacks.
+      merge(itemHeaders, defaultHeaders)
+    }
+
   fun toMpvHeaderFields(headers: Map<String, String>): String =
     headers.entries
       .filterNot { it.key.equals("User-Agent", ignoreCase = true) }

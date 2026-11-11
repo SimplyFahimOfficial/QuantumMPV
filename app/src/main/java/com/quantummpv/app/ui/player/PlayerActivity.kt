@@ -100,6 +100,7 @@ import com.quantummpv.app.preferences.MpvConfigOverridePolicy
 import com.quantummpv.app.preferences.PlayerPreferences
 import com.quantummpv.app.preferences.SubtitlesPreferences
 import com.quantummpv.app.preferences.VideoSortType
+import com.quantummpv.app.preferences.YtdlPreferences
 import com.quantummpv.app.ui.browser.playlist.ALL_VIDEOS_PLAYLIST_ID
 import com.quantummpv.app.ui.browser.playlist.buildAllVideosPlaylistEntity
 import com.quantummpv.app.ui.browser.playlist.isAllVideosPlaylist
@@ -115,6 +116,7 @@ import com.quantummpv.app.ui.player.media3.MpvMedia3SeekDirection
 import com.quantummpv.app.ui.player.media3.MpvMedia3SessionHost
 import com.quantummpv.app.ui.player.media3.MpvMedia3SessionManager
 import com.quantummpv.app.ui.player.ytdlp.YtdlpManager
+import com.quantummpv.app.ui.player.ytdlp.YtdlpOptionsBuilder
 import com.quantummpv.app.ui.theme.MpvrxTheme
 import com.quantummpv.app.ui.torrent.TorrentSelectionActivity
 import com.quantummpv.app.utils.device.DeviceFormFactor
@@ -252,6 +254,8 @@ class PlayerActivity :
    * Preferences for subtitle settings.
    */
   private val subtitlesPreferences: SubtitlesPreferences by inject()
+
+  private val ytdlPreferences: YtdlPreferences by inject()
 
   /**
    * Preferences for decoder and renderer settings.
@@ -3314,24 +3318,23 @@ class PlayerActivity :
   }
 
   /**
-   * Processes intent extras to set initial playback position, subtitles, and HTTP headers.
+   * Processes one-shot intent extras for the initial playback position.
    *
-   * This method checks the intent extras for the following keys:
-   * - "position": The initial playback position in seconds.
-   * - "subs": A list of subtitle URIs to add.
-   * - "subs.enable": A list of subtitle URIs to enable.
-   * - "headers": A list of HTTP headers to set for network playback.
+   * This method checks the intent extras for the launch-only "position" key, expressed in
+   * milliseconds, and consumes it after applying it once.
    *
    * @param extras Bundle containing intent extras
    */
   private fun setIntentExtras(extras: Bundle?) {
     if (extras == null) return
 
-    extras.getInt("position", POSITION_NOT_SET).takeIf { it != POSITION_NOT_SET }?.let {
+    val launchPosition = extras.getInt("position", POSITION_NOT_SET).takeIf { it != POSITION_NOT_SET }
+    launchPosition?.let {
       PlaybackSession.setPropertyDouble("time-pos", it / MILLISECONDS_TO_SECONDS.toDouble())
+      // FILE_LOADED also fires for later queue items in this Activity. Consume the launch-only
+      // position so it cannot seek every subsequent item to the original external-request offset.
+      extras.remove("position")
     }
-
-    setHttpHeadersFromExtras(extras)
   }
 
   /**
@@ -5449,12 +5452,12 @@ private suspend fun restorePlaybackPosition(state: PlaybackStateEntity?) {
     val requestedQueueItem = PlaybackSession.queue.value.items.getOrNull(requestedPlaylistIndex)
     val requestGeneration = mediaRequestGeneration
     val requestedSource = originalUri ?: extractUriFromIntent(sourceIntent)?.toString() ?: playableUri
-    val requestedHeaders =
-      buildPlaybackHeaders(
-        Uri.parse(requestedSource),
+    val requestedCallerHeaders =
+      PlaybackHttpHeaders.merge(
         PlaybackHttpHeaders.fromFlatPairs(sourceIntent.extras?.getStringArray("headers")),
-        requestedQueueItem?.headers.orEmpty(),
+        requestedQueueItem?.callerSuppliedHeaders.orEmpty(),
       )
+    val requestedHeaders = buildPlaybackHeaders(Uri.parse(requestedSource), requestedCallerHeaders)
     val requestedTorrentFileIndex = sourceIntent.getIntExtra("torrent_file_index", -1).takeIf { it >= 0 }
     val isTorrentRequest =
       isTorrentSource(requestedSource, sourceIntent.type) || isTorrentSource(playableUri, sourceIntent.type)
@@ -5563,7 +5566,11 @@ private suspend fun restorePlaybackPosition(state: PlaybackStateEntity?) {
             }
           val item =
             if (!isTorrentRequest) {
-              requestedQueueItem?.copy(playableUri = resolvedPlayableUri, headers = requestedHeaders)
+              requestedQueueItem?.copy(
+                playableUri = resolvedPlayableUri,
+                headers = requestedHeaders,
+                callerSuppliedHeaders = requestedCallerHeaders,
+              )
             } else {
               null
             }
@@ -5574,6 +5581,7 @@ private suspend fun restorePlaybackPosition(state: PlaybackStateEntity?) {
                 title = resolvedFileName,
                 mimeType = resolvedMimeType,
                 headers = requestedHeaders,
+                callerSuppliedHeaders = requestedCallerHeaders,
                 networkSource = networkSource,
                 torrentFileIndex = torrentResult?.selectedFile?.index,
               )
@@ -5605,6 +5613,7 @@ private suspend fun restorePlaybackPosition(state: PlaybackStateEntity?) {
                       title = file.name,
                       mimeType = file.mimeType,
                       headers = requestedHeaders,
+                      callerSuppliedHeaders = requestedCallerHeaders,
                       torrentFileIndex = file.index,
                     )
                   }
@@ -5713,9 +5722,10 @@ private suspend fun restorePlaybackPosition(state: PlaybackStateEntity?) {
             if (requestGeneration != mediaRequestGeneration) {
               -1L
             } else {
-              // shortcut: a null override keeps whatever format is active, so a per-video override stays
-              // until the core restarts; upgrade by restoring the configured format when it is null.
-              if (requiresYtdlp && ytdlFormat != null) PlaybackSession.setPropertyString("ytdl-format", ytdlFormat)
+              if (requiresYtdlp && !MpvConfigOverridePolicy.isOwnedByMpvConf("ytdl-format")) {
+                val effectiveFormat = ytdlFormat ?: YtdlpOptionsBuilder.configuredFormat(ytdlPreferences)
+                if (effectiveFormat.isNotBlank()) PlaybackSession.setPropertyString("ytdl-format", effectiveFormat)
+              }
               nativeLoad()
             }
           }
@@ -7805,7 +7815,8 @@ private suspend fun restorePlaybackPosition(state: PlaybackStateEntity?) {
             ?.takeIf { it.isNotBlank() }
             ?.let { userAgent -> mapOf("User-Agent" to userAgent) }
             .orEmpty()
-        val headers = buildPlaybackHeaders(uri, networkPlaylistHeaders.getOrNull(index).orEmpty(), storedHeaders)
+        val callerSuppliedHeaders = PlaybackHttpHeaders.merge(networkPlaylistHeaders.getOrNull(index).orEmpty(), storedHeaders)
+        val headers = buildPlaybackHeaders(uri, callerSuppliedHeaders)
         val existingItem =
           existingQueueItems.firstOrNull { it.originalUri == uri.toString() || it.playableUri == uri.toString() }
 
@@ -7817,6 +7828,7 @@ private suspend fun restorePlaybackPosition(state: PlaybackStateEntity?) {
           artist = existingItem?.artist,
           mimeType = launchMimeType,
           headers = headers,
+          callerSuppliedHeaders = callerSuppliedHeaders,
           networkSource = networkSource,
           playlistItemId = databaseItem?.id,
           artworkUri =

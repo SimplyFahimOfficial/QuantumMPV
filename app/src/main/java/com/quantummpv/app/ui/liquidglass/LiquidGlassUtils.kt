@@ -244,6 +244,7 @@ class DampedDragAnimation(
   val pressedScale: Float,
   val onDragStarted: DampedDragAnimation.(position: Offset) -> Unit,
   val onDragStopped: DampedDragAnimation.() -> Unit,
+  val onDragCancelled: DampedDragAnimation.() -> Unit,
   val onDrag: DampedDragAnimation.(size: IntSize, dragAmount: Offset) -> Unit,
 ) {
   private val valueAnimationSpec = spring<Float>(1f, 1000f, visibilityThreshold)
@@ -280,7 +281,7 @@ class DampedDragAnimation(
         release()
       },
       onDragCancel = {
-        onDragStopped()
+        onDragCancelled()
         release()
       }
     ) { _, dragAmount ->

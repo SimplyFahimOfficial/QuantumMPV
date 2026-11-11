@@ -22,6 +22,7 @@ import com.quantummpv.app.data.network.proxy.XtreamStreamingProxy
 import com.quantummpv.app.domain.network.NetworkPlaybackUri
 import com.quantummpv.app.domain.network.XtreamPlaybackUri
 import com.quantummpv.app.preferences.MpvConfigOverridePolicy
+import com.quantummpv.app.utils.media.HttpUtils
 import `is`.xyz.mpv.MPVLib
 import `is`.xyz.mpv.MPVNode
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -897,17 +898,13 @@ object PlaybackSession : MPVLib.EventObserver {
         )
       }
       clearTimelinePropertiesLocked()
-      val userAgent = PlaybackHttpHeaders.userAgent(resolvedItem.headers)
-      val headerFields = PlaybackHttpHeaders.toMpvHeaderFields(resolvedItem.headers)
-      // URL-specific headers are request metadata, not a global mpv preference. Always apply the
-      // media UA and headers, then restore the post-mpv.conf defaults for a headerless item. A
-      // headerless item must get the mpv.conf headers back, not an empty list, or a Referer or
-      // Authorization from the previous stream is replaced by nothing instead of by the user's default.
-      MPVLib.setPropertyString("user-agent", userAgent ?: defaultUserAgent.orEmpty())
-      MPVLib.setPropertyString(
-        "http-header-fields",
-        if (resolvedItem.headers.isEmpty()) defaultHttpHeaderFields.orEmpty() else headerFields,
-      )
+      val userAgent = effectiveRequestUserAgent(resolvedItem)
+      val headerFields = PlaybackHttpHeaders.toMpvHeaderFields(effectiveRequestHeaders(resolvedItem))
+      // Generated request fallbacks (such as Referer/User-Agent) must not make an otherwise
+      // headerless item discard the post-mpv.conf defaults. Explicit item headers retain their
+      // existing override behavior; defaults are restored/merged for generated-only or local items.
+      MPVLib.setPropertyString("user-agent", userAgent.orEmpty())
+      MPVLib.setPropertyString("http-header-fields", headerFields)
       MPVLib.setPropertyString("force-media-title", "")
 
       if (!_state.value.surfaceAttached) {
@@ -1795,6 +1792,30 @@ object PlaybackSession : MPVLib.EventObserver {
       }
   }
 
+  private fun effectiveRequestHeaders(item: PlaybackItem): Map<String, String> =
+    PlaybackHttpHeaders.forPlaybackItem(
+      itemHeaders = item.headers,
+      callerSuppliedHeaders =
+        if (hasCallerSuppliedNetworkHeaders(item)) item.callerSuppliedHeaders else emptyMap(),
+      defaultHeaders = PlaybackHttpHeaders.fromMpvHeaderFields(defaultHttpHeaderFields),
+    )
+
+  private fun effectiveRequestUserAgent(item: PlaybackItem): String? {
+    if (hasCallerSuppliedNetworkHeaders(item)) {
+      return PlaybackHttpHeaders.userAgent(item.headers)
+        ?: defaultUserAgent?.takeIf(String::isNotBlank)
+    }
+    val defaultHeaders = PlaybackHttpHeaders.fromMpvHeaderFields(defaultHttpHeaderFields)
+    return defaultUserAgent?.takeIf(String::isNotBlank)
+      ?: PlaybackHttpHeaders.userAgent(defaultHeaders)
+      ?: PlaybackHttpHeaders.userAgent(item.headers)
+  }
+
+  private fun hasCallerSuppliedNetworkHeaders(item: PlaybackItem): Boolean =
+    item.callerSuppliedHeaders.isNotEmpty() &&
+      sequenceOf(item.originalUri, item.playableUri)
+        .any { value -> HttpUtils.isNetworkStream(Uri.parse(value)) }
+
   private fun resolvePlayableUri(item: PlaybackItem): ResolvedPlayable {
     val xtreamReference = XtreamPlaybackUri.parse(item.playableUri)
     if (xtreamReference != null) {
@@ -1831,12 +1852,13 @@ object PlaybackSession : MPVLib.EventObserver {
     if (M3uPlaybackPolicy.shouldProxyHls(item.playableUri, item.mimeType)) {
       val hlsProxy = HlsStreamingProxy.getInstance()
       val streamId = "hls-${streamSequence.incrementAndGet()}"
-      val userAgent = PlaybackHttpHeaders.userAgent(item.headers)
+      val headers = effectiveRequestHeaders(item)
+      val userAgent = effectiveRequestUserAgent(item)
       val uri =
         hlsProxy.registerStream(
           streamId = streamId,
           sourceUrl = item.playableUri,
-          headers = item.headers,
+          headers = headers,
           userAgent = userAgent,
         )
       Log.d(TAG, "Routing HLS stream through HlsStreamingProxy: $uri")

@@ -94,7 +94,13 @@ fun AppWallpaperHost(content: @Composable () -> Unit) {
     modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background),
   ) {
     wallpaper?.let { bitmap ->
-      Box(modifier = Modifier.fillMaxSize().captureLiquidGlass(glassWallpaper)) {
+      Box(
+        modifier =
+          Modifier
+            .fillMaxSize()
+            .background(MaterialTheme.colorScheme.background)
+            .captureLiquidGlass(glassWallpaper),
+      ) {
         WallpaperImage(
           bitmap = bitmap,
           zoom = wallpaperZoom,
