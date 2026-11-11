@@ -214,7 +214,7 @@ object SupportScreen : Screen {
           modifier = Modifier.padding(start = 24.dp, end = 24.dp, top = 8.dp).semantics { heading() },
         )
 
-        // UPI and More Ways to Pay share one card; the QR sits beside the payee details.
+        // The QR sits beside the payee details; More Ways to Pay follows as its own card.
         PreferenceCard(modifier = Modifier.animateContentSize()) {
           Column(modifier = Modifier.padding(horizontal = 16.dp)) {
             MethodHeader(
@@ -318,20 +318,24 @@ object SupportScreen : Screen {
               style = MaterialTheme.typography.bodySmall,
               color = cs.onSurfaceVariant,
             )
-            Spacer(Modifier.height(8.dp))
           }
-          PreferenceDivider()
-          SupportLinkRow(
-            icon = Icons.RoundedFilled.Payments,
-            title = stringResource(R.string.support_more_ways_title),
-            subtitle = stringResource(R.string.support_more_ways_summary),
-            external = true,
-            onClick = {
-              haptics.tick()
-              SupportIntents.openLink(context, SupportConfig.PAYMENT_OPTIONS_URL)
-            },
-          )
         }
+
+        // Secondary accent: a different action from Pay with UPI (the tertiary button), and it leaves the app.
+        SupportHighlightCard(
+          icon = Icons.RoundedFilled.Payments,
+          title = stringResource(R.string.support_more_ways_title),
+          subtitle = stringResource(R.string.support_more_ways_summary),
+          container = cs.secondaryContainer,
+          onContainer = cs.onSecondaryContainer,
+          accent = cs.secondary,
+          onAccent = cs.onSecondary,
+          external = true,
+          onClick = {
+            haptics.tick()
+            SupportIntents.openLink(context, SupportConfig.PAYMENT_OPTIONS_URL)
+          },
+        )
 
         Text(
           text = stringResource(R.string.support_optional_note),
