@@ -26,14 +26,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.unit.dp
 import com.kyant.backdrop.Backdrop
-import com.kyant.backdrop.drawBackdrop
-import com.kyant.backdrop.highlight.Highlight
-import com.kyant.backdrop.shadow.InnerShadow
-import com.kyant.backdrop.shadow.Shadow
 import com.quantummpv.app.ui.liquidglass.LocalLiquidGlassBackdrop
-import com.quantummpv.app.ui.liquidglass.drawShapeTint
-import com.quantummpv.app.ui.liquidglass.liquidGlassEffects
-import com.quantummpv.app.ui.liquidglass.rememberLiquidGlassSettings
+import com.quantummpv.app.ui.liquidglass.liquidGlassSurface
 import com.quantummpv.app.ui.theme.DesignTokens.DynamicTintMode
 import com.quantummpv.app.ui.theme.DesignTokens.EdgeHighlightMode
 import com.quantummpv.app.ui.theme.DesignTokens.LocalGlassConfig
@@ -403,42 +397,13 @@ private fun LiquidGlassContainer(
     alwaysBorder: Boolean,
     content: @Composable () -> Unit,
 ) {
-    val settings = rememberLiquidGlassSettings()
-    val reduceMotion = AppMotion.shouldReduceMotion()
-    val colors = MaterialTheme.colorScheme
-    // Navigation surfaces animate constantly, so they get a lighter blur and a shallower lens.
-    val blurRadius = if (lightweightNav) 8.dp else 12.dp
-    val refractionHeight = if (lightweightNav) 14.dp else 18.dp
-    val refractionAmount = if (lightweightNav) 22.dp else 26.dp
-    val highlight = remember(settings, reduceMotion) {
-        settings.highlight(Highlight.Ambient.copy(alpha = if (reduceMotion) 0.28f else 0.52f))
-    }
-    val shadow = remember { Shadow(radius = 8.dp, color = Color.Black.copy(alpha = 0.16f)) }
-    val innerShadow = remember { InnerShadow(radius = 2.dp, color = Color.White.copy(alpha = 0.14f)) }
     Box(
         modifier =
             modifier
-                .drawBackdrop(
-                    backdrop = backdrop,
-                    shape = { shape },
-                    effects = {
-                        liquidGlassEffects(
-                            settings,
-                            blurRadius.toPx(),
-                            refractionHeight.toPx(),
-                            refractionAmount.toPx(),
-                            vibrant = true,
-                            refractionEnabled = !reduceMotion,
-                        )
-                    },
-                    highlight = { highlight },
-                    shadow = { shadow },
-                    innerShadow = { innerShadow },
-                    onDrawSurface = { drawShapeTint(shape, settings.surfaceColor(tintColor)) },
-                )
+                .liquidGlassSurface(backdrop, shape, tintColor, lightweight = lightweightNav)
                 .then(
                     if (alwaysBorder) {
-                        Modifier.border(1.dp, colors.outlineVariant.copy(alpha = 0.48f), shape)
+                        Modifier.border(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.48f), shape)
                     } else {
                         Modifier
                     },

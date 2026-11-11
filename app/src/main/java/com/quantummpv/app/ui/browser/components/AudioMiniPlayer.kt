@@ -46,7 +46,6 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.quantummpv.app.R
 import com.quantummpv.app.ui.icons.Icon
 import com.quantummpv.app.ui.icons.Icons
-import com.quantummpv.app.ui.liquidglass.LocalLiquidGlassBackdrop
 import com.quantummpv.app.ui.player.MediaPlaybackService
 import com.quantummpv.app.ui.player.PlaybackSession
 import com.quantummpv.app.ui.player.PlayerActivity
@@ -66,8 +65,7 @@ fun AudioMiniPlayer(modifier: Modifier = Modifier) {
   val duration by PlaybackSession.propInt["duration"].collectAsStateWithLifecycle()
   val position by PlaybackSession.propInt["time-pos"].collectAsStateWithLifecycle()
   val surfaceStyle = LocalGlassConfig.current.style
-  val useGlassSurface =
-    (surfaceStyle != SurfaceStyle.CLASSIC && surfaceStyle != SurfaceStyle.MINIMAL) || LocalLiquidGlassBackdrop.current != null
+  val useGlassSurface = surfaceStyle != SurfaceStyle.CLASSIC && surfaceStyle != SurfaceStyle.MINIMAL
 
   if (!isServiceRunning || sessionState.currentItem == null) return
 

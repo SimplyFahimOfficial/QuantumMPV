@@ -14,15 +14,24 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.unit.dp
 import com.kyant.backdrop.Backdrop
 import com.kyant.backdrop.backdrops.LayerBackdrop
 import com.kyant.backdrop.backdrops.layerBackdrop
 import com.kyant.backdrop.backdrops.rememberCombinedBackdrop
 import com.kyant.backdrop.backdrops.rememberLayerBackdrop
+import com.kyant.backdrop.drawBackdrop
+import com.kyant.backdrop.highlight.Highlight
+import com.kyant.backdrop.shadow.InnerShadow
+import com.kyant.backdrop.shadow.Shadow
 import com.quantummpv.app.preferences.AppearancePreferences
 import com.quantummpv.app.preferences.preference.collectAsState
+import com.quantummpv.app.ui.theme.AppMotion
 import org.koin.compose.koinInject
 
 /**
@@ -67,6 +76,49 @@ fun rememberLiquidGlassCapture(): LayerBackdrop? {
 }
 
 fun Modifier.captureLiquidGlass(layer: LayerBackdrop?): Modifier = if (layer != null) layerBackdrop(layer) else this
+
+/**
+ * Draws the Kyant glass for [shape] over [backdrop]: blur, lens refraction, rim highlight and shadow, with
+ * [tintColor] laid over the glass. Shared by the dock surfaces and the mini player so they look alike.
+ * Navigation surfaces animate constantly, so [lightweight] gives them a lighter blur and a shallower lens.
+ */
+@Composable
+fun Modifier.liquidGlassSurface(
+  backdrop: Backdrop,
+  shape: Shape,
+  tintColor: Color,
+  lightweight: Boolean = false,
+): Modifier {
+  val settings = rememberLiquidGlassSettings()
+  val reduceMotion = AppMotion.shouldReduceMotion()
+  val blurRadius = if (lightweight) 8.dp else 12.dp
+  val refractionHeight = if (lightweight) 14.dp else 18.dp
+  val refractionAmount = if (lightweight) 22.dp else 26.dp
+  val highlight =
+    remember(settings, reduceMotion) {
+      settings.highlight(Highlight.Ambient.copy(alpha = if (reduceMotion) 0.28f else 0.52f))
+    }
+  val shadow = remember { Shadow(radius = 8.dp, color = Color.Black.copy(alpha = 0.16f)) }
+  val innerShadow = remember { InnerShadow(radius = 2.dp, color = Color.White.copy(alpha = 0.14f)) }
+  return drawBackdrop(
+    backdrop = backdrop,
+    shape = { shape },
+    effects = {
+      liquidGlassEffects(
+        settings,
+        blurRadius.toPx(),
+        refractionHeight.toPx(),
+        refractionAmount.toPx(),
+        vibrant = true,
+        refractionEnabled = !reduceMotion,
+      )
+    },
+    highlight = { highlight },
+    shadow = { shadow },
+    innerShadow = { innerShadow },
+    onDrawSurface = { drawShapeTint(shape, settings.surfaceColor(tintColor)) },
+  )
+}
 
 /**
  * Makes [backdrop] available to the glass surfaces inside [content] (or removes it when null), with the
