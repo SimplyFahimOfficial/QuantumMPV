@@ -1788,6 +1788,7 @@
   <string name="support_upi_id_label">UPI ID</string>
   <string name="support_copy_upi_id">Copy UPI ID</string>
   <string name="support_upi_id_copied">UPI ID copied</string>
+  <string name="support_upi_id_copy_failed">Couldn’t copy the UPI ID. Please try again.</string>
   <string name="support_open_upi_app">Pay with UPI</string>
   <string name="support_choose_upi_app">Pay with</string>
   <string name="support_no_upi_app">No UPI app is installed on this device, so the UPI ID was copied. Scan the QR code from another phone, or paste the ID in a UPI app.</string>

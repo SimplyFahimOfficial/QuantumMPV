@@ -236,10 +236,19 @@ object SupportScreen : Screen {
                 DetailRow(label = stringResource(R.string.support_upi_payee_label), value = SupportConfig.UPI_PAYEE_NAME)
                 DetailRow(label = stringResource(R.string.support_upi_id_label), value = SupportConfig.UPI_ID)
                 val copied = stringResource(R.string.support_upi_id_copied)
+                val copyFailed = stringResource(R.string.support_upi_id_copy_failed)
                 FilledTonalButton(
                   onClick = {
-                    SafeClipboard.copyPlainText(context, "simplyfahim_upi_id", SupportConfig.UPI_ID, showToast = false)
-                    notify(copied)
+                    val copySucceeded =
+                      runCatching {
+                        SafeClipboard.copyPlainText(
+                          context,
+                          "simplyfahim_upi_id",
+                          SupportConfig.UPI_ID,
+                          showToast = false,
+                        )
+                      }.isSuccess
+                    notify(if (copySucceeded) copied else copyFailed)
                   },
                   contentPadding = ButtonDefaults.ButtonWithIconContentPadding,
                 ) {
