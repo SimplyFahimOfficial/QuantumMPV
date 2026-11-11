@@ -40,6 +40,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -74,6 +75,7 @@ import androidx.compose.ui.unit.sp
 import com.quantummpv.app.R
 import com.quantummpv.app.preferences.AudioPreferences
 import com.quantummpv.app.preferences.GesturePreferences
+import com.quantummpv.app.preferences.MpvConfigOverridePolicy
 import com.quantummpv.app.preferences.PlayerPreferences
 import com.quantummpv.app.preferences.SubtitlesPreferences
 import com.quantummpv.app.preferences.preference.collectAsState
@@ -146,6 +148,12 @@ internal fun swipeSpeedAfter(
   repeat(abs(steps)) { speed = swipeSpeedStep(speed, up = steps > 0) }
   return speed
 }
+
+internal fun clearOwnedSpeedSwipeUpdate(
+  current: PlayerUpdates,
+  shownSpeed: PlayerUpdates.DynamicSpeedControl?,
+): PlayerUpdates =
+  if (shownSpeed != null && current === shownSpeed) PlayerUpdates.None else current
 
 private fun nearestHoldSpeedPreset(speed: Float): Float =
   holdSpeedPresets.minByOrNull { abs(it - speed) } ?: holdSpeedPresets.first()
@@ -224,7 +232,24 @@ fun GestureHandler(
   val enableCenterSwipeUpGesture by gesturePreferences.enableCenterSwipeUpGesture.collectAsState()
   val pinchToZoomSubtitles by gesturePreferences.pinchToZoomSubtitles.collectAsState()
   val twoFingerSpeedSwipe by gesturePreferences.twoFingerSpeedSwipe.collectAsState()
-  var speedSwipeFeedbackJob by remember { mutableStateOf<Job?>(null) }
+  var speedSwipeFeedbackJob by remember(viewModel) { mutableStateOf<Job?>(null) }
+  var ownedSpeedSwipeUpdate by remember(viewModel) { mutableStateOf<PlayerUpdates.DynamicSpeedControl?>(null) }
+  var speedSwipeHandlerDisposed by remember(viewModel) { mutableStateOf(false) }
+  fun showSpeedSwipeFeedback(speed: Float): PlayerUpdates.DynamicSpeedControl? {
+    if (speedSwipeHandlerDisposed) return null
+    val update = PlayerUpdates.DynamicSpeedControl(speed)
+    ownedSpeedSwipeUpdate = update
+    viewModel.playerUpdate.update { update }
+    return update
+  }
+  DisposableEffect(viewModel) {
+    onDispose {
+      speedSwipeHandlerDisposed = true
+      speedSwipeFeedbackJob?.cancel()
+      viewModel.playerUpdate.update { clearOwnedSpeedSwipeUpdate(it, ownedSpeedSwipeUpdate) }
+      ownedSpeedSwipeUpdate = null
+    }
+  }
   val swipeSubtitlesToSeekDialog by gesturePreferences.swipeSubtitlesToSeekDialog.collectAsState()
   val waitForDoubleTapEverywhere by gesturePreferences.waitForDoubleTapEverywhere.collectAsState()
   val leftDoubleTapAction by gesturePreferences.leftSingleActionGesture.collectAsState()
@@ -1241,7 +1266,10 @@ fun GestureHandler(
                   startMidY = midY
                   // Pinch and pan wait until this cannot be a speed swipe; zoomed-in video keeps two-finger panning.
                   speedSwipeRuledOut =
-                    !twoFingerSpeedSwipe || isSubZoomMode || (panAndZoomEnabled && viewModel.videoZoom.value > 0f)
+                    !twoFingerSpeedSwipe ||
+                      isSubZoomMode ||
+                      MpvConfigOverridePolicy.isOwnedByMpvConf("speed") ||
+                      (panAndZoomEnabled && viewModel.videoZoom.value > 0f)
                 } else {
                   if (!speedSwipeRuledOut && !speedSwipeMode) {
                     val travelX = midX - startMidX
@@ -1266,7 +1294,7 @@ fun GestureHandler(
                         // Already at 0.5x or 4x: a step that changed nothing must not count when reversing.
                         swipeFirstStep = 0
                       }
-                      viewModel.playerUpdate.update { PlayerUpdates.DynamicSpeedControl(swipedSpeed) }
+                      showSpeedSwipeFeedback(swipedSpeed)
                     }
                   } else if (speedSwipeMode) {
                     val stepPx = SWIPE_SPEED_STEP_DISTANCE.toPx()
@@ -1280,7 +1308,7 @@ fun GestureHandler(
                         swipedSpeed = nextSpeed
                         PlaybackSession.setPropertyFloat("speed", nextSpeed)
                         haptics.performHapticFeedback(HapticFeedbackType.TextHandleMove)
-                        viewModel.playerUpdate.update { PlayerUpdates.DynamicSpeedControl(nextSpeed) }
+                        showSpeedSwipeFeedback(nextSpeed)
                       } else {
                         // Pinned at 0.5x or 4x: move the anchor with the fingers so reversing responds at once.
                         swipeAnchorY = midY + swipeExtraSteps * stepPx
@@ -1361,12 +1389,15 @@ fun GestureHandler(
               releaseGesture(GestureOwner.PINCH)
               if (speedSwipeMode) {
                 // Keep the final speed on screen for a moment, unless something else has replaced it.
-                val shownSpeed = PlayerUpdates.DynamicSpeedControl(swipedSpeed)
                 speedSwipeFeedbackJob?.cancel()
+                val shownSpeed = showSpeedSwipeFeedback(swipedSpeed)
                 speedSwipeFeedbackJob =
-                  coroutineScope.launch {
-                    delay(SWIPE_SPEED_FEEDBACK_MS)
-                    viewModel.playerUpdate.update { if (it == shownSpeed) PlayerUpdates.None else it }
+                  shownSpeed?.let { feedback ->
+                    coroutineScope.launch {
+                      delay(SWIPE_SPEED_FEEDBACK_MS)
+                      viewModel.playerUpdate.update { clearOwnedSpeedSwipeUpdate(it, feedback) }
+                      if (ownedSpeedSwipeUpdate === feedback) ownedSpeedSwipeUpdate = null
+                    }
                   }
               } else {
                 viewModel.playerUpdate.update { PlayerUpdates.None }

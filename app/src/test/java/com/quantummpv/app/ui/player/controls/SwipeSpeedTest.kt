@@ -1,6 +1,9 @@
 package com.quantummpv.app.ui.player.controls
 
+import com.quantummpv.app.ui.player.PlayerUpdates
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotSame
+import org.junit.Assert.assertSame
 import org.junit.Test
 
 class SwipeSpeedTest {
@@ -43,5 +46,19 @@ class SwipeSpeedTest {
   @Test
   fun zeroStepsKeepTheSpeed() {
     assertEquals(1.1f, swipeSpeedAfter(1.1f, 0), 0f)
+  }
+
+  @Test
+  fun speedSwipeCleanupClearsOnlyTheUpdateItOwns() {
+    val shown = PlayerUpdates.DynamicSpeedControl(1.5f)
+    assertSame(
+      PlayerUpdates.None,
+      clearOwnedSpeedSwipeUpdate(shown, shown),
+    )
+
+    val newer = PlayerUpdates.DynamicSpeedControl(1.5f)
+    assertEquals(shown, newer)
+    assertNotSame(shown, newer)
+    assertSame(newer, clearOwnedSpeedSwipeUpdate(newer, shown))
   }
 }
