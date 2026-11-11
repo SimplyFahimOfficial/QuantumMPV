@@ -60,6 +60,7 @@ import com.quantummpv.app.presentation.Screen
 import com.quantummpv.app.presentation.components.ConfirmDialog
 import com.quantummpv.app.ui.icons.Icon
 import com.quantummpv.app.ui.icons.Icons
+import com.quantummpv.app.ui.player.controls.PlayerButtonAlpha
 import com.quantummpv.app.ui.player.controls.components.SeekbarStyleLivePreview
 import com.quantummpv.app.ui.preferences.components.PlayerButtonChip
 import com.quantummpv.app.ui.preferences.components.SwitchPreference
@@ -70,7 +71,9 @@ import com.quantummpv.app.ui.utils.popSafely
 import kotlinx.serialization.Serializable
 import me.zhanghai.compose.preference.ListPreference
 import me.zhanghai.compose.preference.ProvidePreferenceLocals
+import me.zhanghai.compose.preference.SliderPreference
 import org.koin.compose.koinInject
+import kotlin.math.roundToInt
 
 // Enum to identify which region we are editing
 @Serializable
@@ -215,6 +218,20 @@ object PlayerControlsPreferencesScreen : Screen {
 
           item {
             var showRecommendedDialog by remember { mutableStateOf(false) }
+            var showClassicDialog by remember { mutableStateOf(false) }
+            if (showClassicDialog) {
+              ConfirmDialog(
+                title = stringResource(R.string.pref_layout_restore_classic_title),
+                subtitle = stringResource(R.string.pref_layout_restore_classic_summary),
+                onConfirm = {
+                  appearancePrefs.restoreClassicPlayerLayout()
+                  // The classic player also had the controls drawer; its buttons would otherwise have no home.
+                  playerPrefs.showControlsDrawer.set(true)
+                  showClassicDialog = false
+                },
+                onCancel = { showClassicDialog = false },
+              )
+            }
             if (showRecommendedDialog) {
               ConfirmDialog(
                 title = stringResource(R.string.pref_layout_reset_recommended_title),
@@ -245,6 +262,26 @@ object PlayerControlsPreferencesScreen : Screen {
                   Modifier
                     .settingsSearchTarget(R.string.pref_layout_reset_recommended)
                     .clickable(role = Role.Button) { showRecommendedDialog = true },
+              )
+              PreferenceDivider()
+              ListItem(
+                content = { Text(text = stringResource(R.string.pref_layout_restore_classic)) },
+                supportingContent = { Text(text = stringResource(R.string.pref_layout_restore_classic_hint)) },
+                leadingContent = {
+                  Icon(
+                    imageVector = Icons.RoundedFilled.Restore,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                  )
+                },
+                colors =
+                  androidx.compose.material3.ListItemDefaults.colors(
+                    containerColor = MaterialTheme.colorScheme.surfaceContainer,
+                  ),
+                modifier =
+                  Modifier
+                    .settingsSearchTarget(R.string.pref_layout_restore_classic)
+                    .clickable(role = Role.Button) { showClassicDialog = true },
               )
             }
           }
@@ -306,6 +343,8 @@ object PlayerControlsPreferencesScreen : Screen {
           item {
             val hidePlayerButtonsBackground by appearancePrefs.hidePlayerButtonsBackground.collectAsState()
             val forceDarkPlayerButtonsBackground by appearancePrefs.forceDarkPlayerButtonsBackground.collectAsState()
+            val storedButtonsBackgroundOpacity by appearancePrefs.playerButtonsBackgroundOpacity.collectAsState()
+            val buttonsBackgroundOpacity = PlayerButtonAlpha.level(storedButtonsBackgroundOpacity)
             val portraitPlaybackControlsPosition by
               appearancePrefs.portraitPlaybackControlsPosition.collectAsState()
             val playerTimeToDisappear by playerPrefs.playerTimeToDisappear.collectAsState()
@@ -330,6 +369,26 @@ object PlayerControlsPreferencesScreen : Screen {
                   )
                 },
                 summary = { Text(portraitPlaybackControlsPosition.displayName) },
+              )
+
+              PreferenceDivider()
+
+              SliderPreference(
+                modifier = Modifier.settingsSearchTarget(R.string.pref_player_buttons_opacity),
+                value = buttonsBackgroundOpacity,
+                onValueChange = { appearancePrefs.playerButtonsBackgroundOpacity.set(it) },
+                sliderValue = buttonsBackgroundOpacity,
+                onSliderValueChange = { appearancePrefs.playerButtonsBackgroundOpacity.set(it) },
+                title = { Text(stringResource(R.string.pref_player_buttons_opacity)) },
+                // 5% steps so the 55% default stays reachable.
+                valueRange = 0f..1f,
+                valueSteps = 19,
+                summary = {
+                  Text(
+                    "${(buttonsBackgroundOpacity * 100).roundToInt()}%",
+                    color = MaterialTheme.colorScheme.outline,
+                  )
+                },
               )
 
               PreferenceDivider()

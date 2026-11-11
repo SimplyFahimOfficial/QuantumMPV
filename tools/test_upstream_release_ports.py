@@ -83,4 +83,24 @@ assert "fun preservesNativeMpvHeaderEntries()" in header_tests
 screenshots = (root / "app/src/main/java/com/quantummpv/app/ui/player/screenshot/ScreenshotSaver.kt").read_text()
 assert "delay(250)" not in screenshots and screenshots.count("awaitScreenshotFile(") >= 3
 
+# mpvRx 3.0.x player screen (docs/UPSTREAM_3_0_SYNC_REVIEW.md, "Player screen").
+app_src = root / "app/src/main/java/com/quantummpv/app"
+assert '"player_buttons_background_opacity", 0.55f' in (app_src / "preferences/AppearancePreferences.kt").read_text()
+buttons = (app_src / "ui/player/controls/components/ControlsButton.kt").read_text()
+# Fill and border both go through the level; a hard-coded alpha would make the slider skip them.
+assert buttons.count("PlayerButtonAlpha.background(") == 2
+assert "LocalPlayerButtonsOpacity provides PlayerButtonAlpha.level(" in (app_src / "ui/player/controls/PlayerControls.kt").read_text()
+for path in (
+    "ui/preferences/PlayerControlsPreferencesScreen.kt",
+    "ui/preferences/SearchablePreference.kt",
+    "ui/preferences/SettingsSearchNavigation.kt",
+):
+    assert "pref_player_buttons_opacity" in (app_src / path).read_text(), path
+gestures = (app_src / "ui/player/controls/GestureHandler.kt").read_text()
+assert 'preferenceStore.getBoolean("two_finger_speed_swipe", true)' in (app_src / "preferences/GesturePreferences.kt").read_text()
+# Speed swipe waits for the first movement so pinch zoom and two-finger panning keep working.
+assert "speedSwipeRuledOut =" in gestures and "if (!speedSwipeRuledOut)" in gestures
+assert re.search(r"\} finally \{\s*if \(isSubZoomMode && gestureStarted\)", gestures)
+assert "pref_player_gestures_two_finger_speed_swipe" in (app_src / "ui/preferences/GesturePreferencesScreen.kt").read_text()
+
 print("selected upstream 2.7.x and 3.0.x release-port regression checks passed")

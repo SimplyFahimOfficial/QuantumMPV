@@ -153,8 +153,8 @@ fun FloatingMenuButton(
 }
 
 /**
- * In-window menu anchored above the dock. Keeping it in the main composition lets the shared Haze
- * backdrop produce real glass in glass mode, while Classic gets the same solid surface as the dock.
+ * In-window menu anchored above the dock. Keeping it in the main composition lets the Liquid Glass
+ * backdrop produce real glass when that experiment is on, while otherwise it gets the same solid surface as the dock.
  * The caller bounds its height; when a short window leaves less room than both rows need, the rows
  * scroll inside the panel instead of being clipped.
  */

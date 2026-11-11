@@ -42,10 +42,8 @@ import com.quantummpv.app.ui.icons.AppIcon
 import com.quantummpv.app.ui.icons.Icon
 import com.quantummpv.app.ui.icons.Icons
 import com.quantummpv.app.ui.player.controls.LocalPlayerButtonsClickEvent
+import com.quantummpv.app.ui.player.controls.PlayerButtonAlpha
 import com.quantummpv.app.ui.theme.AppMotion
-import com.quantummpv.app.ui.theme.DesignTokens.LocalGlassConfig
-import com.quantummpv.app.ui.theme.DesignTokens.SurfaceStyle
-import com.quantummpv.app.ui.theme.GlassComponents
 import com.quantummpv.app.ui.theme.LocalDarkAppColorScheme
 import com.quantummpv.app.ui.theme.spacing
 
@@ -56,6 +54,10 @@ internal val LocalForceDarkPlayerButtonsBackground = staticCompositionLocalOf { 
 
 @Suppress("CompositionLocalAllowlist")
 internal val LocalHidePlayerButtonsBackground = staticCompositionLocalOf { false }
+
+/** Player button background opacity level, see [PlayerButtonAlpha.background]. */
+@Suppress("CompositionLocalAllowlist")
+internal val LocalPlayerButtonsOpacity = staticCompositionLocalOf { PlayerButtonAlpha.DEFAULT_BACKGROUND_LEVEL }
 
 /** Spoken name for a player button whose caller did not pass a title. */
 @Suppress("CompositionLocalAllowlist")
@@ -70,14 +72,18 @@ private fun playerButtonColorScheme(
 
 @Composable
 internal fun playerButtonContainerColor(): Color =
-  playerButtonColorScheme().surfaceContainer.copy(alpha = 0.55f)
+  playerButtonColorScheme().surfaceContainer.copy(
+    alpha = PlayerButtonAlpha.background(PlayerButtonAlpha.CONTAINER, LocalPlayerButtonsOpacity.current),
+  )
 
 @Composable
 internal fun playerButtonContentColor(): Color = playerButtonColorScheme().onSurface
 
 @Composable
 internal fun playerButtonBorderColor(): Color =
-  playerButtonColorScheme().outlineVariant.copy(alpha = 0.4f)
+  playerButtonColorScheme().outlineVariant.copy(
+    alpha = PlayerButtonAlpha.background(PlayerButtonAlpha.BORDER, LocalPlayerButtonsOpacity.current),
+  )
 
 @Suppress("ModifierClickableOrder")
 @OptIn(ExperimentalFoundationApi::class)
@@ -93,8 +99,6 @@ fun ControlsButton(
 ) {
   val interactionSource = remember { MutableInteractionSource() }
   val hideBackground = LocalHidePlayerButtonsBackground.current
-  val surfaceStyle = LocalGlassConfig.current.style
-  val useGlassSurface = surfaceStyle != SurfaceStyle.CLASSIC && surfaceStyle != SurfaceStyle.MINIMAL
   val resolvedColor = color ?: playerButtonContentColor()
   val label = title ?: LocalPlayerButtonLabel.current
 
@@ -134,12 +138,12 @@ fun ControlsButton(
           role = Role.Button,
         ),
     shape = CircleShape,
-    color = if (hideBackground || useGlassSurface) Color.Transparent else playerButtonContainerColor(),
+    color = if (hideBackground) Color.Transparent else playerButtonContainerColor(),
     contentColor = resolvedColor,
     tonalElevation = 0.dp,
     shadowElevation = 0.dp,
     border =
-      if (hideBackground || useGlassSurface) {
+      if (hideBackground) {
         null
       } else {
         BorderStroke(
@@ -149,13 +153,6 @@ fun ControlsButton(
       },
   ) {
     Box(contentAlignment = Alignment.Center) {
-      if (useGlassSurface && !hideBackground) {
-        GlassComponents.GlassPlayerSurface(
-          modifier = Modifier.matchParentSize(),
-          shape = CircleShape,
-          isOnVideo = true,
-        ) {}
-      }
       Icon(
         imageVector = icon,
         contentDescription = label,

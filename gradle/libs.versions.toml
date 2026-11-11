@@ -7,7 +7,6 @@ kotlin = "2.4.21"
 ksp = "2.3.12"
 composeBom = "2026.09.00"
 activityCompose = "1.13.0"
-haze = "2.0.1"
 # Backdrop + shapes: the experimental Liquid Glass renderer (Apache-2.0, github.com/Kyant0/AndroidLiquidGlass).
 kyant = "2.0.1"
 kyant-shapes = "1.2.1"
@@ -79,8 +78,6 @@ nanohttpd = { module = "org.nanohttpd:nanohttpd", version.ref = "nanohttpd" }
 sardine-android = { module = "com.github.thegrizzlylabs:sardine-android", version.ref = "sardineAndroid" }
 androidx-ui = { group = "androidx.compose.ui", name = "ui" }
 androidx-ui-graphics = { group = "androidx.compose.ui", name = "ui-graphics" }
-haze-core = { group = "dev.chrisbanes.haze", name = "haze", version.ref = "haze" }
-haze-glass = { group = "dev.chrisbanes.haze", name = "haze-glass", version.ref = "haze" }
 kyant-backdrop = { module = "io.github.kyant0:backdrop-android", version.ref = "kyant" }
 kyant-shapes = { module = "io.github.kyant0:shapes-android", version.ref = "kyant-shapes" }
 androidx-ui-tooling = { group = "androidx.compose.ui", name = "ui-tooling" }

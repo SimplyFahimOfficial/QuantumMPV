@@ -149,6 +149,7 @@ import com.quantummpv.app.ui.player.controls.components.BrightnessSlider
 import com.quantummpv.app.ui.player.controls.components.ControlsButton
 import com.quantummpv.app.ui.player.controls.components.LocalForceDarkPlayerButtonsBackground
 import com.quantummpv.app.ui.player.controls.components.LocalHidePlayerButtonsBackground
+import com.quantummpv.app.ui.player.controls.components.LocalPlayerButtonsOpacity
 import com.quantummpv.app.ui.player.controls.components.MediaScopesOverlay
 import com.quantummpv.app.ui.player.controls.components.MultipleSpeedPlayerUpdate
 import com.quantummpv.app.ui.player.controls.components.ResumeAvailablePlayerUpdate
@@ -229,6 +230,7 @@ fun PlayerControls(
   val realtimeSubsEnabled by aiPreferences.realtimeSubsEnabled.collectAsState()
   val hideBackground by appearancePreferences.hidePlayerButtonsBackground.collectAsState()
   val forceDarkButtonBackground by appearancePreferences.forceDarkPlayerButtonsBackground.collectAsState()
+  val buttonsBackgroundOpacity by appearancePreferences.playerButtonsBackgroundOpacity.collectAsState()
   val portraitPlaybackControlsPosition by
     appearancePreferences.portraitPlaybackControlsPosition.collectAsState()
   val playerPreferences = koinInject<PlayerPreferences>()
@@ -654,6 +656,7 @@ fun PlayerControls(
       LocalPlayerButtonsClickEvent provides { resetControlsTimestamp = System.currentTimeMillis() },
       LocalForceDarkPlayerButtonsBackground provides forceDarkButtonBackground,
       LocalHidePlayerButtonsBackground provides hideBackground,
+      LocalPlayerButtonsOpacity provides PlayerButtonAlpha.level(buttonsBackgroundOpacity),
       LocalContentColor provides Color.White,
     ) {
       CompositionLocalProvider(

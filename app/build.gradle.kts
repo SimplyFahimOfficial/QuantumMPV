@@ -288,8 +288,6 @@ dependencies {
   implementation(platform(libs.androidx.compose.bom))
   implementation(libs.androidx.ui)
   implementation(libs.androidx.ui.graphics)
-  implementation(libs.haze.core)
-  implementation(libs.haze.glass)
   implementation(libs.kyant.backdrop)
   implementation(libs.kyant.shapes)
   implementation(libs.androidx.material3.android)

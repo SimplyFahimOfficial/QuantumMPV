@@ -100,25 +100,6 @@ object SearchablePreferences {
       )
       add(
         SearchablePreference(
-          titleRes = R.string.pref_glass_surface_style_title,
-          summaryRes = R.string.pref_glass_surface_style_summary,
-          keywords = listOf("glass", "liquid glass", "surface", "style", "appearance", "translucent"),
-          category = "Appearance",
-          screen = AppearancePreferencesScreen,
-          anchorItemIndex = 3,
-        ),
-      )
-      add(
-        SearchablePreference(
-          titleRes = R.string.pref_glass_intensity_title,
-          keywords = listOf("glass", "opacity", "transparency", "surface", "appearance"),
-          category = "Appearance",
-          screen = AppearancePreferencesScreen,
-          anchorItemIndex = 3,
-        ),
-      )
-      add(
-        SearchablePreference(
           titleRes = R.string.pref_appearance_osd_font_title,
           summaryRes = R.string.pref_appearance_osd_font_summary,
           keywords = listOf("font", "osd", "player", "mpv", "system", "google sans", "appearance"),
@@ -239,6 +220,15 @@ object SearchablePreferences {
       )
       add(
         SearchablePreference(
+          titleRes = R.string.pref_layout_restore_classic,
+          summaryRes = R.string.pref_layout_restore_classic_hint,
+          keywords = listOf("restore", "classic", "old", "previous", "layout", "controls", "buttons", "drawer", "player"),
+          category = "Appearance",
+          screen = PlayerControlsPreferencesScreen,
+        ),
+      )
+      add(
+        SearchablePreference(
           titleRes = R.string.pref_layout_top_right_controls,
           keywords = listOf("controls", "top", "right", "landscape", "buttons"),
           category = "Appearance",
@@ -265,6 +255,14 @@ object SearchablePreferences {
         SearchablePreference(
           titleRes = R.string.pref_layout_portrait_bottom_controls,
           keywords = listOf("controls", "portrait", "bottom", "buttons"),
+          category = "Appearance",
+          screen = PlayerControlsPreferencesScreen,
+        ),
+      )
+      add(
+        SearchablePreference(
+          titleRes = R.string.pref_player_buttons_opacity,
+          keywords = listOf("opacity", "transparency", "transparent", "alpha", "background", "buttons", "player"),
           category = "Appearance",
           screen = PlayerControlsPreferencesScreen,
         ),
@@ -1333,7 +1331,7 @@ object SearchablePreferences {
       addSearchEntries(
         category = "Appearance",
         screen = AppearancePreferencesScreen,
-        anchorItemIndex = 5,
+        anchorItemIndex = 3,
         SearchEntrySpec(R.string.pref_tree_flatten_depth_title, listOf("tree", "folder", "path", "flatten", "compression")),
         SearchEntrySpec(R.string.ui_dual_pane_view, listOf("tablet", "two pane", "split", "folder")),
         SearchEntrySpec(R.string.pref_appearance_watched_threshold_title, listOf("watched", "progress", "threshold", "percent")),
@@ -1342,7 +1340,7 @@ object SearchablePreferences {
       addSearchEntries(
         category = "Appearance",
         screen = AppearancePreferencesScreen,
-        anchorItemIndex = 7,
+        anchorItemIndex = 5,
         SearchEntrySpec(
           R.string.pref_appearance_thumbnail_position_title,
           listOf("thumbnail", "frame", "position", "percent", "preview"),
@@ -1352,7 +1350,7 @@ object SearchablePreferences {
       addSearchEntries(
         category = "Appearance",
         screen = AppearancePreferencesScreen,
-        anchorItemIndex = 9,
+        anchorItemIndex = 7,
         SearchEntrySpec(R.string.pref_nav_music_title, listOf("music", "audio", "tab", "navigation")),
         SearchEntrySpec(R.string.pref_nav_profile_title, listOf("profile", "recent", "history", "playlist", "tab", "navigation")),
         SearchEntrySpec(R.string.pref_nav_network_title, listOf("network", "stream", "tab", "navigation")),
@@ -1364,7 +1362,7 @@ object SearchablePreferences {
       addSearchEntries(
         category = "Appearance",
         screen = AppearancePreferencesScreen,
-        anchorItemIndex = 13,
+        anchorItemIndex = 11,
         SearchEntrySpec(R.string.pref_anim_controls_style_title, listOf("animation", "controls", "fade", "slide")),
         SearchEntrySpec(R.string.pref_anim_video_open_title, listOf("animation", "video", "opening", "launch")),
         SearchEntrySpec(R.string.pref_anim_screen_nav_style_title, listOf("animation", "screen", "navigation", "transition")),
@@ -1457,6 +1455,10 @@ object SearchablePreferences {
         screen = GesturePreferencesScreen,
         anchorItemIndex = 1,
         SearchEntrySpec(R.string.pref_player_gestures_pinch_to_zoom_subtitles, listOf("pinch", "zoom", "subtitle", "gesture")),
+        SearchEntrySpec(
+          R.string.pref_player_gestures_two_finger_speed_swipe,
+          listOf("two finger", "swipe", "speed", "playback speed", "gesture"),
+        ),
         SearchEntrySpec(R.string.pref_player_gestures_swipe_subtitles_to_seek_dialog, listOf("swipe", "subtitle", "seek", "dialog")),
         SearchEntrySpec(R.string.pref_player_gestures_swipe_subtitles_invert_direction, listOf("swipe", "subtitle", "invert", "direction")),
         SearchEntrySpec(R.string.pref_player_gestures_enable_center_swipe_up_gesture, listOf("swipe up", "center", "playlist", "gesture")),

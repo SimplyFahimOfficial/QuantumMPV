@@ -26,6 +26,7 @@
   <string name="pref_appearance_material_you_summary_disabled">Only available on Android 12 and above</string>
   <string name="pref_appearance_unlimited_name_lines_title">Show full names</string>
   <string name="pref_appearance_unlimited_name_lines_summary">Show full folder and video names without truncation</string>
+  <string name="pref_player_buttons_opacity">Player button background opacity</string>
   <string name="pref_appearance_hide_player_buttons_background_title">Hide player buttons background</string>
   <string name="pref_appearance_hide_player_buttons_background_summary">Hide the background of all player control buttons</string>
   <string name="pref_appearance_force_dark_player_buttons_background_title">Always use dark player button backgrounds</string>
@@ -197,6 +198,10 @@
   <string name="pref_layout_reset_recommended_hint">Fewer buttons on screen. Everything else stays in More.</string>
   <string name="pref_layout_reset_recommended_title">Use the recommended layout?</string>
   <string name="pref_layout_reset_recommended_summary">Every control region will be replaced with the recommended buttons. Controls that are no longer on screen are listed in More.</string>
+  <string name="pref_layout_restore_classic">Restore classic layout</string>
+  <string name="pref_layout_restore_classic_hint">Bring back every button and the controls drawer from earlier versions.</string>
+  <string name="pref_layout_restore_classic_title">Restore the classic layout?</string>
+  <string name="pref_layout_restore_classic_summary">All five control regions go back to the full set of buttons earlier versions had, and the controls drawer is turned on. Your current button choices will be replaced.</string>
   <string name="player_more_controls_title">Controls</string>
   <string name="player_seekbar_description">Seek bar</string>
   <string name="player_seekbar_state">%1$s of %2$s</string>
@@ -250,6 +255,8 @@
   <string name="pref_player_gestures_volume">Volume gestures</string>
   <string name="pref_player_gestures_pinch_to_zoom">Pinch to zoom</string>
   <string name="pref_player_gestures_pinch_to_zoom_subtitles">Pinch to zoom subtitles</string>
+  <string name="pref_player_gestures_two_finger_speed_swipe">Two-finger swipe for speed</string>
+  <string name="pref_player_gestures_two_finger_speed_swipe_summary">Drag two fingers up or down to change the playback speed in 0.25x steps, from 0.5x to 4x</string>
   <string name="pref_player_gestures_swipe_subtitles_to_seek_dialog">Swipe subtitles to seek dialog</string>
   <string name="pref_player_gestures_swipe_subtitles_invert_direction">Invert swipe subtitles direction</string>
   <string name="pref_player_gestures_swipe_subtitles_invert_direction_summary">Swipe right-to-left to seek forward, left-to-right to seek backward</string>
@@ -2687,7 +2694,6 @@
   <string name="refraction_experimental">Experimental</string>
   <string name="refraction_experimental_summary">Advanced refraction (may impact performance)</string>
 
-  <string name="pref_section_glass_surface">Surface Appearance</string>
   <!-- Liquid Glass (experimental) -->
   <string name="pref_liquid_glass_title">Liquid Glass</string>
   <string name="pref_liquid_glass_entry_summary">Experimental. Real blur and lens refraction on the navigation dock and mini player.</string>
@@ -2716,19 +2722,10 @@
   <string name="pref_liquid_glass_highlight_ambient">Ambient</string>
   <string name="pref_liquid_glass_highlight_plain">Plain</string>
   <string name="pref_liquid_glass_preview_toggle">Preview toggle</string>
-  <string name="pref_glass_surface_style_title">Surface style</string>
-  <string name="pref_glass_surface_style_summary">Choose the style for supported surfaces, including bottom navigation and confirmation dialogs.</string>
-  <string name="pref_glass_intensity_title">Surface opacity</string>
-  <string name="pref_glass_intensity_summary">Opacity: %1$d percent. Lower values are more transparent.</string>
-  <string name="pref_dynamic_tint_mode_title">Theme tint</string>
-  <string name="pref_edge_highlight_mode_title">Surface edge highlight</string>
-  <string name="pref_refraction_mode_title">Refraction</string>
 
   <string name="pref_section_performance_motion">Motion and Surface Behavior</string>
   <string name="pref_motion_style_title">Animation Style</string>
   <string name="pref_performance_mode_title">Rendering Quality</string>
-  <string name="pref_cinema_mode_title">Cinema mode</string>
-  <string name="pref_cinema_mode_summary">Increase glass surface opacity for a more immersive appearance</string>
 
   <!-- Library Insights -->
   <string name="library_insights_title">Library Insights</string>

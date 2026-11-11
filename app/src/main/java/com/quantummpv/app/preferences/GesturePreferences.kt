@@ -37,6 +37,8 @@ class GesturePreferences(
     preferenceStore.getBoolean("enable_center_swipe_up_gesture", true)
   val pinchToZoomSubtitles =
     preferenceStore.getBoolean("pinch_to_zoom_subtitles", true)
+  val twoFingerSpeedSwipe =
+    preferenceStore.getBoolean("two_finger_speed_swipe", true)
   val swipeSubtitlesToSeekDialog =
     preferenceStore.getBoolean("swipe_subtitles_to_seek_dialog", true)
   val swipeSubtitlesInvertDirection =

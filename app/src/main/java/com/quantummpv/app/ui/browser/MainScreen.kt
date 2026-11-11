@@ -121,8 +121,6 @@ import com.quantummpv.app.ui.player.NavigationAnimStyle
 import com.quantummpv.app.ui.player.controls.components.rememberTvInitialFocusRequester
 import com.quantummpv.app.ui.player.controls.components.tvFocusHighlight
 import com.quantummpv.app.ui.player.controls.components.tvInitialFocus
-import com.quantummpv.app.ui.theme.DesignTokens.LocalGlassConfig
-import com.quantummpv.app.ui.theme.DesignTokens.SurfaceStyle
 import com.quantummpv.app.ui.utils.LocalBackStack
 import com.quantummpv.app.ui.utils.LocalSharedTransitionScope
 import com.quantummpv.app.ui.utils.NavigationPager
@@ -239,17 +237,10 @@ object MainScreen : Screen {
     val moreMenuShortcuts = remember(moreMenuShortcutNames) { MoreMenuShortcut.resolve(moreMenuShortcutNames) }
     val showNetworkTab by appearancePreferences.showNetworkTab.collectAsState()
     val showJellyfinTab by appearancePreferences.showJellyfinTab.collectAsState()
-    val legacyGlassBottomNavigation by appearancePreferences.legacyGlassBottomNavigation.collectAsState()
-    val surfaceStyle = LocalGlassConfig.current.style
-    val glassBottomNavigation =
-      if (appearancePreferences.hasLegacyGlassBottomNavigation && !appearancePreferences.hasStoredSurfaceStyle) {
-        legacyGlassBottomNavigation
-      } else {
-        surfaceStyle != SurfaceStyle.CLASSIC && surfaceStyle != SurfaceStyle.MINIMAL
-      }
-    // Experimental Liquid Glass: record the page content for the dock to refract, and show the dock as glass.
+    // Experimental Liquid Glass: record the page content for the dock to refract. The dock is glass only
+    // while it is on; the selectable surface styles are gone, so there is no other glass source.
     val liquidGlassCapture = rememberLiquidGlassCapture()
-    val glassDock = glassBottomNavigation || liquidGlassCapture != null
+    val glassDock = liquidGlassCapture != null
     val hideNavigationBar = NavigationBarState.shouldHideNavigationBar
     val isPermissionDenied = NavigationBarState.isPermissionDenied
     val isDualPaneFolderSelected = NavigationBarState.isDualPaneFolderSelected

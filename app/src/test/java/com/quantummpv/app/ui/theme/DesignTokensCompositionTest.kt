@@ -10,8 +10,6 @@ import androidx.compose.runtime.Recomposer
 import androidx.compose.ui.Modifier
 import com.quantummpv.app.preferences.AppearancePreferences
 import com.quantummpv.app.preferences.preference.AndroidPreferenceStore
-import com.quantummpv.app.ui.theme.DesignTokens.DynamicTintMode
-import com.quantummpv.app.ui.theme.DesignTokens.EdgeHighlightMode
 import com.quantummpv.app.ui.theme.DesignTokens.GlassConfig
 import com.quantummpv.app.ui.theme.DesignTokens.GlassConfigProvider
 import com.quantummpv.app.ui.theme.DesignTokens.LocalGlassConfig
@@ -157,29 +155,21 @@ class DesignTokensCompositionTest {
     assertOpacity(SurfaceStyle.CLASSIC.defaultIntensity, config.copy(cinemaMode = true))
   }
 
+  /** Surface styles were removed: a glass style stored by an older build must still resolve to solid Classic surfaces. */
   @Test
-  fun postInitializationCinemaImportSuppressesEffectsInBothRuntimeReaders() {
+  fun storedLegacySurfaceStylesResolveToClassicWithMotionAndPerformanceOnly() {
     val context = RuntimeEnvironment.getApplication()
-    val storage = context.getSharedPreferences("design-tokens-cinema-test", Context.MODE_PRIVATE)
-    storage.edit().clear().commit()
+    val storage = context.getSharedPreferences("design-tokens-legacy-style-test", Context.MODE_PRIVATE)
+    storage.edit().clear().putString("surface_style", "CLEAR_GLASS").putFloat("glass_intensity", 0.1f).commit()
     val preferences = AppearancePreferences(AndroidPreferenceStore(context, storage))
-    preferences.dynamicTintMode.set(DynamicTintMode.THEME)
-    preferences.edgeHighlightMode.set(EdgeHighlightMode.STRONG)
-    storage.edit().putString("surface_style", "CINEMA").commit()
+    preferences.performanceMode.set(PerformanceMode.BATTERY_SAVER)
 
     startKoin { modules(module { single { preferences } }) }
     try {
-      val preferenceConfig = preferences.glassConfig
       var composedConfig: GlassConfig? = null
       compose { composedConfig = DesignTokens.rememberGlassConfig() }
 
-      for (config in listOf(preferenceConfig, requireNotNull(composedConfig))) {
-        assertEquals(SurfaceStyle.CLASSIC, config.style)
-        assertEquals(DynamicTintMode.OFF, config.dynamicTint)
-        assertEquals(EdgeHighlightMode.OFF, config.edgeHighlight)
-      }
-      assertEquals(DynamicTintMode.THEME, preferences.dynamicTintMode.get())
-      assertEquals(EdgeHighlightMode.STRONG, preferences.edgeHighlightMode.get())
+      assertEquals(GlassConfig(performanceMode = PerformanceMode.BATTERY_SAVER), composedConfig)
     } finally {
       stopKoin()
     }

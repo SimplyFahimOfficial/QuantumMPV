@@ -350,33 +350,16 @@ object DesignTokens {
     }
 
     /**
-     * Collects appearance preferences as Compose state and returns their current glass configuration.
-     * Resolves legacy styles to canonical presets while preserving stored intensity and blur.
-     * Suppresses Cinema tint and highlights and unsupported tint modes without persisting these conversions.
+     * The surface configuration for the app. Surfaces are always solid ([SurfaceStyle.CLASSIC]): the
+     * selectable surface styles were removed, and glass now comes only from the experimental Liquid Glass
+     * renderer. Motion and performance are real settings and still follow their preferences.
      */
     @Composable
     fun rememberGlassConfig(): GlassConfig {
         val preferences = koinInject<AppearancePreferences>()
-        val style by preferences.surfaceStyle.collectAsState()
-        val intensity by preferences.glassIntensity.collectAsState()
-        val blurLevel by preferences.glassBlurLevel.collectAsState()
-        val dynamicTint by preferences.dynamicTintMode.collectAsState()
-        val edgeHighlight by preferences.edgeHighlightMode.collectAsState()
-        val refraction by preferences.refractionMode.collectAsState()
         val motionStyle by preferences.motionStyle.collectAsState()
         val performanceMode by preferences.performanceMode.collectAsState()
-        val cinemaMode by preferences.cinemaMode.collectAsState()
-        return GlassConfig(
-            style = style.selectableStyle,
-            intensity = intensity,
-            blurLevel = blurLevel,
-            dynamicTint = style.effectiveDynamicTint(dynamicTint),
-            edgeHighlight = style.effectiveEdgeHighlight(edgeHighlight),
-            refraction = refraction,
-            motionStyle = motionStyle,
-            performanceMode = performanceMode,
-            cinemaMode = cinemaMode,
-        )
+        return GlassConfig(motionStyle = motionStyle, performanceMode = performanceMode)
     }
 
     // ============================================================================
