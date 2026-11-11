@@ -242,7 +242,7 @@ class DampedDragAnimation(
   val visibilityThreshold: Float,
   val initialScale: Float,
   val pressedScale: Float,
-  val onDragStarted: DampedDragAnimation.(position: Offset) -> Unit,
+  val onDragStarted: DampedDragAnimation.(position: Offset) -> Unit = {},
   val onDragStopped: DampedDragAnimation.() -> Unit,
   val onDragCancelled: DampedDragAnimation.() -> Unit,
   val onDrag: DampedDragAnimation.(size: IntSize, dragAmount: Offset) -> Unit,
