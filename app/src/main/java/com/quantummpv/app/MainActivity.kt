@@ -67,6 +67,9 @@ import com.quantummpv.app.presentation.Screen
 import com.quantummpv.app.ui.browser.MainScreen
 import com.quantummpv.app.ui.browser.NavigationBarState
 import com.quantummpv.app.ui.browser.components.MiniPlayer
+import com.quantummpv.app.ui.liquidglass.ProvideLiquidGlassBackdrop
+import com.quantummpv.app.ui.liquidglass.captureLiquidGlass
+import com.quantummpv.app.ui.liquidglass.rememberLiquidGlassCapture
 import com.quantummpv.app.ui.player.MPVPipHelper
 import com.quantummpv.app.ui.player.MediaPlaybackService
 import com.quantummpv.app.ui.player.PlaybackPhase
@@ -533,10 +536,12 @@ class MainActivity : AppCompatActivity() {
       }
 
       if (hasNavEntries) {
+        // Experimental Liquid Glass: the mini player sits over the whole navigation display.
+        val miniPlayerGlassCapture = rememberLiquidGlassCapture()
         Box(modifier = Modifier.fillMaxSize()) {
           // Destinations share elements (e.g. the dock's Search button morphing into the Search
           // bar) through this scope; each entry gets its own AnimatedVisibilityScope from NavDisplay.
-          SharedTransitionLayout(modifier = Modifier.fillMaxSize()) {
+          SharedTransitionLayout(modifier = Modifier.fillMaxSize().captureLiquidGlass(miniPlayerGlassCapture)) {
             CompositionLocalProvider(LocalSharedTransitionScope provides this) {
               ScreenNavDisplay(
                 modifier = Modifier.fillMaxSize(),
@@ -628,7 +633,9 @@ class MainActivity : AppCompatActivity() {
               }
             }
 
-          MiniPlayer(modifier = miniPlayerModifier)
+          ProvideLiquidGlassBackdrop(miniPlayerGlassCapture) {
+            MiniPlayer(modifier = miniPlayerModifier)
+          }
         }
       }
 

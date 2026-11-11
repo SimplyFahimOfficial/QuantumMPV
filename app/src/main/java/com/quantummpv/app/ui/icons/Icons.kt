@@ -172,8 +172,10 @@ object Icons {
     val Notifications by lazy(LazyThreadSafetyMode.NONE) { AppIcon(MaterialSymbols.RoundedFilled.Notifications) }
     val NotInterested by lazy(LazyThreadSafetyMode.NONE) { AppIcon(MaterialSymbols.RoundedFilled.Block) }
     val Opacity by lazy(LazyThreadSafetyMode.NONE) { AppIcon(MaterialSymbols.RoundedFilled.Opacity) }
+    val OpenInNew by lazy(LazyThreadSafetyMode.NONE) { AppIcon(MaterialSymbols.RoundedFilled.Open_in_new) }
     val Palette by lazy(LazyThreadSafetyMode.NONE) { AppIcon(MaterialSymbols.RoundedFilled.Palette) }
     val Pause by lazy(LazyThreadSafetyMode.NONE) { AppIcon(MaterialSymbols.RoundedFilled.Pause) }
+    val Payments by lazy(LazyThreadSafetyMode.NONE) { AppIcon(MaterialSymbols.RoundedFilled.Payments) }
     val PictureInPictureAlt by lazy(LazyThreadSafetyMode.NONE) {
       AppIcon(MaterialSymbols.RoundedFilled.Picture_in_picture_alt)
     }
@@ -401,8 +403,10 @@ object Icons {
     val Notifications get() = Shared.Notifications
     val NotInterested get() = Shared.NotInterested
     val Opacity get() = Shared.Opacity
+    val OpenInNew get() = Shared.OpenInNew
     val Palette get() = Shared.Palette
     val Pause get() = Shared.Pause
+    val Payments get() = Shared.Payments
     val PictureInPictureAlt get() = Shared.PictureInPictureAlt
     val PlayArrow get() = Shared.PlayArrow
     val PlayCircle get() = Shared.PlayCircle

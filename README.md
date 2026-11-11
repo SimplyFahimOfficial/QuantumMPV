@@ -17,9 +17,9 @@
 > **Support QuantumMPV**
 > **If QuantumMPV is useful to you, please consider supporting continued development.**
 >
-> **[Ko-fi · ko-fi.com/simplyfahim](https://ko-fi.com/simplyfahim)**
+> **UPI ID: `SimplyFahim@sbi`** (payee **Md Fahim**). In the app: **Settings → Help & Support → Support My Work** shows a QR code generated on your device.
 >
-> **UPI ID: `SimplyFahim@sbi`** (payee **Md Fahim**). In the app: **Settings → Support my work** shows a QR code generated on your device.
+> **[More ways to pay · simplyfahim.pages.dev/pay-options](https://simplyfahim.pages.dev/pay-options)**
 >
 > More projects: [SimplyFahim.pages.dev](https://SimplyFahim.pages.dev)
 >
@@ -441,7 +441,7 @@ Use the [issue tracker](https://github.com/SimplyFahimOfficial/QuantumMPV/issues
 
 <table>
   <tr>
-    <td width="50%" align="center" valign="top">
+    <td align="center" valign="top">
       <picture>
         <source media="(prefers-color-scheme: dark)" srcset="docs/assets/support/support-upi-dark.svg" />
         <img src="docs/assets/support/support-upi-light.svg" width="100%" alt="UPI" />
@@ -452,16 +452,9 @@ Use the [issue tracker](https://github.com/SimplyFahimOfficial/QuantumMPV/issues
 <p><strong>Payee: Md Fahim</strong><br />
 <strong>UPI ID · Select and copy</strong></p>
 <a href="https://simplyfahim.pages.dev/pay/"><img src="https://img.shields.io/badge/Pay_with-UPI-009E3B?style=for-the-badge&amp;logo=googlepay&amp;logoColor=white" height="40" alt="Pay with UPI" /></a>
+<a href="https://simplyfahim.pages.dev/pay-options"><img src="https://img.shields.io/badge/More_ways-to_pay-4B5563?style=for-the-badge" height="40" alt="More ways to pay" /></a>
 
 </td>
-    <td width="50%" align="center" valign="top">
-      <picture>
-        <source media="(prefers-color-scheme: dark)" srcset="docs/assets/support/support-kofi-dark.svg" />
-        <img src="docs/assets/support/support-kofi-light.svg" width="100%" alt="Ko-fi" />
-      </picture>
-      <br /><br />
-      <a href="https://ko-fi.com/simplyfahim"><img src="https://img.shields.io/badge/Support_on-Ko--fi-FF5E5B?style=for-the-badge" height="40" alt="Support SimplyFahim on Ko-fi" /></a>
-    </td>
   </tr>
 </table>
 
@@ -479,12 +472,7 @@ Use the [issue tracker](https://github.com/SimplyFahimOfficial/QuantumMPV/issues
 <p align="center">
   <sub><b>Personal contact</b></sub>
   <br />
-  <a href="https://instagram.com/SimplyFahimofficial"><img src="https://img.shields.io/badge/Instagram-%40SimplyFahimofficial-C13584?style=flat-square&logo=instagram&logoColor=white" height="22" alt="Instagram @SimplyFahimofficial" /></a>
-  <a href="mailto:SimplyFahim@tuta.io?subject=QuantumMPV%20feedback"><img src="https://img.shields.io/badge/Email-SimplyFahim%40tuta.io-4B5563?style=flat-square" height="22" alt="Email SimplyFahim@tuta.io" /></a>
-  <a href="mailto:simplyfahimofficial@gmail.com?subject=QuantumMPV%20feedback"><img src="https://img.shields.io/badge/Email-Gmail-4B5563?style=flat-square" height="22" alt="Email simplyfahimofficial@gmail.com" /></a>
-  <!-- TODO_PERSONAL_TELEGRAM_USERNAME: add a personal Telegram badge here once the username is set in SupportConfig.kt:
-  <a href="https://t.me/TODO_PERSONAL_TELEGRAM_USERNAME"><img src="https://img.shields.io/badge/Telegram-%40TODO_PERSONAL_TELEGRAM_USERNAME-229ED9?style=flat-square&logo=telegram&logoColor=white" height="22" alt="Personal Telegram @TODO_PERSONAL_TELEGRAM_USERNAME" /></a>
-  -->
+  <a href="https://simplyfahim.pages.dev/contactme"><img src="https://img.shields.io/badge/Contact-the_developer-4B5563?style=flat-square" height="22" alt="Contact the developer: website, email and social links" /></a>
 </p>
 
 ---

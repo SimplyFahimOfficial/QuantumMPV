@@ -12,7 +12,6 @@ package com.quantummpv.app.ui.preferences
 import android.graphics.Bitmap
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.annotation.DrawableRes
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.Animatable
@@ -20,10 +19,8 @@ import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.togetherWith
-import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -44,7 +41,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
+import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
@@ -64,27 +61,20 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.FilterQuality
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.platform.LocalResources
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
-import androidx.core.graphics.ColorUtils
-import com.quantummpv.app.BuildConfig
 import com.quantummpv.app.R
 import com.quantummpv.app.presentation.Screen
 import com.quantummpv.app.support.SupportConfig
@@ -104,15 +94,12 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.Serializable
 
-/** Ko-fi's brand red, used only to tint the Ko-fi mark. */
-private val KofiRed = Color(0xFFFF5E5B)
-
 /** Large enough to stay sharp when enlarged or saved, small enough to encode instantly. */
 private const val QR_SIZE_PX = 768
 
 /**
- * Support My Work: voluntary Ko-fi and UPI support, kept apart from project links.
- * All values come from [SupportConfig]; the QR code is generated on the device.
+ * Support My Work: voluntary UPI support plus a link to more payment options, opened from
+ * [HelpSupportScreen]. All values come from [SupportConfig]; the QR code is generated on the device.
  */
 @Serializable
 object SupportScreen : Screen {
@@ -129,7 +116,6 @@ object SupportScreen : Screen {
     val reduceMotion = AppMotion.shouldReduceMotion()
     var showLargeQr by remember { mutableStateOf(false) }
     val haptics = rememberAppHaptics()
-    val resources = LocalResources.current
 
     // Fade and rise in a graphics layer only, so layout never shifts; starts settled under reduced motion.
     val entrance = remember { Animatable(if (reduceMotion) 1f else 0f) }
@@ -146,19 +132,6 @@ object SupportScreen : Screen {
         snackbar.currentSnackbarData?.dismiss()
         snackbar.showSnackbar(message)
       }
-    }
-
-    fun openLink(
-      link: String,
-      copyValue: String = link,
-    ) {
-      haptics.tick()
-      SupportIntents.openLink(context, link, copyValue)
-    }
-
-    fun copyValue(value: String) {
-      SafeClipboard.copyPlainText(context, "simplyfahim_contact", value, showToast = false)
-      notify(resources.getString(R.string.support_value_copied, value))
     }
 
     val qrSaved = stringResource(R.string.support_qr_saved)
@@ -217,77 +190,76 @@ object SupportScreen : Screen {
             }.then(searchHighlight)
             .verticalScroll(scrollState),
       ) {
-        // Introduction
-        PreferenceCard(emphasis = true) {
-          Row(modifier = Modifier.padding(16.dp), verticalAlignment = Alignment.Top) {
-            Icon(
-              imageVector = Icons.RoundedFilled.Favorite,
-              contentDescription = null,
-              tint = cs.primary,
-              modifier = Modifier.padding(top = 2.dp).size(24.dp),
-            )
-            Spacer(Modifier.size(12.dp))
-            Text(
-              text = stringResource(R.string.support_intro),
-              style = MaterialTheme.typography.bodyLarge,
-              color = cs.onSurface,
-            )
-          }
+        // Introduction: plain text under the title rather than a card, so the whole screen fits without scrolling.
+        Row(modifier = Modifier.padding(horizontal = 24.dp), verticalAlignment = Alignment.Top) {
+          Icon(
+            imageVector = Icons.RoundedFilled.Favorite,
+            contentDescription = null,
+            tint = cs.primary,
+            modifier = Modifier.padding(top = 1.dp).size(16.dp),
+          )
+          Spacer(Modifier.size(10.dp))
+          Text(
+            text = stringResource(R.string.support_intro),
+            style = MaterialTheme.typography.bodySmall,
+            color = cs.onSurfaceVariant,
+          )
         }
 
-        // Payment options
-        PreferenceSectionHeader(
-          title = stringResource(R.string.support_section_payment),
-          modifier = Modifier.semantics { heading() },
+        // Same look as SettingsSectionHeader, with less vertical space.
+        Text(
+          text = stringResource(R.string.support_section_payment),
+          style = MaterialTheme.typography.labelLarge,
+          color = cs.primary,
+          modifier = Modifier.padding(start = 24.dp, end = 24.dp, top = 8.dp).semantics { heading() },
         )
 
+        // The QR sits beside the payee details; More Ways to Pay follows as its own card.
         PreferenceCard(modifier = Modifier.animateContentSize()) {
-          Column(modifier = Modifier.padding(16.dp)) {
+          Column(modifier = Modifier.padding(horizontal = 16.dp)) {
             MethodHeader(
               icon = Icons.RoundedFilled.MonetizationOn,
               tint = cs.tertiary,
               title = stringResource(R.string.support_upi_title),
-              subtitle = SupportConfig.UPI_ID,
+              subtitle = stringResource(R.string.support_upi_summary),
             )
             Spacer(Modifier.height(10.dp))
-            Text(
-              text = stringResource(R.string.support_upi_summary),
-              style = MaterialTheme.typography.bodyMedium,
-              color = cs.onSurfaceVariant,
-            )
-            Spacer(Modifier.height(16.dp))
 
-            QrPanel(
-              bitmap = qrBitmap,
-              reduceMotion = reduceMotion,
-              onClick = { showLargeQr = true },
-              modifier = Modifier.align(Alignment.CenterHorizontally),
-            )
-
-            Spacer(Modifier.height(16.dp))
-            DetailRow(label = stringResource(R.string.support_upi_payee_label), value = SupportConfig.UPI_PAYEE_NAME)
-            PreferenceDivider(Modifier.padding(vertical = 2.dp))
-            val copied = stringResource(R.string.support_upi_id_copied)
-            DetailRow(
-              label = stringResource(R.string.support_upi_id_label),
-              value = SupportConfig.UPI_ID,
-              trailing = {
-                IconButton(
+            Row(horizontalArrangement = Arrangement.spacedBy(14.dp), verticalAlignment = Alignment.CenterVertically) {
+              QrPanel(
+                bitmap = qrBitmap,
+                reduceMotion = reduceMotion,
+                onClick = { showLargeQr = true },
+                modifier = Modifier.weight(0.47f, fill = false).widthIn(max = 200.dp),
+              )
+              Column(modifier = Modifier.weight(0.53f), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                DetailRow(label = stringResource(R.string.support_upi_payee_label), value = SupportConfig.UPI_PAYEE_NAME)
+                DetailRow(label = stringResource(R.string.support_upi_id_label), value = SupportConfig.UPI_ID)
+                val copied = stringResource(R.string.support_upi_id_copied)
+                val copyFailed = stringResource(R.string.support_upi_id_copy_failed)
+                FilledTonalButton(
                   onClick = {
-                    SafeClipboard.copyPlainText(context, "simplyfahim_upi_id", SupportConfig.UPI_ID, showToast = false)
-                    notify(copied)
+                    val copySucceeded =
+                      runCatching {
+                        SafeClipboard.copyPlainText(
+                          context,
+                          "simplyfahim_upi_id",
+                          SupportConfig.UPI_ID,
+                          showToast = false,
+                        )
+                      }.isSuccess
+                    notify(if (copySucceeded) copied else copyFailed)
                   },
+                  contentPadding = ButtonDefaults.ButtonWithIconContentPadding,
                 ) {
-                  Icon(
-                    imageVector = Icons.RoundedFilled.ContentCopy,
-                    contentDescription = stringResource(R.string.support_copy_upi_id),
-                    tint = cs.primary,
-                  )
+                  Icon(Icons.RoundedFilled.ContentCopy, contentDescription = null, modifier = Modifier.size(18.dp))
+                  Spacer(Modifier.size(8.dp))
+                  Text(stringResource(R.string.support_copy_upi_id))
                 }
-              },
-            )
+              }
+            }
 
-            Spacer(Modifier.height(14.dp))
+            Spacer(Modifier.height(8.dp))
             val chooseApp = stringResource(R.string.support_choose_upi_app)
             val noUpiApp = stringResource(R.string.support_no_upi_app)
             Button(
@@ -304,7 +276,7 @@ object SupportScreen : Screen {
             ) {
               Text(stringResource(R.string.support_open_upi_app), fontWeight = FontWeight.SemiBold)
             }
-            Spacer(Modifier.height(10.dp))
+            Spacer(Modifier.height(8.dp))
             Row(horizontalArrangement = Arrangement.spacedBy(10.dp), modifier = Modifier.fillMaxWidth()) {
               val shareText =
                 stringResource(R.string.support_share_qr_text, SupportConfig.UPI_ID, SupportConfig.UPI_PAYEE_NAME)
@@ -340,7 +312,7 @@ object SupportScreen : Screen {
                 Text(stringResource(R.string.support_save_qr))
               }
             }
-            Spacer(Modifier.height(14.dp))
+            Spacer(Modifier.height(10.dp))
             Text(
               text = stringResource(R.string.support_upi_safety_note, SupportConfig.UPI_PAYEE_NAME),
               style = MaterialTheme.typography.bodySmall,
@@ -349,126 +321,28 @@ object SupportScreen : Screen {
           }
         }
 
-        PreferenceCard {
-          Column(modifier = Modifier.padding(16.dp)) {
-            MethodHeader(
-              painter = R.drawable.ic_kofi,
-              tint = KofiRed,
-              title = stringResource(R.string.support_kofi_title),
-              subtitle = SupportConfig.displayUrl(SupportConfig.KOFI_URL),
-            )
-            Spacer(Modifier.height(10.dp))
-            Text(
-              text = stringResource(R.string.support_kofi_summary),
-              style = MaterialTheme.typography.bodyMedium,
-              color = cs.onSurfaceVariant,
-            )
-            Spacer(Modifier.height(14.dp))
-            Button(
-              onClick = { openLink(SupportConfig.KOFI_URL) },
-              modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp),
-              shape = RoundedCornerShape(12.dp),
-            ) {
-              Icon(painter = painterResource(R.drawable.ic_kofi), contentDescription = null, modifier = Modifier.size(18.dp))
-              Spacer(Modifier.size(8.dp))
-              Text(stringResource(R.string.support_kofi_button), fontWeight = FontWeight.SemiBold)
-            }
-          }
-        }
-
-        // Community: the Telegram group is the primary contact, so it gets the large accent card.
-        PreferenceSectionHeader(
-          title = stringResource(R.string.support_section_community),
-          modifier = Modifier.semantics { heading() },
-        )
-        CommunityHeroCard(
-          onClick = { openLink(SupportConfig.telegramGroupUrl) },
-          onLongClick = { copyValue(SupportConfig.telegramGroupUrl) },
+        // Secondary accent: a different action from Pay with UPI (the tertiary button), and it leaves the app.
+        SupportHighlightCard(
+          icon = Icons.RoundedFilled.Payments,
+          title = stringResource(R.string.support_more_ways_title),
+          subtitle = stringResource(R.string.support_more_ways_summary),
+          container = cs.secondaryContainer,
+          onContainer = cs.onSecondaryContainer,
+          accent = cs.secondary,
+          onAccent = cs.onSecondary,
+          external = true,
+          onClick = {
+            haptics.tick()
+            SupportIntents.openLink(context, SupportConfig.PAYMENT_OPTIONS_URL)
+          },
         )
 
-        // Personal contact: deliberately smaller and quieter than the group card.
         Text(
-          text = stringResource(R.string.support_section_personal),
-          style = MaterialTheme.typography.labelLarge,
+          text = stringResource(R.string.support_optional_note),
+          style = MaterialTheme.typography.bodySmall,
           color = cs.onSurfaceVariant,
-          modifier =
-            Modifier
-              .padding(start = 24.dp, end = 24.dp, top = 20.dp, bottom = 4.dp)
-              .semantics { heading() },
+          modifier = Modifier.padding(start = 24.dp, end = 24.dp, top = 4.dp, bottom = 4.dp),
         )
-        PreferenceCard {
-          ContactTile(
-            painter = R.drawable.ic_instagram,
-            title = stringResource(R.string.support_contact_instagram),
-            value = "@${SupportConfig.INSTAGRAM_HANDLE}",
-            onClick = { openLink(SupportConfig.instagramUrl) },
-            onLongClick = { copyValue(SupportConfig.instagramUrl) },
-          )
-          SupportConfig.CONTACT_EMAILS.forEach { email ->
-            PreferenceDivider()
-            ContactTile(
-              icon = Icons.RoundedFilled.Mail,
-              title = stringResource(R.string.support_contact_email),
-              value = email,
-              onClick = { openLink(SupportConfig.emailUri(email), copyValue = email) },
-              onLongClick = { copyValue(email) },
-            )
-          }
-          SupportConfig.personalTelegramUrl?.let { url ->
-            PreferenceDivider()
-            ContactTile(
-              painter = R.drawable.ic_telegram,
-              title = stringResource(R.string.support_contact_telegram),
-              value = "@${SupportConfig.PERSONAL_TELEGRAM_USERNAME}",
-              onClick = { openLink(url) },
-              onLongClick = { copyValue(url) },
-            )
-          }
-        }
-
-        // About the application: project and personal links, separate from payments.
-        val appName = stringResource(R.string.app_name)
-        PreferenceSectionHeader(
-          title = stringResource(R.string.support_section_about, appName),
-          modifier = Modifier.semantics { heading() },
-        )
-        PreferenceCard {
-          Text(
-            text =
-              stringResource(
-                R.string.support_project_info,
-                appName,
-                SupportConfig.PROJECT_LICENSE,
-                BuildConfig.VERSION_NAME.substringBefore('-'),
-              ),
-            style = MaterialTheme.typography.bodyMedium,
-            color = cs.onSurfaceVariant,
-            modifier = Modifier.padding(16.dp),
-          )
-          PreferenceDivider()
-          LinkRow(
-            painter = R.drawable.ic_github,
-            title = stringResource(R.string.support_repo_title),
-            subtitle = SupportConfig.displayUrl(SupportConfig.PROJECT_REPOSITORY_URL),
-            onClick = { openLink(SupportConfig.PROJECT_REPOSITORY_URL) },
-          )
-          PreferenceDivider()
-          LinkRow(
-            icon = Icons.RoundedFilled.Language,
-            title = stringResource(R.string.support_website_title),
-            subtitle = SupportConfig.displayUrl(SupportConfig.WEBSITE_URL),
-            onClick = { openLink(SupportConfig.WEBSITE_URL) },
-          )
-          PreferenceDivider()
-          LinkRow(
-            icon = Icons.RoundedFilled.Person,
-            title = stringResource(R.string.support_profile_title),
-            subtitle = SupportConfig.displayUrl(SupportConfig.GITHUB_PROFILE_URL),
-            onClick = { openLink(SupportConfig.GITHUB_PROFILE_URL) },
-          )
-        }
-
-        Spacer(Modifier.height(24.dp))
       }
     }
 
@@ -484,155 +358,18 @@ private fun MethodHeader(
   title: String,
   subtitle: String,
   tint: Color,
-  icon: AppIcon? = null,
-  @DrawableRes painter: Int? = null,
+  icon: AppIcon,
 ) {
   Row(verticalAlignment = Alignment.CenterVertically) {
     Surface(shape = CircleShape, color = tint.copy(alpha = 0.14f), modifier = Modifier.size(40.dp)) {
       Box(contentAlignment = Alignment.Center) {
-        if (painter != null) {
-          Icon(painter = painterResource(painter), contentDescription = null, tint = tint, modifier = Modifier.size(22.dp))
-        } else if (icon != null) {
-          Icon(imageVector = icon, contentDescription = null, tint = tint, modifier = Modifier.size(22.dp))
-        }
+        Icon(imageVector = icon, contentDescription = null, tint = tint, modifier = Modifier.size(22.dp))
       }
     }
     Spacer(Modifier.size(12.dp))
     Column {
       Text(title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
       Text(subtitle, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.outline)
-    }
-  }
-}
-
-/** WCAG AA contrast for normal-size text. */
-private const val MIN_TEXT_CONTRAST = 4.5
-
-/**
- * [preferred] when it reaches 4.5:1 on [background], otherwise black or white, whichever contrasts
- * more. Guards custom themes whose on-colours were not tuned for text.
- */
-private fun readableOn(
-  background: Color,
-  preferred: Color,
-): Color {
-  val bg = background.copy(alpha = 1f).toArgb()
-  if (ColorUtils.calculateContrast(preferred.copy(alpha = 1f).toArgb(), bg) >= MIN_TEXT_CONTRAST) return preferred
-  val onBlack = ColorUtils.calculateContrast(Color.Black.toArgb(), bg)
-  val onWhite = ColorUtils.calculateContrast(Color.White.toArgb(), bg)
-  return if (onBlack >= onWhite) Color.Black else Color.White
-}
-
-/** The Telegram group: the largest, accent-filled card, so it reads as the main way to get in touch. */
-@OptIn(ExperimentalFoundationApi::class)
-@Composable
-private fun CommunityHeroCard(
-  onClick: () -> Unit,
-  onLongClick: () -> Unit,
-) {
-  val cs = MaterialTheme.colorScheme
-  val container = cs.primary
-  val content = readableOn(container, cs.onPrimary)
-  val shape = MaterialTheme.shapes.extraLargeIncreased
-  val appName = stringResource(R.string.app_name)
-  val handle = SupportConfig.displayUrl(SupportConfig.telegramGroupUrl)
-  val description = stringResource(R.string.support_community_description, appName, handle)
-  Surface(
-    shape = shape,
-    color = container,
-    contentColor = content,
-    modifier =
-      Modifier
-        .fillMaxWidth()
-        .padding(horizontal = 16.dp, vertical = 8.dp)
-        .clip(shape)
-        .combinedClickable(
-          role = Role.Button,
-          onClickLabel = stringResource(R.string.support_community_cta),
-          onLongClickLabel = stringResource(R.string.support_copy),
-          onClick = onClick,
-          onLongClick = onLongClick,
-        ).semantics(mergeDescendants = true) { contentDescription = description },
-  ) {
-    Column(modifier = Modifier.padding(20.dp)) {
-      Row(verticalAlignment = Alignment.CenterVertically) {
-        Surface(shape = CircleShape, color = content.copy(alpha = 0.16f), modifier = Modifier.size(56.dp)) {
-          Box(contentAlignment = Alignment.Center) {
-            Icon(
-              painter = painterResource(R.drawable.ic_telegram),
-              contentDescription = null,
-              tint = content,
-              modifier = Modifier.size(30.dp),
-            )
-          }
-        }
-        Spacer(Modifier.size(14.dp))
-        Column(Modifier.weight(1f)) {
-          Text(
-            text = stringResource(R.string.support_community_title, appName),
-            style = MaterialTheme.typography.titleLarge,
-            fontWeight = FontWeight.ExtraBold,
-          )
-          Text(text = handle, style = MaterialTheme.typography.bodyMedium)
-        }
-      }
-      Spacer(Modifier.height(12.dp))
-      Text(text = stringResource(R.string.support_community_summary), style = MaterialTheme.typography.bodyLarge)
-      Spacer(Modifier.height(16.dp))
-      // Looks like a button but is part of the single card target, so TalkBack sees one action.
-      Surface(shape = RoundedCornerShape(12.dp), color = content, contentColor = container, modifier = Modifier.fillMaxWidth()) {
-        Row(
-          modifier = Modifier.heightIn(min = 48.dp).padding(horizontal = 16.dp),
-          verticalAlignment = Alignment.CenterVertically,
-          horizontalArrangement = Arrangement.Center,
-        ) {
-          Text(stringResource(R.string.support_community_cta), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-          Spacer(Modifier.size(8.dp))
-          Icon(imageVector = Icons.RoundedFilled.ArrowForward, contentDescription = null, modifier = Modifier.size(20.dp))
-        }
-      }
-    }
-  }
-}
-
-/** A compact personal-contact row: tap opens, long-press copies the value. */
-@OptIn(ExperimentalFoundationApi::class)
-@Composable
-private fun ContactTile(
-  title: String,
-  value: String,
-  onClick: () -> Unit,
-  onLongClick: () -> Unit,
-  icon: AppIcon? = null,
-  @DrawableRes painter: Int? = null,
-) {
-  val cs = MaterialTheme.colorScheme
-  val secondary = readableOn(cs.surfaceContainerLow, cs.onSurfaceVariant)
-  val description = stringResource(R.string.support_contact_description, title, value)
-  Row(
-    modifier =
-      Modifier
-        .fillMaxWidth()
-        .heightIn(min = 48.dp)
-        .combinedClickable(
-          role = Role.Button,
-          onClickLabel = stringResource(R.string.support_contact_open),
-          onLongClickLabel = stringResource(R.string.support_copy),
-          onClick = onClick,
-          onLongClick = onLongClick,
-        ).semantics(mergeDescendants = true) { contentDescription = description }
-        .padding(horizontal = 16.dp, vertical = 8.dp),
-    verticalAlignment = Alignment.CenterVertically,
-  ) {
-    if (painter != null) {
-      Icon(painter = painterResource(painter), contentDescription = null, tint = secondary, modifier = Modifier.size(20.dp))
-    } else if (icon != null) {
-      Icon(imageVector = icon, contentDescription = null, tint = secondary, modifier = Modifier.size(20.dp))
-    }
-    Spacer(Modifier.size(14.dp))
-    Column(Modifier.weight(1f)) {
-      Text(title, style = MaterialTheme.typography.labelLarge, color = cs.onSurface)
-      Text(value, style = MaterialTheme.typography.bodySmall, color = secondary)
     }
   }
 }
@@ -652,8 +389,6 @@ private fun QrPanel(
     color = Color.White,
     modifier =
       modifier
-        .widthIn(max = 260.dp)
-        .fillMaxWidth()
         .aspectRatio(1f)
         .clickable(role = Role.Image, onClickLabel = stringResource(R.string.support_qr_enlarged_title), onClick = onClick)
         .semantics(mergeDescendants = true) {},
@@ -676,7 +411,7 @@ private fun QrPanel(
           bitmap = remember(current) { current.asImageBitmap() },
           contentDescription = description,
           filterQuality = FilterQuality.None,
-          modifier = Modifier.padding(8.dp),
+          modifier = Modifier.padding(4.dp),
         )
       }
     }
@@ -687,48 +422,10 @@ private fun QrPanel(
 private fun DetailRow(
   label: String,
   value: String,
-  trailing: (@Composable () -> Unit)? = null,
 ) {
-  Row(
-    modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp).semantics(mergeDescendants = true) {},
-    verticalAlignment = Alignment.CenterVertically,
-  ) {
-    Column(Modifier.weight(1f)) {
-      Text(label, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.outline)
-      Text(value, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
-    }
-    trailing?.invoke()
-  }
-}
-
-@Composable
-private fun LinkRow(
-  title: String,
-  subtitle: String,
-  onClick: () -> Unit,
-  icon: AppIcon? = null,
-  @DrawableRes painter: Int? = null,
-) {
-  val cs = MaterialTheme.colorScheme
-  Row(
-    modifier =
-      Modifier
-        .fillMaxWidth()
-        .clickable(role = Role.Button, onClick = onClick)
-        .padding(horizontal = 16.dp, vertical = 14.dp),
-    verticalAlignment = Alignment.CenterVertically,
-  ) {
-    if (painter != null) {
-      Icon(painter = painterResource(painter), contentDescription = null, tint = cs.primary, modifier = Modifier.size(22.dp))
-    } else if (icon != null) {
-      Icon(imageVector = icon, contentDescription = null, tint = cs.primary, modifier = Modifier.size(22.dp))
-    }
-    Spacer(Modifier.size(16.dp))
-    Column(Modifier.weight(1f)) {
-      Text(title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
-      Text(subtitle, style = MaterialTheme.typography.bodySmall, color = cs.outline)
-    }
-    Icon(imageVector = Icons.RoundedFilled.ChevronRight, contentDescription = null, tint = cs.outline)
+  Column(modifier = Modifier.fillMaxWidth().semantics(mergeDescendants = true) {}) {
+    Text(label, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.outline)
+    Text(value, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
   }
 }
 

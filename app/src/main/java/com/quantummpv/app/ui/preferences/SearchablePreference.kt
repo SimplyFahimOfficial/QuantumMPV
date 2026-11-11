@@ -1624,6 +1624,16 @@ object SearchablePreferences {
         SearchEntrySpec(R.string.pref_seerr_server_management, listOf("seerr", "jellyseerr", "overseerr", "requests", "server", "api")),
       )
 
+      add(
+        SearchablePreference(
+          titleRes = R.string.pref_liquid_glass_title,
+          summaryRes = R.string.pref_liquid_glass_entry_summary,
+          keywords = listOf("liquid", "glass", "blur", "refraction", "lens", "frost", "experimental", "dock", "mini player"),
+          category = "Appearance",
+          screen = LiquidGlassPreferencesScreen,
+        ),
+      )
+
       // About
       add(
         SearchablePreference(
@@ -1636,9 +1646,22 @@ object SearchablePreferences {
       )
       add(
         SearchablePreference(
+          titleRes = R.string.help_support_title,
+          summaryRes = R.string.help_support_summary,
+          keywords =
+            listOf(
+              "help", "support", "telegram", "community", "bug", "report", "issue", "feedback",
+              "github", "website", "contact", "developer",
+            ),
+          category = "About",
+          screen = HelpSupportScreen,
+        ),
+      )
+      add(
+        SearchablePreference(
           titleRes = R.string.support_title,
           summaryRes = R.string.support_entry_summary,
-          keywords = listOf("support", "donate", "ko-fi", "kofi", "upi", "qr", "website", "github", "developer"),
+          keywords = listOf("support", "donate", "donation", "contribute", "upi", "qr", "pay", "payment"),
           category = "About",
           screen = SupportScreen,
         ),

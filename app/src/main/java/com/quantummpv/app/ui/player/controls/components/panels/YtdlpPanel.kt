@@ -35,7 +35,6 @@ import com.quantummpv.app.ui.player.ytdlp.YtdlCodecPreference
 import com.quantummpv.app.ui.player.ytdlp.YtdlpInstallationStatus
 import com.quantummpv.app.ui.player.ytdlp.YtdlpManager
 import com.quantummpv.app.ui.player.ytdlp.YtdlpNightlyConfirmDialog
-import com.quantummpv.app.ui.player.ytdlp.YtdlpOptionSettings
 import com.quantummpv.app.ui.player.ytdlp.YtdlpOptionsBuilder
 import com.quantummpv.app.ui.player.ytdlp.YtdlpReleaseChannel
 import com.quantummpv.app.ui.theme.spacing
@@ -392,17 +391,5 @@ fun YtdlpPanel(
 }
 
 private fun updateFormatString(prefs: YtdlPreferences) {
-  prefs.ytdlFormat.set(
-    YtdlpOptionsBuilder.buildFormat(
-      YtdlpOptionSettings(
-        codecPreference = prefs.codecPreference.get(),
-        legacyPreferH264 = prefs.preferH264.get(),
-        maxHeight = prefs.ytdlQuality.get(),
-        maxFps = prefs.maxFps.get(),
-        hdrPreference = prefs.hdrPreference.get(),
-        containerPreference = prefs.containerPreference.get(),
-        audioPreference = prefs.audioPreference.get(),
-      ),
-    ),
-  )
+  prefs.ytdlFormat.set(YtdlpOptionsBuilder.buildFormat(prefs))
 }

@@ -61,4 +61,26 @@ assert '"tvdb_id": 169' in intro_db_test and "movieResponseYieldsEverySegmentTyp
 main_activity = (root / "app/src/main/java/com/quantummpv/app/MainActivity.kt").read_text()
 assert "window.isNavigationBarContrastEnforced = true" in main_activity
 
+# mpvRx 3.0.x mpv-integration fixes (docs/UPSTREAM_3_0_SYNC_REVIEW.md, "Second batch").
+import re
+
+main_sources = "\n".join(p.read_text() for p in (root / "app/src/main/java").rglob("*.kt"))
+# duration is a double property; an int64 read is not valid for every mpv build.
+assert 'getPropertyInt("duration")' not in main_sources
+# vid / sid can be "auto" or "no", so they are read as strings.
+assert not re.search(r'getPropertyInt\("(vid|secondary-sid)"\)', main_sources)
+player_activity = (root / "app/src/main/java/com/quantummpv/app/ui/player/PlayerActivity.kt").read_text()
+assert 'PlaybackSession.setPropertyDouble("time-pos", it / MILLISECONDS_TO_SECONDS.toDouble())' in player_activity
+assert 'if (requiresYtdlp && !MpvConfigOverridePolicy.isOwnedByMpvConf("ytdl-format"))' in player_activity
+assert "ytdlFormat ?: YtdlpOptionsBuilder.configuredFormat(ytdlPreferences)" in player_activity
+assert 'PlaybackSession.setPropertyString("ytdl-format", effectiveFormat)' in player_activity
+assert 'ytdlFormat.orEmpty())' not in player_activity
+assert 'MPVLib.getPropertyNode("http-header-fields")?.toObject<List<String>>(json).orEmpty()' in playback_session
+assert "PlaybackHttpHeaders.forPlaybackItem(" in playback_session
+assert "defaultHeaders = PlaybackHttpHeaders.fromMpvHeaderFields(defaultHttpHeaderFields)" in playback_session
+header_tests = (root / "app/src/test/java/com/quantummpv/app/ui/player/PlaybackHttpHeadersTest.kt").read_text()
+assert "fun preservesNativeMpvHeaderEntries()" in header_tests
+screenshots = (root / "app/src/main/java/com/quantummpv/app/ui/player/screenshot/ScreenshotSaver.kt").read_text()
+assert "delay(250)" not in screenshots and screenshots.count("awaitScreenshotFile(") >= 3
+
 print("selected upstream 2.7.x and 3.0.x release-port regression checks passed")

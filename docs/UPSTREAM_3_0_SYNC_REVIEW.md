@@ -44,6 +44,37 @@ Every port was reviewed by hand against QuantumMPV's code; authorship and the up
 | `f5f616b5d` (vignette part, by hand) | Vignette fade uses `1.0 - smoothstep(0.1, 1.3, r)` | Reversed smoothstep edges are undefined in GLSL. QuantumMPV's Glow shader has no precision-qualified constructors, so the rest of that commit doesn't apply. |
 | `afd38886a` (by hand) | TheIntroDB v4 API | QuantumMPV called v2 with a v1 fallback. v1 is removed and v2/v3 are frozen ([migration guide](https://github.com/TheIntroDB/theintrodb-npm/blob/main/docs/migration-v3-to-v4.md)). `TheIntroDbV4Test` parses the v4 examples from TheIntroDB's OpenAPI spec. |
 
+### Second batch: mpv integration fixes
+
+Each was checked against QuantumMPV's code first; the bug exists here.
+
+| Upstream | Change | Notes |
+|---|---|---|
+| `b3a12cceb` | A load with no per-video yt-dlp format keeps the quality chosen in settings | QuantumMPV wrote an empty string over it on every yt-dlp load. Known limit: a per-video override stays until the core restarts (`shortcut:` comment in `PlayerActivity`). The `vid=auto` half of that commit does not apply, because QuantumMPV does not defer video selection. |
+| `b840fa11e` | A headerless item gets the `mpv.conf` HTTP headers back | QuantumMPV reset `http-header-fields` to an empty list, which dropped the user's default. The default is captured after init like `user-agent`. |
+| `c4cae1f64`, `9ced52e2f` | `duration` is read as a double | Seek clamp, `resolveSeekMode` and the lyrics requests. A test guard fails if an int64 read of `duration` comes back. |
+| `c4cae1f64`, `389f9509a` | `vid` and `secondary-sid` are read as strings | Both can be `auto` or `no`. |
+| `5f655ccd8` | The `position` intent extra keeps millisecond precision | |
+| `aa5ab1533` | Screenshots wait for the file instead of sleeping 250 ms | `ScreenshotSaverAwaitTest`. `screenshot-to-file` ignores `screenshot-format`, so that write is gone. |
+
+### Liquid Glass (experimental)
+
+Ported from 3.0.0–3.0.2, opt-in and off by default (Appearance > Surface style > Liquid Glass). It is the Kyant
+backdrop renderer (`io.github.kyant0:backdrop-android` 2.0.1 and `shapes-android` 1.2.1, Apache-2.0) with upstream's
+settings page, live preview and tuning options.
+
+- **Where it applies:** the navigation dock, its overflow menu and the mini player. `GlassContainer` picks the Kyant
+  renderer only when a captured backdrop is provided, so every other surface keeps the Haze or Classic path.
+- **How it is wired:** `MainScreen` records the page content and `MainActivity` records the navigation display. A
+  glass surface cannot sample a layer it is part of, so the backdrop goes only to siblings of the recorded content.
+  `tools/test_quantummpv_custom_features.py` pins this.
+- **Needs:** Android 12 for the blur. The lens refraction needs Android 13.
+- **Not ported:** glass over the playing video. Upstream moves mpv's output to a `TextureView` so the glass can sample
+  it, and a `TextureView` tone-maps HDR to SDR. That changes every playback path (HDR, PiP, external display) and
+  cannot be checked without a device. Also not ported: glass sliders and seekbar thumb, player sheets, the
+  "Liquid glass in HDR" option, and upstream's animated backgrounds (QuantumMPV has none). A custom wallpaper is
+  recorded into its own layer, so the glass refracts it together with the page content.
+
 Guards for these changes are in `tools/test_upstream_release_ports.py`.
 
 ## Applies cleanly but not ported
@@ -51,7 +82,7 @@ Guards for these changes are in `tools/test_upstream_release_ports.py`.
 | Upstream | Reason |
 |---|---|
 | `50cf4a1c0`, `4aad98480` | Play Store build only. QuantumMPV has no scoped-storage flavour (`SCOPED_STORAGE_ONLY` is false everywhere). |
-| `e12ca8e24`, `e42c3e58a`, `6bf0fc284` | Upstream's Kyant Liquid Glass. QuantumMPV has no Kyant backdrop or `liquidGlassEnabled`; `6bf0fc284` would not compile. |
+| `e42c3e58a`, `6bf0fc284` | Player glass-button inset and shadow tweaks. They belong to the player-video glass, which is not ported (see "Liquid Glass" below). |
 | `86ba2c4f6` | Adds a closing brace for an upstream-only scope bug; QuantumMPV's `FoldersPreferencesScreen` doesn't have that bug. |
 
 ## Release features that need a product decision
@@ -60,8 +91,7 @@ These conflict with QuantumMPV's own direction and need a maintainer decision be
 
 - **Material 3 Expressive redesign, new icon, icon builder and splash** (3.0.0). QuantumMPV has its own identity and the
   "Quiet Geometry" design system (`docs/design`). Porting this would replace both.
-- **Kyant Liquid Glass** (3.0.0–3.0.2). QuantumMPV kept Classic and Clear Glass (1.4.0). Upstream's version adds a native
-  backdrop dependency and HDR-specific paths.
+- **Liquid Glass over the playing video** (3.0.0–3.0.2). See "Liquid Glass (experimental)" above for what was ported.
 - **Profile hub, floating navigation rework.** QuantumMPV's navigation is planned separately (4 tabs, audit P2-4).
 - **Play Store build.** It needs a new flavour, signing and asset split.
 - **Animated Apple Music covers and the lrc.red lyrics provider.** These are new third-party services, so they need a
@@ -73,7 +103,9 @@ These conflict with QuantumMPV's own direction and need a maintainer decision be
 
 ## Fixes worth porting next (need manual adaptation)
 
-These are bug fixes that matter to QuantumMPV but conflict with its code:
+These are bug fixes that matter to QuantumMPV but conflict with its code. A mechanical check
+(`git apply --check` on every small upstream fix, with paths and packages mapped) finds one that applies, and that one
+is in the "not ported" table above, so each of these needs a hand port:
 
 1. **SMB stalls** (`14cb6290c`, `e59f3f82e`, `12186e541`): direct transport, bounded connects and listings, and safer
    reconnects. QuantumMPV's `SmbClient` differs; needs testing against a real SMB server.
@@ -87,6 +119,17 @@ These are bug fixes that matter to QuantumMPV but conflict with its code:
    validates and skips entries; compare before porting the crash-revert part.
 8. **mpvlib 1.1.4 native update.** QuantumMPV pins its own checksum-verified AARs (`mpvlib-v1.0.10`); updating them
    follows the native-artifact process, not a code port.
+
+### Assessed in the second batch and left open
+
+- **Native event callbacks can deadlock during startup** (`20238d284`). The pattern is present: `PlaybackSession`
+  registers itself as the observer, and its handlers take `nativeLock`. The upstream fix queues callbacks onto a
+  single-thread dispatcher, which re-plumbs the central event path. It needs a device to exercise, so it is left.
+- **Shader commands before `MPVLib.init()`** (`d8457c987`). `MPVView.initOptions()` applies Anime4K and HDR Toys with
+  property and `change-list` calls, which mpv rejects before init. QuantumMPV's own comment says they must stay there,
+  so the two disagree, and GPU shader loading cannot be checked here. Left, with this note.
+- **Recents hides playlists** (`5e2ade1a2`). A product change, not a bug fix.
+- **Not applicable:** `1a421970e` (`numericWidthKey` does not exist here) and the `vid=auto` half of `b3a12cceb`.
 
 ## Note on tap timing
 

@@ -25,6 +25,9 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.unit.dp
+import com.kyant.backdrop.Backdrop
+import com.quantummpv.app.ui.liquidglass.LocalLiquidGlassBackdrop
+import com.quantummpv.app.ui.liquidglass.liquidGlassSurface
 import com.quantummpv.app.ui.theme.DesignTokens.DynamicTintMode
 import com.quantummpv.app.ui.theme.DesignTokens.EdgeHighlightMode
 import com.quantummpv.app.ui.theme.DesignTokens.LocalGlassConfig
@@ -229,6 +232,20 @@ private fun GlassContainer(
     val colors = MaterialTheme.colorScheme
 
     val usesGlassStyle = config.style != SurfaceStyle.CLASSIC && config.style != SurfaceStyle.MINIMAL
+    // Experimental Liquid Glass: only surfaces that sit above a captured screen layer get a backdrop.
+    val liquidBackdrop = LocalLiquidGlassBackdrop.current
+    if (liquidBackdrop != null && (usesGlassStyle || forceGlass)) {
+        LiquidGlassContainer(
+            backdrop = liquidBackdrop,
+            modifier = modifier,
+            shape = shape,
+            tintColor = (if (selected) colors.primaryContainer else colors.surface).copy(alpha = 0.34f + opacityBoost),
+            lightweightNav = lightweightNav,
+            alwaysBorder = alwaysBorder,
+            content = content,
+        )
+        return
+    }
     if (!usesGlassStyle && !forceGlass) {
         Surface(
             modifier = modifier,
@@ -364,6 +381,33 @@ private fun GlassContainer(
                 .clip(shape)
                 .then(hazeModifier)
                 .then(if (borderColor == Color.Transparent) Modifier else Modifier.border(1.dp, borderColor, shape)),
+        contentAlignment = Alignment.Center,
+        content = { content() },
+    )
+}
+
+/** The Kyant renderer: real backdrop blur plus lens refraction, tuned on the Liquid Glass settings page. */
+@Composable
+private fun LiquidGlassContainer(
+    backdrop: Backdrop,
+    modifier: Modifier,
+    shape: Shape,
+    tintColor: Color,
+    lightweightNav: Boolean,
+    alwaysBorder: Boolean,
+    content: @Composable () -> Unit,
+) {
+    Box(
+        modifier =
+            modifier
+                .liquidGlassSurface(backdrop, shape, tintColor, lightweight = lightweightNav)
+                .then(
+                    if (alwaysBorder) {
+                        Modifier.border(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.48f), shape)
+                    } else {
+                        Modifier
+                    },
+                ),
         contentAlignment = Alignment.Center,
         content = { content() },
     )

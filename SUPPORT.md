@@ -3,6 +3,7 @@
 ## Start here
 
 - Check the [README](README.md) for features, build variants, and setup information.
+- Ask questions in the [QuantumMPV Telegram community](https://t.me/Quantummpv). In the app, **Settings → Help & Support** links to the community, the issue tracker, the [project website](https://simplyfahim.pages.dev/quantummpv), and [developer contact](https://simplyfahim.pages.dev/contactme).
 - Check [release notes](https://github.com/SimplyFahimOfficial/QuantumMPV/releases) and [existing issues](https://github.com/SimplyFahimOfficial/QuantumMPV/issues) before opening a new report.
 - When troubleshooting, note whether you are using a stable or preview build and which APK variant you installed.
 

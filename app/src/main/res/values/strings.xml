@@ -1761,14 +1761,26 @@
   <string name="update_beta_build_format">Beta r%1$d</string>
   <string name="ui_beta_badge_suffix">\u0020(Beta)</string>
   <string name="ui_core_open_source_dependencies_used_by_mpvrx">Core open source dependencies used by QuantumMPV.</string>
-  <!-- Support My Work screen. Payment details live in support/SupportConfig.kt, not here. -->
+  <!-- Help & Support and Support My Work screens. Links and payment details live in support/SupportConfig.kt, not here. -->
+  <string name="help_support_title">Help &amp; Support</string>
+  <string name="help_support_summary">Community, bug reports, project website and developer contact</string>
+  <string name="help_section_get_help">Get help</string>
+  <string name="help_telegram_title">Telegram Community</string>
+  <string name="help_telegram_summary">Ask questions, share feedback and get help.</string>
+  <string name="help_report_bug_title">Report a Bug</string>
+  <string name="help_report_bug_summary">Report issues and request improvements.</string>
+  <string name="help_section_project">Project</string>
+  <string name="help_website_title">Project Website</string>
+  <string name="help_website_summary">Explore project links, downloads and resources.</string>
+  <string name="help_section_support">Support development</string>
+  <string name="help_section_developer">Developer</string>
+  <string name="help_contact_title">Contact Developer</string>
+  <string name="help_contact_summary">Website, email and personal social links.</string>
+  <string name="help_opens_externally">Opens outside the app</string>
   <string name="support_title">Support My Work</string>
-  <string name="support_entry_summary">UPI, Ko-fi, Telegram group and project links</string>
+  <string name="support_entry_summary">Optional contributions via UPI and other payment methods.</string>
   <string name="support_intro">Your support helps me maintain existing applications, improve features and continue developing independent open-source projects. Every contribution is voluntary and appreciated.</string>
   <string name="support_section_payment">Payment options</string>
-  <string name="support_kofi_title">Ko-fi</string>
-  <string name="support_kofi_summary">Support me on Ko-fi. Opens ko-fi.com in your browser.</string>
-  <string name="support_kofi_button">Support on Ko-fi</string>
   <string name="support_upi_title">UPI</string>
   <string name="support_upi_summary">Scan the code with any UPI app, or open one on this phone. You choose the amount.</string>
   <string name="support_upi_qr_description">UPI QR code to pay %1$s, UPI ID %2$s</string>
@@ -1776,7 +1788,8 @@
   <string name="support_upi_id_label">UPI ID</string>
   <string name="support_copy_upi_id">Copy UPI ID</string>
   <string name="support_upi_id_copied">UPI ID copied</string>
-  <string name="support_open_upi_app">Open UPI app</string>
+  <string name="support_upi_id_copy_failed">Couldn’t copy the UPI ID. Please try again.</string>
+  <string name="support_open_upi_app">Pay with UPI</string>
   <string name="support_choose_upi_app">Pay with</string>
   <string name="support_no_upi_app">No UPI app is installed on this device, so the UPI ID was copied. Scan the QR code from another phone, or paste the ID in a UPI app.</string>
   <string name="support_share_qr">Share QR</string>
@@ -1788,26 +1801,11 @@
   <string name="support_upi_safety_note">Check that your UPI app shows the payee name %1$s before you pay. Opening a UPI app does not complete a payment, and this app never learns whether you paid.</string>
   <string name="support_qr_enlarged_title">Scan with any UPI app</string>
   <string name="support_close">Close</string>
-  <string name="support_section_about">About %1$s</string>
-  <string name="support_repo_title">Source code on GitHub</string>
-  <string name="support_website_title">Personal website</string>
-  <string name="support_profile_title">More projects on GitHub</string>
-  <string name="support_project_info">%1$s is free and open-source software, licensed under %2$s. Version %3$s.</string>
+  <string name="support_more_ways_title">More Ways to Pay</string>
+  <string name="support_more_ways_summary">Explore additional payment options</string>
+  <string name="support_optional_note">Contributions are optional. All features and community help stay free.</string>
   <string name="support_link_open_failed">No app found to open this link</string>
   <string name="support_link_copied_instead">No app found to open this link, so it was copied to the clipboard</string>
-  <string name="support_section_community">Community</string>
-  <string name="support_community_title">%1$s Telegram group</string>
-  <string name="support_community_summary">Get release updates, ask for help and share feedback with other users.</string>
-  <string name="support_community_cta">Join the group</string>
-  <string name="support_community_description">%1$s Telegram group, %2$s. Join for updates, help and feedback.</string>
-  <string name="support_section_personal">Personal contact</string>
-  <string name="support_contact_instagram">Instagram</string>
-  <string name="support_contact_email">Email</string>
-  <string name="support_contact_telegram">Telegram</string>
-  <string name="support_contact_description">%1$s, %2$s</string>
-  <string name="support_contact_open">Open</string>
-  <string name="support_copy">Copy</string>
-  <string name="support_value_copied">Copied %1$s</string>
   <string name="ui_already_using_latest_version">Already using latest version</string>
   <string name="ui_install_and_update_yt_dlp_for_streaming_support">Install and update yt-dlp for streaming support</string>
   <string name="ui_instructions_for_ai_file_renaming">Instructions for AI file renaming...</string>
@@ -2690,6 +2688,34 @@
   <string name="refraction_experimental_summary">Advanced refraction (may impact performance)</string>
 
   <string name="pref_section_glass_surface">Surface Appearance</string>
+  <!-- Liquid Glass (experimental) -->
+  <string name="pref_liquid_glass_title">Liquid Glass</string>
+  <string name="pref_liquid_glass_entry_summary">Experimental. Real blur and lens refraction on the navigation dock and mini player.</string>
+  <string name="pref_experimental_badge">Experimental</string>
+  <string name="pref_liquid_glass_experimental_note">Records the screen behind the glass every frame, so it can use more battery. Applies to the navigation dock, its menu and the mini player.</string>
+  <string name="pref_liquid_glass_enable_title">Use Liquid Glass</string>
+  <string name="pref_liquid_glass_enable_summary">Replaces the dock and mini player surfaces with refracting glass.</string>
+  <string name="pref_liquid_glass_enable_unavailable">Needs Android 12 or newer.</string>
+  <string name="pref_liquid_glass_material">Material</string>
+  <string name="pref_liquid_glass_frost">Frost</string>
+  <string name="pref_liquid_glass_optics">Optics</string>
+  <string name="pref_liquid_glass_opacity">Opacity</string>
+  <string name="pref_liquid_glass_refraction_height">Refraction height</string>
+  <string name="pref_liquid_glass_refraction_amount">Refraction strength</string>
+  <string name="pref_liquid_glass_depth">Depth effect</string>
+  <string name="pref_liquid_glass_chromatic">Chromatic aberration</string>
+  <string name="pref_liquid_glass_lens_unavailable">Refraction needs Android 13 or newer. Blur and tint still apply.</string>
+  <string name="pref_liquid_glass_colors">Colors</string>
+  <string name="pref_liquid_glass_vibrancy">Vibrancy</string>
+  <string name="pref_liquid_glass_highlights">Highlights</string>
+  <string name="pref_liquid_glass_highlight_style">Highlight style</string>
+  <string name="pref_liquid_glass_highlight_strength">Highlight strength</string>
+  <string name="pref_liquid_glass_highlight_width">Highlight width</string>
+  <string name="pref_liquid_glass_highlight_blur">Highlight softness</string>
+  <string name="pref_liquid_glass_component_default">Per surface</string>
+  <string name="pref_liquid_glass_highlight_ambient">Ambient</string>
+  <string name="pref_liquid_glass_highlight_plain">Plain</string>
+  <string name="pref_liquid_glass_preview_toggle">Preview toggle</string>
   <string name="pref_glass_surface_style_title">Surface style</string>
   <string name="pref_glass_surface_style_summary">Choose the style for supported surfaces, including bottom navigation and confirmation dialogs.</string>
   <string name="pref_glass_intensity_title">Surface opacity</string>
@@ -2722,13 +2748,12 @@
 
   <!-- Floating menu -->
   <string name="ui_menu">Menu</string>
-  <string name="more_menu_support">Support</string>
   <string name="pref_more_menu_title">Customize More menu</string>
   <string name="pref_more_menu_summary">Choose the shortcuts shown in the navigation bar\'s ⋮ menu</string>
   <string name="pref_more_menu_fixed_summary">Always shown</string>
   <string name="pref_more_menu_optional_header">Optional shortcuts</string>
   <string name="pref_more_menu_reset">Reset to default</string>
-  <string name="pref_more_menu_reset_summary">Show Settings, Support and Appearance only</string>
+  <string name="pref_more_menu_reset_summary">Show Settings, Help &amp; Support and Appearance only</string>
 
   <!-- Profile hub (ported from mpvRx) -->
   <string name="ui_profile">Profile</string>

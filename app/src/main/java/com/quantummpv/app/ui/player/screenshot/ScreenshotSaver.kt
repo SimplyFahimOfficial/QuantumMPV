@@ -68,6 +68,8 @@ data class ScreenshotSaveResult(
 
 object ScreenshotSaver {
   private const val SNAPSHOT_FOLDER = "mpvSnaps"
+  private const val SCREENSHOT_WRITE_POLL_MS = 25L
+  private const val SCREENSHOT_WRITE_TIMEOUT_MS = 3_000L
 
   suspend fun save(
     context: Context,
@@ -115,8 +117,24 @@ object ScreenshotSaver {
     val tempFile = File(context.cacheDir, "mpvrx_snapshot_native.${settings.format.extension}")
     tempFile.delete()
     PlaybackSession.command("screenshot-to-file", tempFile.absolutePath, if (includeSubtitles) "subtitles" else "video")
-    delay(250)
-    return tempFile.takeIf { it.exists() && it.length() > 0L }
+    return awaitScreenshotFile(tempFile)
+  }
+
+  /**
+   * mpv encodes the screenshot on its own playloop, so the command returning says nothing about the
+   * file. Waiting for the size to stop growing is the earliest point the image is known complete: a
+   * fixed sleep either wastes time on a small frame or hands back a half-written image on a large one.
+   */
+  internal suspend fun awaitScreenshotFile(file: File): File? {
+    val deadline = System.currentTimeMillis() + SCREENSHOT_WRITE_TIMEOUT_MS
+    var previousLength = -1L
+    while (System.currentTimeMillis() < deadline) {
+      val length = if (file.exists()) file.length() else -1L
+      if (length > 0L && length == previousLength) return file
+      previousLength = length
+      delay(SCREENSHOT_WRITE_POLL_MS)
+    }
+    return file.takeIf { it.exists() && it.length() > 0L }
   }
 
   private suspend fun captureWithAndroidFallback(
@@ -128,10 +146,9 @@ object ScreenshotSaver {
 
     val sourcePng = File(context.cacheDir, "mpvrx_snapshot_fallback_source.png")
     sourcePng.delete()
-    PlaybackSession.setOptionString("screenshot-format", "png")
+    // screenshot-to-file takes its format from the .png extension; mpv ignores screenshot-format for it.
     PlaybackSession.command("screenshot-to-file", sourcePng.absolutePath, if (includeSubtitles) "subtitles" else "video")
-    delay(250)
-    if (!sourcePng.exists() || sourcePng.length() == 0L) return null
+    if (awaitScreenshotFile(sourcePng) == null) return null
 
     if (settings.format == ScreenshotFormat.PNG) {
       return sourcePng

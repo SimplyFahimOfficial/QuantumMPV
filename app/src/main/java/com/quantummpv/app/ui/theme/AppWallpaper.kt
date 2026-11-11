@@ -35,8 +35,12 @@ import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import com.kyant.backdrop.backdrops.rememberLayerBackdrop
 import com.quantummpv.app.preferences.AppearancePreferences
 import com.quantummpv.app.preferences.preference.collectAsState
+import com.quantummpv.app.ui.liquidglass.LocalAppBackgroundBackdrop
+import com.quantummpv.app.ui.liquidglass.captureLiquidGlass
+import com.quantummpv.app.ui.liquidglass.liquidGlassEnabled
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.koin.compose.koinInject
@@ -81,35 +85,50 @@ fun AppWallpaperHost(content: @Composable () -> Unit) {
     }
   }
   val wallpaperActive = wallpaper != null
+  // Experimental Liquid Glass refracts the wallpaper, so it is recorded into a layer while that is on.
+  val liquidGlass = liquidGlassEnabled()
+  val wallpaperBackdrop = rememberLayerBackdrop()
+  val glassWallpaper = wallpaperBackdrop.takeIf { wallpaperActive && liquidGlass }
 
   Box(
     modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background),
   ) {
     wallpaper?.let { bitmap ->
-      WallpaperImage(
-        bitmap = bitmap,
-        zoom = wallpaperZoom,
-        offsetX = wallpaperOffsetX,
-        offsetY = wallpaperOffsetY,
-        scaleMode = wallpaperScaleMode,
-        blurRadius = wallpaperBlur,
-        imageAlpha = wallpaperAlpha,
-        modifier = Modifier.fillMaxSize(),
-      )
       Box(
         modifier =
           Modifier
             .fillMaxSize()
-            .background(
-              if (MaterialTheme.colorScheme.background.luminance() < 0.5f) {
-                Color.Black.copy(alpha = 0.18f)
-              } else {
-                Color.White.copy(alpha = 0.30f)
-              },
-            ),
-      )
+            .background(MaterialTheme.colorScheme.background)
+            .captureLiquidGlass(glassWallpaper),
+      ) {
+        WallpaperImage(
+          bitmap = bitmap,
+          zoom = wallpaperZoom,
+          offsetX = wallpaperOffsetX,
+          offsetY = wallpaperOffsetY,
+          scaleMode = wallpaperScaleMode,
+          blurRadius = wallpaperBlur,
+          imageAlpha = wallpaperAlpha,
+          modifier = Modifier.fillMaxSize(),
+        )
+        Box(
+          modifier =
+            Modifier
+              .fillMaxSize()
+              .background(
+                if (MaterialTheme.colorScheme.background.luminance() < 0.5f) {
+                  Color.Black.copy(alpha = 0.18f)
+                } else {
+                  Color.White.copy(alpha = 0.30f)
+                },
+              ),
+        )
+      }
     }
-    CompositionLocalProvider(LocalAppWallpaperActive provides wallpaperActive) {
+    CompositionLocalProvider(
+      LocalAppWallpaperActive provides wallpaperActive,
+      LocalAppBackgroundBackdrop provides glassWallpaper,
+    ) {
       content()
     }
   }

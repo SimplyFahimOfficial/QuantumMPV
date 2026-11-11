@@ -22,6 +22,7 @@ import com.quantummpv.app.data.network.proxy.XtreamStreamingProxy
 import com.quantummpv.app.domain.network.NetworkPlaybackUri
 import com.quantummpv.app.domain.network.XtreamPlaybackUri
 import com.quantummpv.app.preferences.MpvConfigOverridePolicy
+import com.quantummpv.app.utils.media.HttpUtils
 import `is`.xyz.mpv.MPVLib
 import `is`.xyz.mpv.MPVNode
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -30,6 +31,8 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.withTimeoutOrNull
+import kotlinx.serialization.json.Json
+import org.koin.core.context.GlobalContext
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.CopyOnWriteArraySet
 import java.util.concurrent.atomic.AtomicLong
@@ -191,6 +194,8 @@ object PlaybackSession : MPVLib.EventObserver {
   private var loadedAudiobookEnded = false
   private var speedBeforeAudiobook: Float? = null
   private var defaultUserAgent: String? = null
+  private var defaultHttpHeaderFields: List<String> = emptyList()
+  private val json by lazy { GlobalContext.get().get<Json>() }
   private var pendingPositionRestoreGeneration = 0L
   private var pendingPositionRestoreOverride: Pair<Long, PlaybackPositionRestoreOverride>? = null
   private var initialPositionGeneration = 0L
@@ -265,6 +270,7 @@ object PlaybackSession : MPVLib.EventObserver {
         desiredPaused = true
         loadedGeneration = 0L
         defaultUserAgent = null
+        defaultHttpHeaderFields = emptyList()
         pendingPositionRestoreGeneration = 0L
         pendingPositionRestoreOverride = null
         initialPositionGeneration = 0L
@@ -288,6 +294,12 @@ object PlaybackSession : MPVLib.EventObserver {
           // Preserve the effective default after mpv.conf has been parsed. Per-media request
           // headers may temporarily override it, but must not leak into the next item.
           defaultUserAgent = MPVLib.getPropertyString("user-agent")
+          defaultHttpHeaderFields =
+            runCatching {
+              MPVLib.getPropertyNode("http-header-fields")?.toObject<List<String>>(json).orEmpty()
+            }.onFailure { error ->
+              Log.w(TAG, "Failed to read default HTTP headers from native MPV property", error)
+            }.getOrDefault(emptyList())
           postInitOptions()
           MPVLib.getPropertyString("vo")
             ?.takeIf { it.isNotBlank() && it != "null" }
@@ -317,6 +329,7 @@ object PlaybackSession : MPVLib.EventObserver {
           desiredPaused = true
           loadedGeneration = 0L
           defaultUserAgent = null
+          defaultHttpHeaderFields = emptyList()
           pendingPositionRestoreGeneration = 0L
           pendingPositionRestoreOverride = null
           initialPositionGeneration = 0L
@@ -606,6 +619,7 @@ object PlaybackSession : MPVLib.EventObserver {
     desiredPaused = true
     loadedGeneration = 0L
     defaultUserAgent = null
+    defaultHttpHeaderFields = emptyList()
     pendingPositionRestoreGeneration = 0L
     pendingPositionRestoreOverride = null
     initialPositionGeneration = 0L
@@ -892,11 +906,12 @@ object PlaybackSession : MPVLib.EventObserver {
         )
       }
       clearTimelinePropertiesLocked()
-      val userAgent = PlaybackHttpHeaders.userAgent(resolvedItem.headers)
-      val headerFields = PlaybackHttpHeaders.toMpvHeaderFields(resolvedItem.headers)
-      // URL-specific headers are request metadata, not a global mpv preference. Always apply the
-      // media UA, then restore the post-mpv.conf default for a headerless item.
-      MPVLib.setPropertyString("user-agent", userAgent ?: defaultUserAgent.orEmpty())
+      val userAgent = effectiveRequestUserAgent(resolvedItem)
+      val headerFields = PlaybackHttpHeaders.toMpvHeaderFields(effectiveRequestHeaders(resolvedItem))
+      // Generated request fallbacks (such as Referer/User-Agent) must not make an otherwise
+      // headerless item discard the post-mpv.conf defaults. Explicit item headers retain their
+      // existing override behavior; defaults are restored/merged for generated-only or local items.
+      MPVLib.setPropertyString("user-agent", userAgent.orEmpty())
       MPVLib.setPropertyString("http-header-fields", headerFields)
       MPVLib.setPropertyString("force-media-title", "")
 
@@ -1205,7 +1220,7 @@ object PlaybackSession : MPVLib.EventObserver {
     withCore(Unit) {
       if (property == "vid") {
         if (value == "no" && _state.value.phase in setOf(PlaybackPhase.READY, PlaybackPhase.BACKGROUND)) {
-          val activeVid = MPVLib.getPropertyInt("vid") ?: -1
+          val activeVid = MPVLib.getPropertyString("vid")?.toIntOrNull() ?: -1
           if (activeVid > 0) {
             suspendedVideoTrack = SuspendedVideoTrack(activeVid, _state.value.generation)
           }
@@ -1390,7 +1405,7 @@ object PlaybackSession : MPVLib.EventObserver {
             // started without video. Repair a disabled selection before exposing READY so an
             // attached player cannot remain on a black frame with audio.
             if (current.surfaceAttached && current.currentItem?.isDefinitelyAudioOnly() != true) {
-              val selectedVideoTrack = MPVLib.getPropertyInt("vid")
+              val selectedVideoTrack = MPVLib.getPropertyString("vid")?.toIntOrNull()
               if (selectedVideoTrack == null || selectedVideoTrack <= 0) {
                 MPVLib.setPropertyString("vid", "auto")
               }
@@ -1496,6 +1511,7 @@ object PlaybackSession : MPVLib.EventObserver {
             desiredPaused = true
             loadedGeneration = 0L
             defaultUserAgent = null
+            defaultHttpHeaderFields = emptyList()
             pendingPositionRestoreGeneration = 0L
             pendingPositionRestoreOverride = null
             initialPositionGeneration = 0L
@@ -1784,6 +1800,27 @@ object PlaybackSession : MPVLib.EventObserver {
       }
   }
 
+  private fun effectiveRequestHeaders(item: PlaybackItem): Map<String, String> =
+    PlaybackHttpHeaders.forPlaybackItem(
+      itemHeaders = item.headers,
+      callerSuppliedHeaders =
+        if (hasCallerSuppliedNetworkHeaders(item)) item.callerSuppliedHeaders else emptyMap(),
+      defaultHeaders = PlaybackHttpHeaders.fromMpvHeaderFields(defaultHttpHeaderFields),
+    )
+
+  private fun effectiveRequestUserAgent(item: PlaybackItem): String? =
+    PlaybackHttpHeaders.effectiveUserAgent(
+      itemHeaders = item.headers,
+      defaultUserAgent = defaultUserAgent,
+      defaultHeaders = PlaybackHttpHeaders.fromMpvHeaderFields(defaultHttpHeaderFields),
+      hasCallerSuppliedHeaders = hasCallerSuppliedNetworkHeaders(item),
+    )
+
+  private fun hasCallerSuppliedNetworkHeaders(item: PlaybackItem): Boolean =
+    item.callerSuppliedHeaders.isNotEmpty() &&
+      sequenceOf(item.originalUri, item.playableUri)
+        .any { value -> HttpUtils.isNetworkStream(Uri.parse(value)) }
+
   private fun resolvePlayableUri(item: PlaybackItem): ResolvedPlayable {
     val xtreamReference = XtreamPlaybackUri.parse(item.playableUri)
     if (xtreamReference != null) {
@@ -1820,12 +1857,13 @@ object PlaybackSession : MPVLib.EventObserver {
     if (M3uPlaybackPolicy.shouldProxyHls(item.playableUri, item.mimeType)) {
       val hlsProxy = HlsStreamingProxy.getInstance()
       val streamId = "hls-${streamSequence.incrementAndGet()}"
-      val userAgent = PlaybackHttpHeaders.userAgent(item.headers)
+      val headers = effectiveRequestHeaders(item)
+      val userAgent = effectiveRequestUserAgent(item)
       val uri =
         hlsProxy.registerStream(
           streamId = streamId,
           sourceUrl = item.playableUri,
-          headers = item.headers,
+          headers = headers,
           userAgent = userAgent,
         )
       Log.d(TAG, "Routing HLS stream through HlsStreamingProxy: $uri")

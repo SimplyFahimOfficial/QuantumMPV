@@ -69,10 +69,10 @@ object MoreMenuPreferencesScreen : Screen {
         LazyColumn(modifier = Modifier.fillMaxSize().padding(padding)) {
           item {
             PreferenceCard {
-              // Settings and Support are fixed rows: shown, but their switches cannot be turned off.
+              // Settings and Help & Support are fixed rows: shown, but their switches cannot be turned off.
               LockedRow(Icons.RoundedFilled.Settings, stringResource(R.string.ui_settings))
               PreferenceDivider()
-              LockedRow(Icons.RoundedFilled.Favorite, stringResource(R.string.more_menu_support))
+              LockedRow(Icons.RoundedFilled.HelpOutline, stringResource(R.string.help_support_title))
             }
           }
 

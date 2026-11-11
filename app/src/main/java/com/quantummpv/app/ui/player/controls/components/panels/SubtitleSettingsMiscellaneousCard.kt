@@ -145,7 +145,7 @@ fun SubtitlesMiscellaneousCard(modifier: Modifier = Modifier) {
         val subScale by PlaybackSession.propFloat["sub-scale"].collectAsState()
         val subPos by PlaybackSession.propInt["sub-pos"].collectAsState()
         val secondarySid by PlaybackSession.propInt["secondary-sid"].collectAsState()
-        val isSecondaryActive = (secondarySid ?: PlaybackSession.getPropertyInt("secondary-sid") ?: 0) > 0
+        val isSecondaryActive = (secondarySid ?: PlaybackSession.getPropertyString("secondary-sid")?.toIntOrNull() ?: 0) > 0
         val secondarySubScale by PlaybackSession.propFloat["secondary-sub-scale"].collectAsState()
         val secondarySubPos by PlaybackSession.propInt["secondary-sub-pos"].collectAsState()
         var useAutomaticSecondaryPosition by remember {

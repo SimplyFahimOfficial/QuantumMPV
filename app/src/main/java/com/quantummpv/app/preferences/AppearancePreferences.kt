@@ -31,6 +31,7 @@ import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
+import com.quantummpv.app.preferences.preference.Preference
 import com.quantummpv.app.preferences.preference.PreferenceStore
 import com.quantummpv.app.preferences.preference.getEnum
 import com.quantummpv.app.ui.player.controls.components.rememberTvInitialFocusRequester
@@ -50,6 +51,9 @@ import com.quantummpv.app.ui.theme.DesignTokens.SurfaceStyle
 import com.quantummpv.app.ui.theme.WallpaperScaleMode
 import com.quantummpv.app.ui.theme.spacing
 import kotlinx.collections.immutable.ImmutableList
+
+/** Which edge-highlight style Liquid Glass draws; Component keeps each surface's own. */
+enum class LiquidGlassHighlightStyle { Component, Default, Ambient, Plain }
 
 class AppearancePreferences(
   private val preferenceStore: PreferenceStore,
@@ -80,6 +84,34 @@ class AppearancePreferences(
 
   // New Glass/Surface Style System
   val surfaceStyle = preferenceStore.getEnum("surface_style", SurfaceStyle.CLASSIC)
+
+  // Experimental Liquid Glass (mpvRx 3.0): a real backdrop blur and lens refraction on the browser dock and
+  // mini player. Opt-in because it records the screen behind the glass every frame.
+  val liquidGlassEnabled = preferenceStore.getBoolean("liquid_glass_enabled", false)
+  val liquidGlassOpacity = preferenceStore.getFloat("liquid_glass_opacity", 1f)
+  val liquidGlassBlur = preferenceStore.getFloat("liquid_glass_blur", 1f)
+  val liquidGlassRefractionHeight = preferenceStore.getFloat("liquid_glass_refraction_height", 1f)
+  val liquidGlassRefractionAmount = preferenceStore.getFloat("liquid_glass_refraction_amount", 1f)
+  val liquidGlassDepthEffect = preferenceStore.getBoolean("liquid_glass_depth_effect", false)
+  val liquidGlassChromaticAberration = preferenceStore.getBoolean("liquid_glass_chromatic_aberration", true)
+  val liquidGlassVibrancy = preferenceStore.getBoolean("liquid_glass_vibrancy", true)
+  val liquidGlassSaturation = preferenceStore.getFloat("liquid_glass_saturation", 1f)
+  val liquidGlassBrightness = preferenceStore.getFloat("liquid_glass_brightness", 0f)
+  val liquidGlassContrast = preferenceStore.getFloat("liquid_glass_contrast", 1f)
+  val liquidGlassHighlightStyle = preferenceStore.getEnum("liquid_glass_highlight_style", LiquidGlassHighlightStyle.Component)
+  val liquidGlassHighlightStrength = preferenceStore.getFloat("liquid_glass_highlight_strength", 1f)
+  val liquidGlassHighlightWidth = preferenceStore.getFloat("liquid_glass_highlight_width", 1f)
+  val liquidGlassHighlightBlur = preferenceStore.getFloat("liquid_glass_highlight_blur", 1f)
+
+  /** Back to the defaults for every Liquid Glass tuning option; the on/off switch is left alone. */
+  fun resetLiquidGlassOptions() {
+    listOf<Preference<*>>(
+      liquidGlassOpacity, liquidGlassBlur, liquidGlassRefractionHeight, liquidGlassRefractionAmount,
+      liquidGlassDepthEffect, liquidGlassChromaticAberration, liquidGlassVibrancy,
+      liquidGlassSaturation, liquidGlassBrightness, liquidGlassContrast,
+      liquidGlassHighlightStyle, liquidGlassHighlightStrength, liquidGlassHighlightWidth, liquidGlassHighlightBlur,
+    ).forEach { it.delete() }
+  }
 
   // Read the former navigation-only preference until the user chooses a global surface style.
   val legacyGlassBottomNavigation = preferenceStore.getBoolean("glass_bottom_navigation", false)
@@ -174,7 +206,7 @@ class AppearancePreferences(
   val profileName = preferenceStore.getString("profile_name", "")
   val profileImagePath = preferenceStore.getString("profile_image_path", "")
 
-  /** Optional dock overflow shortcuts; Settings and Support are always shown and never stored here. */
+  /** Optional dock overflow shortcuts; Settings and Help & Support are always shown and never stored here. */
   val moreMenuShortcuts =
     preferenceStore.getStringSet("more_menu_shortcuts", MoreMenuShortcut.DEFAULT.mapTo(HashSet()) { it.name })
   val showNetworkTab = preferenceStore.getBoolean("show_network_tab", false)
@@ -232,7 +264,7 @@ class AppearancePreferences(
       .toList()
 }
 
-/** Optional rows of the dock's More menu, shown below the fixed Settings and Support rows in this order. */
+/** Optional rows of the dock's More menu, shown below the fixed Settings and Help & Support rows in this order. */
 enum class MoreMenuShortcut {
   APPEARANCE,
   PLAYER,

@@ -86,6 +86,8 @@ import com.quantummpv.app.presentation.HidesMiniPlayer
 import com.quantummpv.app.ui.browser.NavigationBarState
 import com.quantummpv.app.ui.icons.Icon
 import com.quantummpv.app.ui.icons.Icons
+import com.quantummpv.app.ui.liquidglass.LocalLiquidGlassBackdrop
+import com.quantummpv.app.ui.liquidglass.liquidGlassSurface
 import com.quantummpv.app.ui.player.DeclaredPlaybackMediaKind
 import com.quantummpv.app.ui.player.MediaPlaybackService
 import com.quantummpv.app.ui.player.PlaybackPhase
@@ -251,6 +253,8 @@ private fun MiniPlayerContent(
     }
   }
 
+  val liquidBackdrop = LocalLiquidGlassBackdrop.current
+  val glassTint = MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.34f)
   Surface(
     modifier = Modifier
       .offset { IntOffset(offsetX.roundToInt(), 0) }
@@ -280,10 +284,17 @@ private fun MiniPlayerContent(
         )
       }
       .clip(RoundedCornerShape(20.dp))
-      .clickable { launchPlayer() },
-    color = MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.96f),
-    tonalElevation = 8.dp,
-    shadowElevation = 10.dp,
+      .then(
+        // Experimental Liquid Glass: refract the screen behind the mini player instead of a flat fill.
+        if (liquidBackdrop != null) {
+          Modifier.liquidGlassSurface(liquidBackdrop, RoundedCornerShape(20.dp), glassTint)
+        } else {
+          Modifier
+        },
+      ).clickable { launchPlayer() },
+    color = if (liquidBackdrop != null) Color.Transparent else MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.96f),
+    tonalElevation = if (liquidBackdrop != null) 0.dp else 8.dp,
+    shadowElevation = if (liquidBackdrop != null) 0.dp else 10.dp,
   ) {
     val progressColor = MaterialTheme.colorScheme.primary
 

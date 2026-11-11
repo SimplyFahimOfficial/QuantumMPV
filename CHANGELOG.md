@@ -18,10 +18,16 @@
 - **Lists**: Removing or re-sorting items in Recents and Playlists animates rows into place instead of jumping. Thumbnails that take time to load fade in.
 - **Design system**: QuantumMPV now follows a documented visual language ("Quiet Geometry", see docs/design). Player panels share one header with a standard-size, labelled close button; player sheets show a drag handle for their swipe-to-dismiss; player buttons give the same press feedback as the dock.
 - **Reduced motion**: Screen transitions now cross-fade under Reduced motion and are removed when motion is Off.
-- **Support My Work**: About now opens a dedicated Support My Work screen with Ko-fi, a UPI QR code generated on the device (scan, enlarge, share or save), Copy UPI ID and Open UPI app, kept separate from the project's GitHub repository and the developer's website. The UPI ID is now `SimplyFahim@sbi` with payee Md Fahim, and the old bundled QR image and unused upstream Ko-fi/PayPal/UPI strings are gone.
+- **Help & Support**: Settings has a new Help & Support page, next to About, with the Telegram community, Report a Bug (GitHub issues), the project website and Contact Developer. The More menu's Support item now opens it.
+- **Liquid Glass (experimental)**: Appearance > Surface style > Liquid Glass turns on real backdrop blur and lens refraction for the navigation dock, its menu and the mini player, with a live preview and frost, opacity, refraction, colour and highlight options. It is off by default, needs Android 12 (refraction needs Android 13), and records the screen behind the glass, so it can use more battery. Glass over the playing video is not included. Based on mpvRx 3.0.
+- **Support My Work**: Help & Support and About open a dedicated Support My Work screen with a UPI QR code generated on the device (scan, enlarge, share or save), Copy UPI ID, Pay with UPI and More Ways to Pay, kept separate from help and project links. The QR sits beside the payee details, so the whole screen fits without scrolling on most phones. The UPI ID is now `SimplyFahim@sbi` with payee Md Fahim, and the old bundled QR image and unused upstream Ko-fi/PayPal/UPI strings are gone.
 
 ### Fixes
 
+- **yt-dlp quality**: Opening a link no longer replaces the video quality chosen in settings with an empty value.
+- **HTTP headers**: A stream without its own headers now gets the headers from your `mpv.conf` back, instead of an empty list.
+- **Playback**: The `position` extra of an external "open with" intent keeps its milliseconds. Track and duration properties are read in the form mpv expects, so audio and subtitle state is right when a track is set to auto or off.
+- **Screenshots**: Saving a screenshot waits for the image to be written instead of a fixed 250 ms, so a large frame is no longer cut short.
 - **Startup performance**: The bundled Baseline Profile still pointed at the old package name, so none of the app's own code was precompiled. It now matches, and a `:baselineprofile` module can generate a real Baseline/Startup Profile and run Macrobenchmarks on a device.
 - **Accessibility**: Back arrows in Settings and other screens, the password visibility toggle, Navidrome favourite toggles, subtitle delete and the Secure Folder menu now have TalkBack labels.
 - **Text**: Music library menus and the create-playlist dialog are now translatable.

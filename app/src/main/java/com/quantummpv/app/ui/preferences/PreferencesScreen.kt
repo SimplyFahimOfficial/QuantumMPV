@@ -89,6 +89,8 @@ private data class SettingsSection(
   val title: String,
   val tint: Color,
   val items: List<SettingsDestination>,
+  /** Tints the group with the primary container so a section such as Help & Support stands out. */
+  val highlighted: Boolean = false,
 )
 
 @Serializable
@@ -405,6 +407,20 @@ object PreferencesScreen : Screen {
             ),
           ),
       ),
+      SettingsSection(
+        title = stringResource(R.string.pref_section_support),
+        tint = colorScheme.primary,
+        highlighted = true,
+        items =
+          listOf(
+            SettingsDestination(
+              title = stringResource(R.string.help_support_title),
+              summary = stringResource(R.string.help_support_summary),
+              icon = Icons.RoundedFilled.HelpOutline,
+              screen = HelpSupportScreen,
+            ),
+          ),
+      ),
     )
   }
 }
@@ -509,7 +525,7 @@ private fun SettingsDestinationGroup(
   Surface(
     modifier = modifier.fillMaxWidth(),
     shape = MaterialTheme.shapes.extraLargeIncreased,
-    color = MaterialTheme.colorScheme.surfaceContainerLow,
+    color = if (section.highlighted) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceContainerLow,
     tonalElevation = 1.dp,
   ) {
     Column(modifier = Modifier.fillMaxWidth()) {
@@ -518,6 +534,7 @@ private fun SettingsDestinationGroup(
           item = item,
           rowIndex = firstRowIndex + index,
           isSelected = selectedScreen == item.screen,
+          highlighted = section.highlighted,
           onClick = { onItemClick(item) },
           modifier = Modifier.staggeredEntrance(firstRowIndex + index, stagger),
         )
@@ -537,17 +554,22 @@ private fun SettingsDestinationRow(
   item: SettingsDestination,
   rowIndex: Int,
   isSelected: Boolean,
+  highlighted: Boolean,
   onClick: () -> Unit,
   modifier: Modifier = Modifier,
 ) {
   // Tonal containers cycle primary -> secondary -> tertiary so the list follows dynamic color.
   val colors = MaterialTheme.colorScheme
   val (iconContainer, iconContent) =
-    when (rowIndex % 3) {
-      0 -> colors.primaryContainer to colors.onPrimaryContainer
-      1 -> colors.secondaryContainer to colors.onSecondaryContainer
+    when {
+      highlighted -> colors.primary to colors.onPrimary
+      rowIndex % 3 == 0 -> colors.primaryContainer to colors.onPrimaryContainer
+      rowIndex % 3 == 1 -> colors.secondaryContainer to colors.onSecondaryContainer
       else -> colors.tertiaryContainer to colors.onTertiaryContainer
     }
+  // On the tinted group the text must pair with the primary container, not the plain surface.
+  val titleColor = if (highlighted) colors.onPrimaryContainer else colors.onSurface
+  val summaryColor = if (highlighted) colors.onPrimaryContainer.copy(alpha = 0.8f) else colors.onSurfaceVariant
   val rowBgColor =
     if (isSelected) {
       MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.5f)
@@ -589,15 +611,15 @@ private fun SettingsDestinationRow(
       Text(
         text = item.title,
         style = MaterialTheme.typography.titleMedium,
-        fontWeight = FontWeight.SemiBold,
-        color = MaterialTheme.colorScheme.onSurface,
+        fontWeight = if (highlighted) FontWeight.Bold else FontWeight.SemiBold,
+        color = titleColor,
         maxLines = 1,
         overflow = TextOverflow.Ellipsis,
       )
       Text(
         text = item.summary,
         style = MaterialTheme.typography.bodyMedium,
-        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        color = summaryColor,
         maxLines = 2,
         overflow = TextOverflow.Ellipsis,
       )
@@ -609,7 +631,7 @@ private fun SettingsDestinationRow(
       imageVector = Icons.RoundedFilled.ChevronRight,
       contentDescription = null,
       modifier = Modifier.size(24.dp),
-      tint = MaterialTheme.colorScheme.outline,
+      tint = if (highlighted) summaryColor else MaterialTheme.colorScheme.outline,
     )
   }
 }
