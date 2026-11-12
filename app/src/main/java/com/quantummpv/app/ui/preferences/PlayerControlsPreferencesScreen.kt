@@ -224,8 +224,8 @@ object PlayerControlsPreferencesScreen : Screen {
                 title = stringResource(R.string.pref_layout_restore_classic_title),
                 subtitle = stringResource(R.string.pref_layout_restore_classic_summary),
                 onConfirm = {
-                  appearancePrefs.restoreClassicPlayerLayout()
-                  // The classic player also had the controls drawer; its buttons would otherwise have no home.
+                  appearancePrefs.resetPlayerLayoutToDefault()
+                  // The default layout also has the controls drawer; its buttons would otherwise have no home.
                   playerPrefs.showControlsDrawer.set(true)
                   showClassicDialog = false
                 },

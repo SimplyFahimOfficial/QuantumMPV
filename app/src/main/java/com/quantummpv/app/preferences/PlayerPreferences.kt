@@ -92,7 +92,7 @@ class PlayerPreferences(
   val allowGesturesInPanels = preferenceStore.getBoolean("allow_gestures_in_panels")
 
   // Off for new installs: the More sheet already lists every control that is not on the HUD.
-  val showControlsDrawer = preferenceStore.getBoolean("show_controls_drawer", false)
+  val showControlsDrawer = preferenceStore.getBoolean("show_controls_drawer", true)
   val showSystemStatusBar = preferenceStore.getBoolean("show_system_status_bar")
   val showSystemNavigationBar = preferenceStore.getBoolean("show_system_navigation_bar")
   val safeAreaWindow = preferenceStore.getBoolean("safe_area_window", false)

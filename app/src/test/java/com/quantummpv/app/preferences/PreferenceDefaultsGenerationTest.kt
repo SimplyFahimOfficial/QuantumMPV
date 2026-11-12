@@ -31,13 +31,13 @@ class PreferenceDefaultsGenerationTest {
   private fun player() = PlayerPreferences(AndroidPreferenceStore(context, prefs))
 
   @Test
-  fun freshInstallGetsTheRecommendedLayout() {
+  fun freshInstallGetsTheFullLayout() {
     PreferenceDefaultsGeneration.apply(prefs, hasOtherAppData = false)
 
     val appearance = appearance()
     assertEquals(AppearancePreferences.DEFAULT_TOP_RIGHT_CONTROLS, appearance.topRightControls.get())
     assertEquals(AppearancePreferences.DEFAULT_PORTRAIT_BOTTOM_CONTROLS, appearance.portraitBottomControls.get())
-    assertFalse(player().showControlsDrawer.get())
+    assertTrue(player().showControlsDrawer.get())
     assertEquals(PreferenceDefaultsGeneration.CURRENT, prefs.getInt(PreferenceDefaultsGeneration.KEY, 0))
   }
 
@@ -96,21 +96,21 @@ class PreferenceDefaultsGenerationTest {
 
     assertEquals(PreferenceDefaultsGeneration.CURRENT, from)
     assertEquals("AUDIO_TRACK", appearance().topRightControls.get())
-    assertFalse(player().showControlsDrawer.get())
+    assertTrue(player().showControlsDrawer.get())
   }
 
   @Test
-  fun resetToRecommendedReplacesEveryRegion() {
+  fun recommendedPresetReplacesEveryRegionWithTheCompactLayout() {
     prefs.edit().putBoolean("amoled_mode", true).commit()
     PreferenceDefaultsGeneration.apply(prefs, hasOtherAppData = true)
     val appearance = appearance()
 
     appearance.resetPlayerLayoutToRecommended()
 
-    assertEquals(AppearancePreferences.DEFAULT_TOP_RIGHT_CONTROLS, appearance.topRightControls.get())
-    assertEquals(AppearancePreferences.DEFAULT_BOTTOM_RIGHT_CONTROLS, appearance.bottomRightControls.get())
-    assertEquals(AppearancePreferences.DEFAULT_BOTTOM_LEFT_CONTROLS, appearance.bottomLeftControls.get())
-    assertEquals(AppearancePreferences.DEFAULT_PORTRAIT_BOTTOM_CONTROLS, appearance.portraitBottomControls.get())
+    assertEquals(AppearancePreferences.COMPACT_TOP_RIGHT_CONTROLS, appearance.topRightControls.get())
+    assertEquals(AppearancePreferences.COMPACT_BOTTOM_RIGHT_CONTROLS, appearance.bottomRightControls.get())
+    assertEquals(AppearancePreferences.COMPACT_BOTTOM_LEFT_CONTROLS, appearance.bottomLeftControls.get())
+    assertEquals(AppearancePreferences.COMPACT_PORTRAIT_BOTTOM_CONTROLS, appearance.portraitBottomControls.get())
   }
 
   @Test
@@ -119,31 +119,84 @@ class PreferenceDefaultsGenerationTest {
   }
 
   @Test
-  fun restoringTheClassicLayoutBringsBackEveryButtonAndLeavesNoneUnknown() {
-    // A fresh install starts on the trimmed recommended layout.
-    PreferenceDefaultsGeneration.apply(prefs, hasOtherAppData = false)
+  fun resetToDefaultRestoresTheFullLayoutInEveryRegion() {
+    appearance().resetPlayerLayoutToRecommended()
     val appearance = appearance()
-    val recommended = listOf(
-      appearance.topRightControls, appearance.bottomRightControls,
-      appearance.bottomLeftControls, appearance.portraitBottomControls,
-    ).map { it.get() }
 
-    appearance.restoreClassicPlayerLayout()
+    appearance.resetPlayerLayoutToDefault()
 
-    val regions = listOf(
-      "top_right_controls" to appearance.topRightControls,
-      "bottom_right_controls" to appearance.bottomRightControls,
-      "bottom_left_controls" to appearance.bottomLeftControls,
-      "portrait_bottom_controls" to appearance.portraitBottomControls,
-    )
-    regions.forEachIndexed { index, (key, preference) ->
-      val classic = PreferenceDefaultsGeneration.legacyDefault(key) as String
-      assertEquals("$key is the layout earlier versions shipped", classic, preference.get())
-      val tokens = classic.split(",")
-      // A misspelt button name would be silently dropped from the player, so every token must exist.
-      tokens.forEach { token -> PlayerButton.valueOf(token) }
-      assertTrue("$key has more buttons than the recommended layout", tokens.size > recommended[index].split(",").size)
-    }
     assertEquals(AppearancePreferences.DEFAULT_TOP_LEFT_CONTROLS, appearance.topLeftControls.get())
+    assertEquals(AppearancePreferences.DEFAULT_TOP_RIGHT_CONTROLS, appearance.topRightControls.get())
+    assertEquals(AppearancePreferences.DEFAULT_BOTTOM_RIGHT_CONTROLS, appearance.bottomRightControls.get())
+    assertEquals(AppearancePreferences.DEFAULT_BOTTOM_LEFT_CONTROLS, appearance.bottomLeftControls.get())
+    assertEquals(AppearancePreferences.DEFAULT_PORTRAIT_BOTTOM_CONTROLS, appearance.portraitBottomControls.get())
+  }
+
+  @Test
+  fun everyDefaultButtonNameExistsAndIsUsedOnceAcrossLandscape() {
+    // A misspelt name is silently dropped from the player, so every token must be a real button.
+    val landscape =
+      listOf(
+        AppearancePreferences.DEFAULT_TOP_LEFT_CONTROLS,
+        AppearancePreferences.DEFAULT_TOP_RIGHT_CONTROLS,
+        AppearancePreferences.DEFAULT_BOTTOM_RIGHT_CONTROLS,
+        AppearancePreferences.DEFAULT_BOTTOM_LEFT_CONTROLS,
+      ).flatMap { it.split(",") }
+    (landscape + AppearancePreferences.DEFAULT_PORTRAIT_BOTTOM_CONTROLS.split(",")).forEach(PlayerButton::valueOf)
+    assertEquals("a button appears in two landscape regions", landscape.size, landscape.toSet().size)
+    val portrait = AppearancePreferences.DEFAULT_PORTRAIT_BOTTOM_CONTROLS.split(",")
+    assertEquals(portrait.size, portrait.toSet().size)
+  }
+
+  @Test
+  fun generationTwoInstallThatNeverCustomizedFollowsTheNewDefault() {
+    // A generation-2 install with the compact layout saved only because the editor was opened and closed.
+    prefs
+      .edit()
+      .putInt(PreferenceDefaultsGeneration.KEY, 2)
+      .putString("top_right_controls", AppearancePreferences.COMPACT_TOP_RIGHT_CONTROLS)
+      .putString("portrait_bottom_controls", AppearancePreferences.COMPACT_PORTRAIT_BOTTOM_CONTROLS)
+      .commit()
+
+    val from = PreferenceDefaultsGeneration.apply(prefs, hasOtherAppData = true)
+
+    assertEquals(2, from)
+    val appearance = appearance()
+    assertEquals(AppearancePreferences.DEFAULT_TOP_RIGHT_CONTROLS, appearance.topRightControls.get())
+    assertEquals(AppearancePreferences.DEFAULT_PORTRAIT_BOTTOM_CONTROLS, appearance.portraitBottomControls.get())
+    assertTrue(player().showControlsDrawer.get())
+    assertEquals(3, prefs.getInt(PreferenceDefaultsGeneration.KEY, 0))
+  }
+
+  @Test
+  fun generationTwoInstallKeepsACustomizedRegionAndMigratesTheRest() {
+    prefs
+      .edit()
+      .putInt(PreferenceDefaultsGeneration.KEY, 2)
+      .putString("top_right_controls", "SUBTITLES,CLIP,MORE_OPTIONS")
+      .putString("bottom_left_controls", AppearancePreferences.COMPACT_BOTTOM_LEFT_CONTROLS)
+      .putBoolean("show_controls_drawer", false)
+      .commit()
+
+    PreferenceDefaultsGeneration.apply(prefs, hasOtherAppData = true)
+
+    val appearance = appearance()
+    assertEquals("SUBTITLES,CLIP,MORE_OPTIONS", appearance.topRightControls.get())
+    assertEquals(AppearancePreferences.DEFAULT_BOTTOM_LEFT_CONTROLS, appearance.bottomLeftControls.get())
+    // An explicit drawer choice is a preference, not a default.
+    assertFalse(player().showControlsDrawer.get())
+  }
+
+  @Test
+  fun legacyInstallStillEndsOnTheFullLayout() {
+    prefs.edit().putBoolean("amoled_mode", true).commit()
+
+    PreferenceDefaultsGeneration.apply(prefs, hasOtherAppData = true)
+
+    assertEquals(AppearancePreferences.DEFAULT_BOTTOM_LEFT_CONTROLS, appearance().bottomLeftControls.get())
+    assertEquals(
+      PreferenceDefaultsGeneration.legacyDefault("bottom_left_controls"),
+      appearance().bottomLeftControls.get(),
+    )
   }
 }

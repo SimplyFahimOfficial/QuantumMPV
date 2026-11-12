@@ -99,7 +99,7 @@ def main() -> int:
     print("PASS: surface styles are gone, Liquid Glass leads Theme, and the dock follows only Liquid Glass.")
 
     player_controls_screen = read("app/src/main/java/com/quantummpv/app/ui/preferences/PlayerControlsPreferencesScreen.kt")
-    require(r'appearancePrefs\.restoreClassicPlayerLayout\(\)[\s\S]{0,200}playerPrefs\.showControlsDrawer\.set\(true\)',
+    require(r'appearancePrefs\.resetPlayerLayoutToDefault\(\)[\s\S]{0,200}playerPrefs\.showControlsDrawer\.set\(true\)',
             player_controls_screen, "Restore classic layout brings back the full legacy button set and the controls drawer")
     require(r'pref_layout_restore_classic', searchable_preferences, "Restore classic layout is searchable")
     require(r'pref_layout_restore_classic', search_navigation, "Restore classic layout has a search anchor")
