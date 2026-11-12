@@ -173,6 +173,42 @@ object LiquidGlassPreferencesScreen : Screen {
                   )
                 }
               }
+              item { SectionHeading(R.string.pref_liquid_glass_player_section) }
+              item {
+                val playerEnabled by preferences.liquidGlassPlayerEnabled.collectAsState()
+                PreferenceCard {
+                  SwitchPreference(
+                    value = playerEnabled && supported,
+                    onValueChange = preferences.liquidGlassPlayerEnabled::set,
+                    title = { Text(stringResource(R.string.pref_liquid_glass_player_title)) },
+                    summary = {
+                      Text(
+                        text =
+                          stringResource(
+                            if (supported) R.string.pref_liquid_glass_player_summary else R.string.pref_liquid_glass_enable_unavailable,
+                          ),
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                      )
+                    },
+                    enabled = supported,
+                    modifier = Modifier.settingsSearchTarget(R.string.pref_liquid_glass_player_title),
+                  )
+                  PreferenceDivider()
+                  SwitchPreference(
+                    value = preferences.liquidGlassInHdr.collectAsState().value,
+                    onValueChange = preferences.liquidGlassInHdr::set,
+                    title = { Text(stringResource(R.string.pref_liquid_glass_player_hdr_title)) },
+                    summary = {
+                      Text(
+                        text = stringResource(R.string.pref_liquid_glass_player_hdr_summary),
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                      )
+                    },
+                    enabled = supported && playerEnabled,
+                    modifier = Modifier.settingsSearchTarget(R.string.pref_liquid_glass_player_hdr_title),
+                  )
+                }
+              }
               liquidGlassOptions(preferences, enabled)
             }
           }

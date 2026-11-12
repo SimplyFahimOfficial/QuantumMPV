@@ -170,6 +170,23 @@ Checked and not needed: `8169193f` (QuantumMPV never had the restore guard that 
 
 Deferred: `9c9c089f9` replaces MediaInfo with platform probing on 32-bit devices in a 438-line rewrite. That changes which codec and subtitle details the browser shows, so it needs a device.
 
+### Sixth batch: Liquid Glass over the playing video (experimental)
+
+Ported from 3.0.0-3.0.2 as an opt-in setting, off by default.
+
+| Upstream | Change | Notes |
+|---|---|---|
+| `MpvSurfaceHost` | `MpvTextureHost` plus `PlayerGlassRenderer` | Upstream turned `MPVView` into a `FrameLayout` that swaps its child. Here `MPVView` stays a `SurfaceView` (`BaseMPVView` in the pinned mpvlib is one), and the texture host is a sibling that is only mounted while the option is on. With the option off nothing is added and no code path changes. |
+| `shouldUseTextureRendering` | `PlayerGlassPolicy` | One pure rule used by the activity and the controls. Adds the Android 12 floor, the Ambient background exclusion and the `mpv.conf` HDR ownership check. `PlayerGlassPolicyTest`. |
+| `VideoGlassBackdrop` | `VideoGlassBackdrop.kt` | Same layer-mapping approach: the texture's GPU layer is drawn into a backdrop in the controls' coordinates, so there is no `PixelCopy` or bitmap readback. |
+| `PlayerGlassSurface` | reuses `liquidGlassSurface` | The dock and mini player already use it, so no second glass implementation was added. |
+
+Renderer switching is safe because each renderer binds under its own owner token and `PlaybackSession.unbindSurface` ignores a non-owner, the same pattern the mini player and the external display use.
+
+Not ported: glass sliders, seekbar thumb, sheets and panels, and the live-preview change for the player. Only the round buttons drawn by `ControlsButton` are glass; pills and the play/pause cluster draw their own containers and are unchanged.
+
+Verification: compiled, ktlint, detekt, Android lint and all 341 unit tests were run locally on a JDK 17 and Android SDK 37 toolchain, and in CI. Nothing runs the feature itself: no device or emulator was available (the sandbox has no KVM), so the renderer switch, the first frame, PiP, background playback, HDR and frame pacing are unverified.
+
 ### Assessed in the second batch and left open
 
 - **Native event callbacks can deadlock during startup** (`20238d284`). The pattern is present: `PlaybackSession`

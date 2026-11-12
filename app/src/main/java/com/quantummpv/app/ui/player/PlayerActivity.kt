@@ -49,6 +49,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -300,6 +301,9 @@ class PlayerActivity :
    * The MPV player view.
    */
   val player by lazy { binding.player }
+
+  // Dormant unless the experimental player glass option is on: with it off nothing is added to the layout.
+  internal val glassRenderer by lazy { PlayerGlassRenderer(binding.player, appearancePreferences, decoderPreferences, playerPreferences) }
 
   override fun currentThumbnailSource(): String? = currentPlayableUri
 
@@ -664,6 +668,7 @@ class PlayerActivity :
     setupAudio()
     setupBackPressHandler()
     setupVideoAmbientBackground()
+    setupPlayerGlass()
     setupPlayerControls()
     setupVideoTransformObserver()
     setupAudioPlayerViewObserver()
@@ -1042,15 +1047,31 @@ class PlayerActivity :
     return true
   }
 
+  /** Evaluates the glass policy now and again whenever one of its inputs changes. */
+  private fun setupPlayerGlass() {
+    glassRenderer.update()
+    lifecycleScope.launch {
+      combine(
+        appearancePreferences.liquidGlassPlayerEnabled.changes(),
+        appearancePreferences.liquidGlassInHdr.changes(),
+        decoderPreferences.hdrScreenMode.changes(),
+        playerPreferences.isAmbientEnabled.changes(),
+        playerPreferences.ambientStyle.changes(),
+      ) { _, _, _, _, _ -> }.collect { glassRenderer.update() }
+    }
+  }
+
   private fun setupPlayerControls() {
     binding.controls.setContent {
       MpvrxTheme {
         Box(modifier = Modifier.fillMaxSize()) {
-          PlayerControls(
-            viewModel = viewModel,
-            onBackPress = ::handleBackPress,
-            modifier = Modifier,
-          )
+          CompositionLocalProvider(LocalPlayerGlassRenderer provides glassRenderer) {
+            PlayerControls(
+              viewModel = viewModel,
+              onBackPress = ::handleBackPress,
+              modifier = Modifier,
+            )
+          }
           val playbackError by viewModel.playbackError.collectAsState()
           playbackError?.let { error ->
             Box(Modifier.fillMaxSize().background(PlaybackErrorScrim))
@@ -1224,6 +1245,7 @@ class PlayerActivity :
           binding.player.scaleY = scale
           binding.player.translationX = panX
           binding.player.translationY = panY
+          glassRenderer.applyTransform(scale, panX, panY)
 
           if (canIssueMpvCommands()) {
             val scaleByWindow = subtitlesPreferences.scaleByWindow.get()
@@ -1282,7 +1304,7 @@ class PlayerActivity :
           if (isAudioOnly) {
             applyPlaybackBrightnessPolicy(isAudio = true)
             viewModel.showControls()
-            binding.player.visibility = View.INVISIBLE
+            glassRenderer.setVideoVisibility(View.INVISIBLE)
             try {
               WindowCompat.setDecorFitsSystemWindows(window, false)
               windowInsetsController.apply {
@@ -1297,7 +1319,7 @@ class PlayerActivity :
             }
           } else {
             binding.player.clipToOutline = false
-            binding.player.visibility = View.VISIBLE
+            glassRenderer.setVideoVisibility(View.VISIBLE)
             if (isVideoAmbientPresentationActive) {
               binding.root.post(::updateVideoAmbientPlayerBounds)
             } else {
@@ -1588,6 +1610,7 @@ class PlayerActivity :
     player.isExiting = true
     mpvInitialized = false
     player.onSurfaceReady = null
+    glassRenderer.release()
     videoParamRefreshJob?.cancel()
     backgroundServiceSyncJob?.cancel()
     backgroundHandoffJob?.cancel()

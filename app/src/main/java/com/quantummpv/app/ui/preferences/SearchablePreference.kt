@@ -1635,6 +1635,15 @@ object SearchablePreferences {
           screen = LiquidGlassPreferencesScreen,
         ),
       )
+      add(
+        SearchablePreference(
+          titleRes = R.string.pref_liquid_glass_player_title,
+          summaryRes = R.string.pref_liquid_glass_player_summary,
+          keywords = listOf("liquid", "glass", "player", "controls", "buttons", "video", "blur", "hdr", "experimental"),
+          category = "Appearance",
+          screen = LiquidGlassPreferencesScreen,
+        ),
+      )
 
       // About
       add(
