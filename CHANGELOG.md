@@ -37,6 +37,7 @@
 - **Picture-in-picture**: The window hint used for the expand animation is no longer replaced with PiP-window bounds while in PiP. Not checked on a device.
 - **Aspect ratio**: Choosing an aspect ratio resets manual zoom and pan; restoring a saved one keeps them.
 - **Music player rotation**: Automatic orientation now follows Android's rotation lock.
+- **Player controls on narrow screens**: With the full default layout, the bottom-left row in landscape and the bottom row in portrait scroll sideways when the buttons do not fit, and the edge fades to show there is more. Scrolling them keeps the controls on screen. The top-right and bottom-right groups keep their natural width. Not checked on a device.
 - **yt-dlp quality**: Opening a link no longer replaces the video quality chosen in settings with an empty value.
 - **HTTP headers**: A stream without its own headers now gets the headers from your `mpv.conf` back, instead of an empty list.
 - **Playback**: The `position` extra of an external "open with" intent keeps its milliseconds. Track and duration properties are read in the form mpv expects, so audio and subtitle state is right when a track is set to auto or off.

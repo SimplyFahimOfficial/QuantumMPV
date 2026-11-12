@@ -153,6 +153,12 @@ Checked and not needed: `66d1a4d68` (QuantumMPV already uses `hr-seek=no` with p
 A-B loops, and has no `scrubTo`), `155fd0b98` (`onStartCommand` already promotes first, which covers the Android 16
 deadline), `171eb9066` (the legacy flags are already one assignment), `d9936e04e` (no clip subtitle loader here).
 
+### Fourth batch: control overflow
+
+| Upstream | Change | Notes |
+|---|---|---|
+| `1bf439137`, `eabbb3464` (part) | `fadingHorizontalScroll` on the landscape bottom-left group and the portrait bottom row | Edge alpha is a pure function (`FadingHorizontalScrollTest`). `shadowRoom` and `reverseScrolling` are not ported: QuantumMPV's buttons have no shadow and nothing here scrolls in reverse. The top-right and bottom-right groups keep their natural width, as upstream does. The layout-preview fade has no counterpart because QuantumMPV's preview wraps. |
+
 ### Assessed in the second batch and left open
 
 - **Native event callbacks can deadlock during startup** (`20238d284`). The pattern is present: `PlaybackSession`

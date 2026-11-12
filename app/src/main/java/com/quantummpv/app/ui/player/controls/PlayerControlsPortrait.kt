@@ -10,7 +10,6 @@
 package com.quantummpv.app.ui.player.controls
 
 import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -46,6 +45,8 @@ import com.quantummpv.app.ui.player.Sheets
 import com.quantummpv.app.ui.player.VideoAspect
 import com.quantummpv.app.ui.player.controls.components.ControlsButton
 import com.quantummpv.app.ui.player.controls.components.ControlsGroup
+import com.quantummpv.app.ui.player.controls.components.KeepControlsShownWhileScrolling
+import com.quantummpv.app.ui.player.controls.components.fadingHorizontalScroll
 import com.quantummpv.app.ui.player.controls.components.playerButtonBorderColor
 import com.quantummpv.app.ui.player.controls.components.playerButtonContainerColor
 import com.quantummpv.app.ui.player.controls.components.playerButtonContentColor
@@ -233,11 +234,13 @@ fun BottomPlayerControlsPortrait(
   activity: PlayerActivity,
 ) {
   PlayerButtonTheme(hideBackground) {
+    val scrollState = rememberScrollState()
+    KeepControlsShownWhileScrolling(scrollState)
     Row(
       modifier =
         Modifier
           .fillMaxWidth()
-          .horizontalScroll(rememberScrollState())
+          .fadingHorizontalScroll(scrollState)
           .padding(bottom = MaterialTheme.spacing.medium),
       horizontalArrangement = Arrangement.spacedBy(MaterialTheme.spacing.medium, Alignment.CenterHorizontally),
       verticalAlignment = Alignment.CenterVertically,
