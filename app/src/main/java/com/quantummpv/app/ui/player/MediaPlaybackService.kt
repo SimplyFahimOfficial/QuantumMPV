@@ -62,6 +62,7 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
@@ -295,7 +296,9 @@ class MediaPlaybackService :
   private var foregroundReady = false
   private val audioFocusChangeListener =
     AudioManager.OnAudioFocusChangeListener { change ->
-      if (mpvAccessReleased || handingBackToActivity) return@OnAudioFocusChangeListener
+      if (mpvAccessReleased || handingBackToActivity || audioPreferences.ignoreAudioFocus.get()) {
+        return@OnAudioFocusChangeListener
+      }
       when (change) {
         AudioManager.AUDIOFOCUS_LOSS -> {
           resumeAfterFocusGain = false
@@ -331,8 +334,9 @@ class MediaPlaybackService :
         context: Context?,
         intent: Intent?,
       ) {
-        if (!mpvAccessReleased && !handingBackToActivity &&
-          intent?.action == AudioManager.ACTION_AUDIO_BECOMING_NOISY && ownsAudioFocus
+        // Headphone disconnection still pauses detached playback when focus handling is disabled.
+        if (canHandleDetachedTransport() &&
+          intent?.action == AudioManager.ACTION_AUDIO_BECOMING_NOISY
         ) {
           PlaybackSession.setPropertyBoolean("pause", true)
         }
@@ -484,6 +488,19 @@ class MediaPlaybackService :
           stopDetachedPlaybackIfNeeded()
           stopForegroundNotification()
           stopSelf()
+        }
+      }
+    }
+
+    serviceScope.launch {
+      audioPreferences.ignoreAudioFocus.changes().distinctUntilChanged().collect { ignore ->
+        if (mpvAccessReleased) return@collect
+        if (ignore) {
+          abandonAudioOwnership()
+        } else if (canHandleDetachedTransport() &&
+          PlaybackSession.getPropertyBoolean("pause") == false && !takeAudioOwnership()
+        ) {
+          PlaybackSession.setPropertyBoolean("pause", true)
         }
       }
     }
@@ -791,6 +808,10 @@ class MediaPlaybackService :
   }
 
   fun takeAudioOwnership(): Boolean {
+    if (audioPreferences.ignoreAudioFocus.get()) {
+      abandonAudioOwnership()
+      return true
+    }
     // During a foreground handoff, returning true means "ownership is intentionally not needed".
     // Do not request focus and bounce it back to PlayerActivity; that focus ping-pong is exactly
     // what can turn a notification tap into an unexpected pause.
