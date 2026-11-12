@@ -41,13 +41,8 @@ import com.quantummpv.app.ui.player.controls.components.tvInitialFocus
 import com.quantummpv.app.ui.theme.AppTheme
 import com.quantummpv.app.ui.theme.CustomThemeDefinition
 import com.quantummpv.app.ui.theme.DarkMode
-import com.quantummpv.app.ui.theme.DesignTokens.DynamicTintMode
-import com.quantummpv.app.ui.theme.DesignTokens.EdgeHighlightMode
-import com.quantummpv.app.ui.theme.DesignTokens.GlassConfig
 import com.quantummpv.app.ui.theme.DesignTokens.MotionStyle
 import com.quantummpv.app.ui.theme.DesignTokens.PerformanceMode
-import com.quantummpv.app.ui.theme.DesignTokens.RefractionMode
-import com.quantummpv.app.ui.theme.DesignTokens.SurfaceStyle
 import com.quantummpv.app.ui.theme.WallpaperScaleMode
 import com.quantummpv.app.ui.theme.spacing
 import kotlinx.collections.immutable.ImmutableList
@@ -82,9 +77,6 @@ class AppearancePreferences(
   val customWallpaperAlpha = preferenceStore.getFloat("custom_wallpaper_alpha", 1f)
   val amoledMode = preferenceStore.getBoolean("amoled_mode", false)
 
-  // New Glass/Surface Style System
-  val surfaceStyle = preferenceStore.getEnum("surface_style", SurfaceStyle.CLASSIC)
-
   // Experimental Liquid Glass (mpvRx 3.0): a real backdrop blur and lens refraction on the browser dock and
   // mini player. Opt-in because it records the screen behind the glass every frame.
   val liquidGlassEnabled = preferenceStore.getBoolean("liquid_glass_enabled", false)
@@ -113,86 +105,16 @@ class AppearancePreferences(
     ).forEach { it.delete() }
   }
 
-  // Read the former navigation-only preference until the user chooses a global surface style.
-  val legacyGlassBottomNavigation = preferenceStore.getBoolean("glass_bottom_navigation", false)
-  val hasLegacyGlassBottomNavigation: Boolean
-    get() = "glass_bottom_navigation" in preferenceStore.getAll()
-  val hasStoredSurfaceStyle: Boolean
-    get() = "surface_style" in preferenceStore.getAll()
-
-  /**
-   * Source of the intensity/blur fallbacks. A saved style may predate its intensity/blur keys (partial
-   * import, older migration); such users keep the look they had, the former Liquid Glass fallback,
-   * while fresh installs get Classic's values.
-   */
-  private val glassFallbackStyle = if (hasStoredSurfaceStyle) SurfaceStyle.LIQUID_GLASS else SurfaceStyle.CLASSIC
-  val glassIntensity = preferenceStore.getFloat("glass_intensity", glassFallbackStyle.defaultIntensity)
-  val glassBlurLevel = preferenceStore.getEnum("glass_blur_level", glassFallbackStyle.defaultBlurLevel)
-  val dynamicTintMode = preferenceStore.getEnum("dynamic_tint_mode", DynamicTintMode.THEME)
-  val edgeHighlightMode = preferenceStore.getEnum("edge_highlight_mode", EdgeHighlightMode.SUBTLE)
-  val refractionMode = preferenceStore.getEnum("refraction_mode", RefractionMode.SUBTLE)
   val motionStyle = preferenceStore.getEnum("motion_style", MotionStyle.STANDARD)
   val performanceMode = preferenceStore.getEnum("performance_mode", PerformanceMode.AUTOMATIC)
-  val cinemaMode = preferenceStore.getBoolean("cinema_mode", false)
-
-  // Computed GlassConfig - combines all glass settings
-  // This is a computed property that always returns the current config based on preferences
-  val glassConfig: GlassConfig
-    get() {
-      val storedSurfaceStyle = surfaceStyle.get()
-      return GlassConfig(
-        style = storedSurfaceStyle.selectableStyle,
-        intensity = glassIntensity.get(),
-        blurLevel = glassBlurLevel.get(),
-        dynamicTint = storedSurfaceStyle.effectiveDynamicTint(dynamicTintMode.get()),
-        edgeHighlight = storedSurfaceStyle.effectiveEdgeHighlight(edgeHighlightMode.get()),
-        refraction = refractionMode.get(),
-        motionStyle = motionStyle.get(),
-        performanceMode = performanceMode.get(),
-        cinemaMode = cinemaMode.get(),
-      )
-    }
-
-  /**
-   * Persists [style]'s canonical preset and its default intensity and blur, even when reselecting it.
-   * Tint and highlight preferences remain stored for compatibility, but their effective values are
-   * fixed by the selected surface style.
-   */
-  fun setSurfaceStyle(style: SurfaceStyle) {
-    val preset = glassConfig.copyWithStyle(style)
-    surfaceStyle.set(preset.style)
-    glassIntensity.set(preset.intensity)
-    glassBlurLevel.set(preset.blurLevel)
-    if (style == SurfaceStyle.CINEMA) {
-      dynamicTintMode.set(preset.dynamicTint)
-      edgeHighlightMode.set(preset.edgeHighlight)
-    }
-  }
-
-  /**
-   * Returns [style]'s canonical preset and persists it only when [style] is a legacy preset.
-   * Preserves custom intensity and blur; legacy tint and highlight values remain readable while the
-   * renderer applies the fixed treatment for the selected style.
-   *
-   * @param style Stored preset to migrate; defaults to the current surface-style preference.
-   */
-  fun canonicalizeSurfaceStyle(style: SurfaceStyle = surfaceStyle.get()): SurfaceStyle {
-    val canonicalStyle = style.selectableStyle
-    if (style != canonicalStyle) {
-      if (style == SurfaceStyle.CINEMA) {
-        dynamicTintMode.set(DynamicTintMode.OFF)
-        edgeHighlightMode.set(EdgeHighlightMode.OFF)
-      }
-      surfaceStyle.set(canonicalStyle)
-    }
-    return canonicalStyle
-  }
-
   val useSystemOsdFont = preferenceStore.getBoolean("use_system_osd_font", false)
   val useSystemFont = preferenceStore.getBoolean("use_system_font", false)
   val unlimitedNameLines = preferenceStore.getBoolean("unlimited_name_lines", false)
   val hidePlayerButtonsBackground = preferenceStore.getBoolean("hide_player_buttons_background", false)
   val forceDarkPlayerButtonsBackground = preferenceStore.getBoolean("force_dark_player_buttons_background", false)
+
+  // mpvRx 3.0.2. 0.55 keeps today's translucent buttons, 0 hides the fill and 1 makes it solid.
+  val playerButtonsBackgroundOpacity = preferenceStore.getFloat("player_buttons_background_opacity", 0.55f)
   val showUnplayedOldVideoLabel = preferenceStore.getBoolean("show_unplayed_old_video_label", true)
   val unplayedOldVideoDays = preferenceStore.getInt("unplayed_old_video_days", 7)
   val showNetworkThumbnails = preferenceStore.getBoolean("show_network_thumbnails", false)
@@ -224,12 +146,6 @@ class AppearancePreferences(
     preferenceStore.getString("portrait_bottom_controls", DEFAULT_PORTRAIT_BOTTOM_CONTROLS)
 
   init {
-    canonicalizeSurfaceStyle()
-
-    if (dynamicTintMode.get() != DynamicTintMode.OFF && dynamicTintMode.get() != DynamicTintMode.THEME) {
-      dynamicTintMode.set(DynamicTintMode.OFF)
-    }
-
     if (selectedCustomThemeName.get().isBlank()) {
       CustomThemeDefinition.parse(customTheme.get())?.let { legacyTheme ->
         selectedCustomThemeName.set(legacyTheme.name)
@@ -244,6 +160,23 @@ class AppearancePreferences(
     bottomRightControls.set(DEFAULT_BOTTOM_RIGHT_CONTROLS)
     bottomLeftControls.set(DEFAULT_BOTTOM_LEFT_CONTROLS)
     portraitBottomControls.set(DEFAULT_PORTRAIT_BOTTOM_CONTROLS)
+  }
+
+  /**
+   * Puts back the fuller layout every install had before the recommended one: all five regions as they
+   * shipped. The controls drawer lives in [PlayerPreferences.showControlsDrawer]; the caller restores it too.
+   */
+  fun restoreClassicPlayerLayout() {
+    fun classic(
+      key: String,
+      current: String,
+    ) = PreferenceDefaultsGeneration.legacyDefault(key) as? String ?: current
+
+    topLeftControls.set(classic("top_left_controls", DEFAULT_TOP_LEFT_CONTROLS))
+    topRightControls.set(classic("top_right_controls", DEFAULT_TOP_RIGHT_CONTROLS))
+    bottomRightControls.set(classic("bottom_right_controls", DEFAULT_BOTTOM_RIGHT_CONTROLS))
+    bottomLeftControls.set(classic("bottom_left_controls", DEFAULT_BOTTOM_LEFT_CONTROLS))
+    portraitBottomControls.set(classic("portrait_bottom_controls", DEFAULT_PORTRAIT_BOTTOM_CONTROLS))
   }
 
   fun parseButtons(

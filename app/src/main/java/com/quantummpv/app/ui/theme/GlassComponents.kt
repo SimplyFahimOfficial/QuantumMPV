@@ -10,68 +10,29 @@
 package com.quantummpv.app.ui.theme
 
 import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.unit.dp
 import com.kyant.backdrop.Backdrop
 import com.quantummpv.app.ui.liquidglass.LocalLiquidGlassBackdrop
 import com.quantummpv.app.ui.liquidglass.liquidGlassSurface
-import com.quantummpv.app.ui.theme.DesignTokens.DynamicTintMode
-import com.quantummpv.app.ui.theme.DesignTokens.EdgeHighlightMode
-import com.quantummpv.app.ui.theme.DesignTokens.LocalGlassConfig
-import com.quantummpv.app.ui.theme.DesignTokens.PerformanceMode
-import com.quantummpv.app.ui.theme.DesignTokens.RefractionMode
-import com.quantummpv.app.ui.theme.DesignTokens.SurfaceStyle
-import com.quantummpv.app.ui.theme.DesignTokens.calculateSurfaceOpacity
-import dev.chrisbanes.haze.ExperimentalHazeApi
-import dev.chrisbanes.haze.HazeInput
-import dev.chrisbanes.haze.HazeState
-import dev.chrisbanes.haze.glass.GlassDefaults
-import dev.chrisbanes.haze.glass.GlassStyle
-import dev.chrisbanes.haze.glass.OpticalSizeValue
-import dev.chrisbanes.haze.glass.hazeGlass
-import dev.chrisbanes.haze.HazePerformanceMode as HazeRenderPerformance
-
-/** Shared backdrop state provided by [MpvrxTheme]; null is used by isolated previews and tests. */
-val LocalHazeState = staticCompositionLocalOf<HazeState?> { null }
 
 /**
- * Shared glass treatments for browser, navigation, dialogs, player controls, and sheets.
- * Non-classic styles use Haze's backdrop Glass renderer. Classic and Minimal retain their
- * existing Material surfaces so the feature remains optional and backwards compatible.
+ * Surfaces for browser, navigation, dialogs, player controls and sheets.
+ *
+ * Every surface is a solid Material surface. The one exception is the floating dock (pill, search button
+ * and overflow menu): while experimental Liquid Glass is on, it draws real backdrop glass over the screen
+ * content recorded by [LocalLiquidGlassBackdrop].
  */
 object GlassComponents {
-    @Composable
-    fun GlassSurface(
-        modifier: Modifier = Modifier,
-        shape: Shape = MaterialTheme.shapes.medium,
-        isOnVideo: Boolean = false,
-        videoLuminance: Float = 0.5f,
-        content: @Composable () -> Unit,
-    ) {
-        GlassContainer(modifier, shape, isOnVideo, videoLuminance, content = content)
-    }
-
-    @Composable
-    fun GlassBottomNavBackground(
-        modifier: Modifier = Modifier,
-        content: @Composable () -> Unit,
-    ) {
-        GlassContainer(modifier, MaterialTheme.shapes.medium, content = content)
-    }
-
     @Composable
     fun GlassBottomSheetBackground(
         modifier: Modifier = Modifier,
@@ -82,7 +43,6 @@ object GlassComponents {
         GlassContainer(
             modifier = modifier,
             shape = shape,
-            opacityBoost = 0.1f,
             classicColor = classicColor,
             content = content,
         )
@@ -99,26 +59,8 @@ object GlassComponents {
         GlassContainer(
             modifier = modifier,
             shape = shape,
-            opacityBoost = 0.05f,
             classicColor = classicColor,
             classicTonalElevation = classicTonalElevation,
-            content = content,
-        )
-    }
-
-    @Composable
-    fun GlassPlayerSurface(
-        modifier: Modifier = Modifier,
-        shape: Shape = MaterialTheme.shapes.medium,
-        isOnVideo: Boolean = true,
-        videoLuminance: Float = 0.5f,
-        content: @Composable () -> Unit,
-    ) {
-        GlassContainer(
-            modifier = modifier,
-            shape = shape,
-            isOnVideo = isOnVideo,
-            videoLuminance = videoLuminance,
             content = content,
         )
     }
@@ -129,12 +71,7 @@ object GlassComponents {
         shape: Shape = MaterialTheme.shapes.large,
         content: @Composable () -> Unit,
     ) {
-        GlassContainer(
-            modifier = modifier,
-            shape = shape,
-            opacityBoost = 0.1f,
-            content = content,
-        )
+        GlassContainer(modifier = modifier, shape = shape, content = content)
     }
 
     @Composable
@@ -143,12 +80,7 @@ object GlassComponents {
         shape: Shape = MaterialTheme.shapes.medium,
         content: @Composable () -> Unit,
     ) {
-        GlassContainer(
-            modifier = modifier,
-            shape = shape,
-            opacityScale = 0.9f,
-            content = content,
-        )
+        GlassContainer(modifier = modifier, shape = shape, content = content)
     }
 
     @Composable
@@ -160,9 +92,8 @@ object GlassComponents {
         classicShadowElevation: androidx.compose.ui.unit.Dp = 12.dp,
         content: @Composable () -> Unit,
     ) {
-        // The menu opens and closes frequently, so keep the lower-cost navigation optics while
-        // retaining real backdrop glass and an always-visible edge for contrast. Classic keeps the
-        // same solid, bordered container as the navigation dock it is anchored to.
+        // The menu opens and closes frequently, so it uses the lighter navigation optics and an
+        // always-visible edge for contrast. Classic is the same solid, bordered container as the dock.
         GlassContainer(
             modifier = modifier,
             shape = shape,
@@ -186,9 +117,7 @@ object GlassComponents {
         shape: Shape = MaterialTheme.shapes.medium,
         content: @Composable () -> Unit,
     ) {
-        // Navigation pill uses a lightweight glass configuration optimized for frequent animation:
-        // reduced blur radius, no refraction, minimal edge highlight. This keeps frame times
-        // responsive while preserving the floating glass aesthetic.
+        // The pill animates constantly, so it uses the lighter navigation optics.
         GlassContainer(
             modifier = modifier,
             shape = shape,
@@ -209,15 +138,11 @@ object GlassComponents {
         BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.48f))
 }
 
-@OptIn(ExperimentalHazeApi::class)
 @Composable
 private fun GlassContainer(
     modifier: Modifier,
     shape: Shape,
-    isOnVideo: Boolean = false,
-    videoLuminance: Float = 0.5f,
     opacityBoost: Float = 0f,
-    opacityScale: Float = 1f,
     selected: Boolean = false,
     forceGlass: Boolean = false,
     lightweightNav: Boolean = false,
@@ -228,13 +153,10 @@ private fun GlassContainer(
     classicBorder: BorderStroke? = null,
     content: @Composable () -> Unit,
 ) {
-    val config = LocalGlassConfig.current
     val colors = MaterialTheme.colorScheme
-
-    val usesGlassStyle = config.style != SurfaceStyle.CLASSIC && config.style != SurfaceStyle.MINIMAL
-    // Experimental Liquid Glass: only surfaces that sit above a captured screen layer get a backdrop.
+    // Only the dock asks for glass, and only surfaces above a captured screen layer can have a backdrop.
     val liquidBackdrop = LocalLiquidGlassBackdrop.current
-    if (liquidBackdrop != null && (usesGlassStyle || forceGlass)) {
+    if (liquidBackdrop != null && forceGlass) {
         LiquidGlassContainer(
             backdrop = liquidBackdrop,
             modifier = modifier,
@@ -246,143 +168,14 @@ private fun GlassContainer(
         )
         return
     }
-    if (!usesGlassStyle && !forceGlass) {
-        Surface(
-            modifier = modifier,
-            shape = shape,
-            color = if (selected) colors.primaryContainer else classicColor,
-            tonalElevation = classicTonalElevation,
-            shadowElevation = classicShadowElevation,
-            border = classicBorder,
-            content = content,
-        )
-        return
-    }
-
-    val effectiveStyle = if (usesGlassStyle) config.style else SurfaceStyle.LIQUID_GLASS
-    val hazeState = LocalHazeState.current
-    val opacity =
-        ((if (usesGlassStyle) {
-            calculateSurfaceOpacity(isOnVideo = isOnVideo, videoLuminance = videoLuminance)
-        } else {
-            config.intensity
-        } + opacityBoost) * opacityScale)
-            .coerceIn(0f, 1f)
-    val containerColor = (if (selected) colors.primaryContainer else colors.surface).copy(alpha = opacity)
-    val tint =
-        when {
-            !effectiveStyle.supportsDynamicTint -> null
-            config.dynamicTint == DynamicTintMode.OFF -> null
-            config.dynamicTint == DynamicTintMode.THEME -> colors.primary.copy(alpha = if (selected) 0.16f else 0.1f)
-            else -> colors.tertiary.copy(alpha = 0.08f)
-        }
-    val glassShape = shape.toGlassShape()
-    val baseStyle =
-        when (effectiveStyle) {
-            SurfaceStyle.CLEAR_GLASS -> GlassStyle.clear
-            SurfaceStyle.LIQUID_GLASS -> if (isOnVideo) GlassStyle.clear else GlassStyle.regular
-            SurfaceStyle.SOFT_GLASS -> GlassStyle.regular
-            SurfaceStyle.FROSTED_GLASS,
-            SurfaceStyle.AMOLED_GLASS,
-            SurfaceStyle.CINEMA,
-            SurfaceStyle.CLASSIC,
-            SurfaceStyle.MINIMAL,
-            -> GlassStyle.regular
-        }
-    // Lightweight navigation mode: reduced blur, no refraction, minimal edge effects.
-    // This keeps the navbar responsive during frequent animation while preserving the
-    // glass aesthetic. Regular surfaces use the full-fidelity glass configuration.
-    val blurRadius = if (lightweightNav) {
-        (config.blurLevel.renderEffectRadius * 0.5f).dp
-    } else {
-        config.blurLevel.renderEffectRadius.dp
-    }
-    val refractionStrength =
-        if (!effectiveStyle.supportsRefraction || lightweightNav) {
-            0f
-        } else {
-            when (config.refraction) {
-                RefractionMode.OFF -> 0f
-                RefractionMode.SUBTLE -> 0.28f
-                RefractionMode.EXPERIMENTAL -> 0.68f
-            }
-        }
-    val effectiveEdgeHighlightMode =
-        if (effectiveStyle.supportsEdgeHighlight && !lightweightNav) config.edgeHighlight else EdgeHighlightMode.OFF
-    val edgeHighlight =
-        when (effectiveEdgeHighlightMode) {
-            EdgeHighlightMode.OFF -> 0f
-            EdgeHighlightMode.SUBTLE -> 0.32f
-            EdgeHighlightMode.STRONG -> 0.68f
-        }
-    val optics =
-        GlassDefaults.optics.copy(
-            refractionStrength = refractionStrength,
-            blurRadius = OpticalSizeValue.Fixed(blurRadius),
-            depth = OpticalSizeValue.Fixed(if (isOnVideo) 0.7f else 1f),
-        )
-    val glassStyle =
-        remember(
-            baseStyle,
-            containerColor,
-            tint,
-            glassShape,
-            optics,
-            edgeHighlight,
-            config.refraction,
-            effectiveStyle,
-            selected,
-            lightweightNav,
-        ) {
-            baseStyle.then {
-                // Haze composites backgroundColor *behind* the captured backdrop, so over opaque app
-                // content it is invisible. The surface-opacity layer is drawn on top instead (below).
-                backgroundColor(Color.Transparent)
-                if (tint != null) tint(tint)
-                shape(glassShape)
-                optics(optics)
-                specularIntensity(edgeHighlight)
-                edgeShadow(if (edgeHighlight == 0f) Color.Transparent else colors.onSurface.copy(alpha = 0.14f))
-                ambientResponse(if (edgeHighlight == 0f) 0.08f else 0.18f + edgeHighlight * 0.38f)
-                edgeSoftness(if (edgeHighlight == 0f) 0.dp else 1.dp)
-                chromaticAberrationStrength(
-                    if (effectiveStyle.supportsRefraction && !lightweightNav && config.refraction == RefractionMode.EXPERIMENTAL) 0.12f else 0f,
-                )
-            }
-        }
-    val borderColor =
-        if (alwaysBorder) {
-            colors.outlineVariant.copy(alpha = 0.48f)
-        } else {
-            when (effectiveEdgeHighlightMode) {
-                EdgeHighlightMode.OFF -> Color.Transparent
-                EdgeHighlightMode.SUBTLE -> colors.onSurface.copy(alpha = 0.14f)
-                EdgeHighlightMode.STRONG -> colors.onSurface.copy(alpha = 0.28f)
-            }
-        }
-    val hazeModifier =
-        if (hazeState != null) {
-            Modifier.hazeGlass(
-                input = HazeInput.Backdrop(hazeState),
-                style = glassStyle,
-                performanceMode = config.performanceMode.toHazePerformanceMode(),
-            )
-                // Surface opacity (Appearance → Surface opacity) as a layer over the blurred backdrop.
-                .background(containerColor, shape)
-        } else {
-            Modifier
-                .background(containerColor, shape)
-                .then(if (tint == null) Modifier else Modifier.background(tint, shape))
-        }
-
-    Box(
-        modifier =
-            modifier
-                .clip(shape)
-                .then(hazeModifier)
-                .then(if (borderColor == Color.Transparent) Modifier else Modifier.border(1.dp, borderColor, shape)),
-        contentAlignment = Alignment.Center,
-        content = { content() },
+    Surface(
+        modifier = modifier,
+        shape = shape,
+        color = if (selected) colors.primaryContainer else classicColor,
+        tonalElevation = classicTonalElevation,
+        shadowElevation = classicShadowElevation,
+        border = classicBorder,
+        content = content,
     )
 }
 
@@ -412,14 +205,3 @@ private fun LiquidGlassContainer(
         content = { content() },
     )
 }
-
-private fun Shape.toGlassShape(): RoundedCornerShape =
-    this as? RoundedCornerShape ?: RoundedCornerShape(percent = 50)
-
-private fun PerformanceMode.toHazePerformanceMode(): HazeRenderPerformance =
-    when (this) {
-        PerformanceMode.BATTERY_SAVER -> HazeRenderPerformance.Performance
-        PerformanceMode.BALANCED -> HazeRenderPerformance.Balanced
-        PerformanceMode.QUALITY -> HazeRenderPerformance.Quality
-        PerformanceMode.AUTOMATIC -> HazeRenderPerformance.Default
-    }

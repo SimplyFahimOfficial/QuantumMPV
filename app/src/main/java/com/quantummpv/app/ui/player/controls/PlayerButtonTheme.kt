@@ -17,6 +17,35 @@ import com.quantummpv.app.ui.player.controls.components.LocalHidePlayerButtonsBa
 import com.quantummpv.app.ui.player.controls.components.LocalPlayerButtonLabel
 import com.quantummpv.app.ui.theme.LocalDarkAppColorScheme
 
+/** Designed button alphas and the user's background opacity level (mpvRx 3.0.2). */
+internal object PlayerButtonAlpha {
+  const val CONTAINER = 0.55f
+  const val BORDER = 0.4f
+
+  /** The level at which every surface keeps its designed alpha. */
+  const val DEFAULT_BACKGROUND_LEVEL = CONTAINER
+
+  /** The stored level made safe: a non-finite or out-of-range value (e.g. from an edited backup) cannot reach drawing. */
+  fun level(raw: Float): Float = if (raw.isFinite()) raw.coerceIn(0f, 1f) else DEFAULT_BACKGROUND_LEVEL
+
+  /**
+   * Maps a designed [alpha] through the user's [level]: 0 gives no fill, [DEFAULT_BACKGROUND_LEVEL]
+   * keeps [alpha], 1 gives a solid fill. A fully transparent hit area stays transparent.
+   */
+  fun background(
+    alpha: Float,
+    level: Float,
+  ): Float {
+    if (alpha <= 0f) return 0f
+    val l = level(level)
+    return if (l >= DEFAULT_BACKGROUND_LEVEL) {
+      alpha + (1f - alpha) * ((l - DEFAULT_BACKGROUND_LEVEL) / (1f - DEFAULT_BACKGROUND_LEVEL))
+    } else {
+      alpha * (l / DEFAULT_BACKGROUND_LEVEL)
+    }
+  }
+}
+
 /**
  * Carries the background visibility choice through every player-button implementation.
  *

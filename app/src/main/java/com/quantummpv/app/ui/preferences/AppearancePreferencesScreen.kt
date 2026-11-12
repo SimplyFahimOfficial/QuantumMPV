@@ -34,7 +34,6 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -72,7 +71,6 @@ import com.quantummpv.app.ui.preferences.components.ThemePicker
 import com.quantummpv.app.ui.theme.CustomThemeDefinition
 import com.quantummpv.app.ui.theme.DarkMode
 import com.quantummpv.app.ui.theme.DesignTokens.MotionStyle
-import com.quantummpv.app.ui.theme.DesignTokens.SurfaceStyle
 import com.quantummpv.app.ui.theme.LocalThemeTransitionState
 import com.quantummpv.app.ui.utils.LocalBackStack
 import com.quantummpv.app.ui.utils.LocalShowSettingsBackArrow
@@ -238,6 +236,19 @@ object AppearancePreferencesScreen : Screen {
 
           item {
             PreferenceCard {
+              // Above the collapsible theme controls so it stays visible when they are folded away.
+              Preference(
+                modifier = Modifier.settingsSearchTarget(R.string.pref_liquid_glass_title),
+                title = { Text(stringResource(R.string.pref_liquid_glass_title)) },
+                summary = {
+                  Text(
+                    stringResource(R.string.pref_liquid_glass_entry_summary),
+                    color = MaterialTheme.colorScheme.outline,
+                  )
+                },
+                onClick = { backstack.navigateTo(LiquidGlassPreferencesScreen) },
+              )
+              PreferenceDivider()
               Row(
                 modifier =
                   Modifier
@@ -491,80 +502,6 @@ object AppearancePreferencesScreen : Screen {
                   )
                 }
               }
-            }
-          }
-
-          // ── Glass & Surface Style ────────────────────────────────────────
-          item {
-            PreferenceSectionHeader(title = stringResource(R.string.pref_section_glass_surface))
-          }
-
-          item {
-            PreferenceCard {
-              val storedSurfaceStyle by preferences.surfaceStyle.collectAsState()
-              val surfaceStyle = storedSurfaceStyle.canonicalStyle
-              val selectableSurfaceStyle = surfaceStyle.selectableStyle
-              LaunchedEffect(storedSurfaceStyle) {
-                preferences.canonicalizeSurfaceStyle(storedSurfaceStyle)
-              }
-              ListPreference(
-                modifier = Modifier.settingsSearchTarget(R.string.pref_glass_surface_style_title),
-                value = selectableSurfaceStyle,
-                onValueChange = preferences::setSurfaceStyle,
-                values = SurfaceStyle.selectableStyles,
-                valueToText = { AnnotatedString(stringResource(id = it.titleRes)) },
-                title = { Text(stringResource(R.string.pref_glass_surface_style_title)) },
-                summary = {
-                  Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                    Text(
-                      "${stringResource(id = selectableSurfaceStyle.titleRes)} — " +
-                        stringResource(id = selectableSurfaceStyle.summaryRes),
-                      color = MaterialTheme.colorScheme.outline,
-                    )
-                    Text(
-                      stringResource(R.string.pref_glass_surface_style_summary),
-                      color = MaterialTheme.colorScheme.outline,
-                    )
-                  }
-                },
-              )
-
-              PreferenceDivider()
-
-              val glassIntensity by preferences.glassIntensity.collectAsState()
-              SliderPreference(
-                modifier = Modifier.settingsSearchTarget(R.string.pref_glass_intensity_title),
-                value = glassIntensity,
-                onValueChange = { preferences.glassIntensity.set(it) },
-                title = { Text(stringResource(R.string.pref_glass_intensity_title)) },
-                valueRange = 0.1f..1f,
-                enabled = selectableSurfaceStyle != SurfaceStyle.CLASSIC,
-                summary = {
-                  Text(
-                    stringResource(
-                      R.string.pref_glass_intensity_summary,
-                      (glassIntensity * 100).roundToInt(),
-                    ),
-                    color = MaterialTheme.colorScheme.outline,
-                  )
-                },
-                onSliderValueChange = { preferences.glassIntensity.set(it) },
-                sliderValue = glassIntensity,
-              )
-
-              PreferenceDivider()
-
-              Preference(
-                modifier = Modifier.settingsSearchTarget(R.string.pref_liquid_glass_title),
-                title = { Text(stringResource(R.string.pref_liquid_glass_title)) },
-                summary = {
-                  Text(
-                    stringResource(R.string.pref_liquid_glass_entry_summary),
-                    color = MaterialTheme.colorScheme.outline,
-                  )
-                },
-                onClick = { backstack.navigateTo(LiquidGlassPreferencesScreen) },
-              )
             }
           }
 
@@ -1097,23 +1034,6 @@ object AppearancePreferencesScreen : Screen {
                 summary = {
                   Text(
                     stringResource(id = motionStyle.titleRes),
-                    color = MaterialTheme.colorScheme.outline,
-                  )
-                },
-              )
-
-              PreferenceDivider()
-              // Keep rendering modes hidden until their limits affect actual rendering paths.
-
-              val cinemaMode by preferences.cinemaMode.collectAsState()
-              SwitchPreference(
-                modifier = Modifier.settingsSearchTarget(R.string.pref_cinema_mode_title),
-                value = cinemaMode,
-                onValueChange = preferences.cinemaMode::set,
-                title = { Text(stringResource(R.string.pref_cinema_mode_title)) },
-                summary = {
-                  Text(
-                    stringResource(R.string.pref_cinema_mode_summary),
                     color = MaterialTheme.colorScheme.outline,
                   )
                 },

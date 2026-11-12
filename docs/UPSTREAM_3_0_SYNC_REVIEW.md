@@ -44,6 +44,21 @@ Every port was reviewed by hand against QuantumMPV's code; authorship and the up
 | `f5f616b5d` (vignette part, by hand) | Vignette fade uses `1.0 - smoothstep(0.1, 1.3, r)` | Reversed smoothstep edges are undefined in GLSL. QuantumMPV's Glow shader has no precision-qualified constructors, so the rest of that commit doesn't apply. |
 | `afd38886a` (by hand) | TheIntroDB v4 API | QuantumMPV called v2 with a v1 fallback. v1 is removed and v2/v3 are frozen ([migration guide](https://github.com/TheIntroDB/theintrodb-npm/blob/main/docs/migration-v3-to-v4.md)). `TheIntroDbV4Test` parses the v4 examples from TheIntroDB's OpenAPI spec. |
 
+### Player screen (3.0.x)
+
+Requested explicitly, so the items marked "needs a product decision" below were revisited.
+
+| Upstream | Change | Notes |
+|---|---|---|
+| `2c62f6048`, `79b7530bd` (opacity part, by hand) | Player button background opacity slider (Player controls > Appearance) | Key `player_buttons_background_opacity`, default 0.55 keeps the current look. `PlayerButtonAlpha` maps the level onto every button fill and border, including the hand-built pills. `PlayerButtonAlphaTest`. The placement options of `2c62f6048` are not ported. |
+| 3.0.2 (two-finger speed part, by hand) | Two-finger swipe changes the speed in 0.25x steps, 0.5x to 4x | Key `two_finger_speed_swipe`, default on. Added to QuantumMPV's older pinch handler: pinch and pan wait until the first movement shows it is not a speed swipe, and zoomed-in video keeps two-finger panning. Cleanup moved into a `finally` so a cancelled gesture cannot leave the speed pill up. `SwipeSpeedTest`. Not checked on a device. |
+
+The top and bottom scrims behind the controls already exist (`TopHudScrim`, `BottomHudScrim`), so upstream's single edge
+vignette was not ported. Not ported from the 3.0 player: persistent status bar, Android TV style volume and brightness
+capsule, redesigned clip editor, buttons beside play/pause in landscape, subtitle drag and pinch regions, and TV controls.
+Each changes layout or gesture arbitration that cannot be checked without a device. The status bar in particular has no
+safe position yet: it would overlap the title row, the lock button and the speed pill.
+
 ### Second batch: mpv integration fixes
 
 Each was checked against QuantumMPV's code first; the bug exists here.
@@ -59,12 +74,12 @@ Each was checked against QuantumMPV's code first; the bug exists here.
 
 ### Liquid Glass (experimental)
 
-Ported from 3.0.0–3.0.2, opt-in and off by default (Appearance > Surface style > Liquid Glass). It is the Kyant
+Ported from 3.0.0–3.0.2, opt-in and off by default (Appearance > Theme > Liquid Glass). It is the Kyant
 backdrop renderer (`io.github.kyant0:backdrop-android` 2.0.1 and `shapes-android` 1.2.1, Apache-2.0) with upstream's
 settings page, live preview and tuning options.
 
 - **Where it applies:** the navigation dock, its overflow menu and the mini player. `GlassContainer` picks the Kyant
-  renderer only when a captured backdrop is provided, so every other surface keeps the Haze or Classic path.
+  renderer only when a captured backdrop is provided, so every other surface is a solid Classic surface.
 - **How it is wired:** `MainScreen` records the page content and `MainActivity` records the navigation display. A
   glass surface cannot sample a layer it is part of, so the backdrop goes only to siblings of the recorded content.
   `tools/test_quantummpv_custom_features.py` pins this.
@@ -98,7 +113,7 @@ These conflict with QuantumMPV's own direction and need a maintainer decision be
   privacy and terms review first. They are candidates for the planned Labs section.
 - **Removal of the in-app HLS proxy** (3.0.2). QuantumMPV still uses its proxy (8 files), so removing it is a
   behaviour change in its own right.
-- **Two-finger speed swipe, persistent status bar, live expanding music player, phone-to-TV remote.** These are new
+- **Persistent status bar, live expanding music player, phone-to-TV remote.** (The two-finger speed swipe was ported, see "Player screen".) These are new
   features rather than fixes, and they interact with the gesture and HUD changes in PR #106.
 
 ## Fixes worth porting next (need manual adaptation)

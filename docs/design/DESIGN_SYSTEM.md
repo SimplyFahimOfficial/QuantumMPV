@@ -13,7 +13,7 @@ Jellyfin), 22 player sheets, 9 draggable player panels, ~42 `AlertDialog` call s
 | Area | Built from | Works well | Weak |
 |------|------------|------------|------|
 | Theme | `MpvrxTheme`: 32 palettes + custom + dynamic, AMOLED, Google Sans Rounded / system font, circular theme reveal | Wide personalisation, contrast enforcement (4.5:1) in palette derivation | Three overlapping token sets (`AppShapes`, `AppShapeScale`, `DesignTokens.Radius`/`Spacing`); 445 raw `RoundedCornerShape` literals, 13 distinct radii, half off-scale (6/10/14/18/24 dp) |
-| Surfaces | `SurfaceStyle` Classic / Clear Glass, Haze backdrop, blur **off** by default | Glass is already opt-in and cheap by default | — |
+| Surfaces | Solid Material surfaces; the experimental Liquid Glass renders the floating dock (surface styles and Haze were removed) | Glass is opt-in and off by default | — |
 | Home / library | Floating dock (pill + Search circle), `VideoCard`/`FolderCard` at 16 dp | Dense, scannable lists; tabular figures on durations | Card/chip/thumbnail radii differ by screen |
 | Player | One `ConstraintLayout` HUD, 0.55 black scrims, 44 dp circular `ControlsButton`, five seekbar styles, reduced-motion-aware control show/hide | Scrims keep controls legible over bright footage; timers use tabular figures | Sheets have no visible drag affordance although they drag to dismiss; panel headers duplicated 9× with 24 dp vs 32 dp close icons |
 | Settings | me.zhanghai preferences inside `PreferenceCard` (32 dp, `surfaceContainerLow`) with accent-bar section headers | Consistent card/divider rhythm | — |

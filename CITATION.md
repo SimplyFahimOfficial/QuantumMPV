@@ -78,7 +78,7 @@ The groups below organize the existing credits by project type; they are not an 
 | AndroidX Media3 | Media session and notifications, plus Transformer for clip export and video compression. Playback stays on libmpv. | [Media3](https://developer.android.com/media/media3) |
 | Room | Local database | [Room](https://developer.android.com/training/data-storage/room) |
 | Sora Editor | Built-in code editor with TextMate highlighting | [Rosemoe/sora-editor](https://github.com/Rosemoe/sora-editor) |
-| Haze | Blur and glass effects in Compose | [chrisbanes/haze](https://github.com/chrisbanes/haze) |
+| AndroidLiquidGlass (backdrop, shapes) | Backdrop blur and lens refraction for the experimental Liquid Glass setting. Based on its use in mpvRx 3.0. | [Kyant0/AndroidLiquidGlass](https://github.com/Kyant0/AndroidLiquidGlass) |
 | smbj | SMB client | [hierynomus/smbj](https://github.com/hierynomus/smbj) |
 | Apache Commons Net | FTP client | [apache/commons-net](https://github.com/apache/commons-net) |
 | sardine-android | WebDAV client | [thegrizzlylabs/sardine-android](https://github.com/thegrizzlylabs/sardine-android) |

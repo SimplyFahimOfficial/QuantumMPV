@@ -34,117 +34,94 @@ def main() -> int:
     equalizer_sheet = read("app/src/main/java/com/quantummpv/app/ui/player/controls/components/sheets/EqualizerSheet.kt")
     strings = read("app/src/main/res/values/strings.xml")
 
+    # Surface styles, glass opacity/blur sliders, tint/edge modes and Cinema mode were removed on purpose.
+    # Every surface is solid except the floating dock under the experimental Liquid Glass switch.
+    for removed_key in (
+        "surface_style", "glass_bottom_navigation", "glass_fallback_style", "glass_intensity", "glass_blur_level",
+        "dynamic_tint_mode", "edge_highlight_mode", "refraction_mode", "cinema_mode",
+    ):
+        if f'"{removed_key}"' in appearance_model:
+            raise AssertionError(f"removed surface preference is registered again: {removed_key}")
     require(
-        r'val surfaceStyle = preferenceStore\.getEnum\("surface_style",\s*SurfaceStyle\.CLASSIC\)',
-        appearance_model,
-        "persisted global Classic default",
-    )
-    require(
-        r'val selectableStyles = listOf\(CLASSIC,\s*CLEAR_GLASS\)',
+        r'fun rememberGlassConfig\(\): GlassConfig \{[\s\S]*?return GlassConfig\(motionStyle = motionStyle, performanceMode = performanceMode\)',
         design_tokens,
-        "surface-style picker offers only Classic and Clear Glass",
+        "resolved glass config is always Classic and only carries motion and performance",
     )
-    require(r'if \(dynamicTintMode\.get\(\) != DynamicTintMode\.OFF && dynamicTintMode\.get\(\) != DynamicTintMode\.THEME\) \{\s*dynamicTintMode\.set\(DynamicTintMode\.OFF\)',
-            appearance_model, "legacy unsupported tint modes are normalized before rendering")
-    require(
-        r'dynamicTint = storedSurfaceStyle\.effectiveDynamicTint\(dynamicTintMode\.get\(\)\),\s*'
-        r'edgeHighlight = storedSurfaceStyle\.effectiveEdgeHighlight\(edgeHighlightMode\.get\(\)\)',
-        appearance_model,
-        "preference-based glass config suppresses legacy Cinema effects before migration",
-    )
-    require(
-        r'dynamicTint = style\.effectiveDynamicTint\(dynamicTint\),\s*'
-        r'edgeHighlight = style\.effectiveEdgeHighlight\(edgeHighlight\)',
-        design_tokens,
-        "Compose glass configuration applies the fixed style effect filters",
-    )
-    require(r'legacyGlassBottomNavigation = preferenceStore\.getBoolean\("glass_bottom_navigation",\s*false\)',
-            appearance_model, "persisted legacy navigation appearance compatibility")
-    require(
-        r'val storedSurfaceStyle by preferences\.surfaceStyle\.collectAsState\(\)\s+'
-        r'val surfaceStyle = storedSurfaceStyle\.canonicalStyle',
+    if re.search(
+        r'pref_section_glass_surface|pref_glass_surface_style_title|pref_glass_intensity_title|pref_cinema_mode_title|'
+        r'pref_dynamic_tint_mode_title|pref_edge_highlight_mode_title|surfaceStyle|cinemaMode|dynamicTintMode by|edgeHighlightMode by',
         appearance_screen,
-        "surface-style preference shown in Appearance settings",
-    )
-    if re.search(r'pref_dynamic_tint_mode_title|pref_edge_highlight_mode_title|dynamicTintMode by|edgeHighlightMode by', appearance_screen):
-        raise AssertionError("tint and edge-highlight controls should stay out of the minimalist Appearance screen")
-    for removed_title in ("pref_dynamic_tint_mode_title", "pref_edge_highlight_mode_title"):
-        if removed_title in searchable_preferences or removed_title in search_navigation:
-            raise AssertionError(f"removed Appearance control remains searchable or has a stale anchor: {removed_title}")
+    ):
+        raise AssertionError("Surface Appearance, surface style, opacity, Cinema, tint and edge controls must stay out of Appearance settings")
+    for removed_title in (
+        "pref_glass_surface_style_title", "pref_glass_intensity_title", "pref_cinema_mode_title",
+        "pref_dynamic_tint_mode_title", "pref_edge_highlight_mode_title",
+    ):
+        if removed_title in searchable_preferences or removed_title in search_navigation or f'name="{removed_title}"' in strings:
+            raise AssertionError(f"removed Appearance control remains searchable, anchored or translated: {removed_title}")
     require(
-        r'val surfaceStyle = LocalGlassConfig\.current\.style\s+val glassBottomNavigation =\s*if \(appearancePreferences\.hasLegacyGlassBottomNavigation && !appearancePreferences\.hasStoredSurfaceStyle\) \{\s*legacyGlassBottomNavigation\s*\} else \{\s*surfaceStyle != SurfaceStyle\.CLASSIC && surfaceStyle != SurfaceStyle\.MINIMAL\s*\}',
-        main_screen,
-        "new global style takes over after preserving the user's saved legacy navigation style",
+        r'PreferenceCard \{[^\n]*\n\s*//[^\n]*\n\s*Preference\(\s*modifier = Modifier\.settingsSearchTarget\(R\.string\.pref_liquid_glass_title\),'
+        r'[\s\S]*?onClick = \{ backstack\.navigateTo\(LiquidGlassPreferencesScreen\) \},\s*\)\s*PreferenceDivider\(\)\s*'
+        r'Row\([\s\S]{0,200}isThemeSectionExpanded = !isThemeSectionExpanded',
+        appearance_screen,
+        "Liquid Glass is the first row of the Theme card, above the collapsible header",
     )
-    # Pill renderers (dock + legacy bar), the overflow menu and the search circle must all follow
-    # the same surface style so the floating dock never mixes solid and glass surfaces.
+    if "Haze" in glass_components or "haze" in glass_components:
+        raise AssertionError("GlassComponents must not depend on Haze again")
+    if re.search(r'(?i)\bhaze\b', read("gradle/libs.versions.toml") + read("app/build.gradle.kts")):
+        raise AssertionError("the Haze dependency must stay removed")
     require(
-        r'val liquidGlassCapture = rememberLiquidGlassCapture\(\)\s+val glassDock = glassBottomNavigation \|\| liquidGlassCapture != null',
+        r'val liquidGlassCapture = rememberLiquidGlassCapture\(\)\s+val glassDock = liquidGlassCapture != null',
         main_screen,
-        "experimental Liquid Glass turns the dock into glass on top of the surface-style setting",
+        "experimental Liquid Glass is the only thing that turns the dock into glass",
     )
     if len(re.findall(r'glass\s*=\s*glassDock', main_screen)) != 4:
-        raise AssertionError("global/legacy surface style and Liquid Glass must reach every navigation dock renderer")
-    if "glass = glassBottomNavigation" in main_screen:
+        raise AssertionError("Liquid Glass must reach every navigation dock renderer")
+    if "glass = glassBottomNavigation" in main_screen or "LocalGlassConfig" in main_screen:
         raise AssertionError("a dock renderer bypasses the Liquid Glass override")
     # Glass may sample the page content only from siblings of it: never provide the backdrop to the content.
     require(r'\.captureLiquidGlass\(liquidGlassCapture\)', main_screen, "page content is recorded for the dock to refract")
     require(r'ProvideLiquidGlassBackdrop\(liquidGlassCapture\) \{\s+com\.quantummpv\.app\.ui\.browser\.components\.FloatingGlassMenuPanel',
             main_screen, "overflow menu is a sibling of the recorded content")
-    require(r'anchorItemIndex = 5,[\s\S]{0,250}pref_tree_flatten_depth_title', searchable_preferences,
+    # The Surface Appearance card is gone, so every card below Theme moved up by two list items.
+    require(r'anchorItemIndex = 3,[\s\S]{0,250}pref_tree_flatten_depth_title', searchable_preferences,
             "file-browser search results target the shifted card")
-    require(r'anchorItemIndex = 7,[\s\S]{0,250}pref_appearance_thumbnail_position_title', searchable_preferences,
+    require(r'anchorItemIndex = 5,[\s\S]{0,250}pref_appearance_thumbnail_position_title', searchable_preferences,
             "thumbnail search results target the shifted card")
-    require(r'anchorItemIndex = 9,[\s\S]{0,250}pref_nav_music_title', searchable_preferences,
+    require(r'anchorItemIndex = 7,[\s\S]{0,250}pref_nav_music_title', searchable_preferences,
             "navigation search results target the shifted card")
-    require(r'anchorItemIndex = 13,[\s\S]{0,250}pref_anim_controls_style_title', searchable_preferences,
+    require(r'anchorItemIndex = 11,[\s\S]{0,250}pref_anim_controls_style_title', searchable_preferences,
             "animation search results target the shifted card")
-    require(r'pref_appearance_unlimited_name_lines_title, itemIndex = 5', search_navigation,
+    require(r'pref_appearance_unlimited_name_lines_title, itemIndex = 3', search_navigation,
             "file-browser fallback anchors use the current list index")
-    require(r'pref_appearance_show_video_thumbnails_title, itemIndex = 7', search_navigation,
+    require(r'pref_appearance_show_video_thumbnails_title, itemIndex = 5', search_navigation,
             "thumbnail fallback anchors use the current list index")
-    require(r'titleRes = R\.string\.pref_glass_intensity_title,\s*keywords', searchable_preferences,
-            "glass opacity search avoids a formatted summary without arguments")
-    require(
-        r'if \(selectableStyle == CLEAR_GLASS\) DynamicTintMode\.THEME else DynamicTintMode\.OFF',
-        design_tokens,
-        "surface style selects the fixed tint treatment",
-    )
-    require(
-        r'if \(selectableStyle == CLEAR_GLASS\) EdgeHighlightMode\.SUBTLE else EdgeHighlightMode\.OFF',
-        design_tokens,
-        "surface style selects the fixed edge-highlight treatment",
-    )
-    require(r'<string name="pref_glass_surface_style_title">Surface style</string>', strings,
-            "visible surface-style settings label")
-    print("PASS: global surface appearance remains visible and connected to navigation.")
+    print("PASS: surface styles are gone, Liquid Glass leads Theme, and the dock follows only Liquid Glass.")
+
+    player_controls_screen = read("app/src/main/java/com/quantummpv/app/ui/preferences/PlayerControlsPreferencesScreen.kt")
+    require(r'appearancePrefs\.restoreClassicPlayerLayout\(\)[\s\S]{0,200}playerPrefs\.showControlsDrawer\.set\(true\)',
+            player_controls_screen, "Restore classic layout brings back the full legacy button set and the controls drawer")
+    require(r'pref_layout_restore_classic', searchable_preferences, "Restore classic layout is searchable")
+    require(r'pref_layout_restore_classic', search_navigation, "Restore classic layout has a search anchor")
+    print("PASS: the classic player layout can be restored from Player controls settings.")
 
     require(r'val useGlassCardSurface = surfaceStyle != SurfaceStyle\.CLASSIC && surfaceStyle != SurfaceStyle\.MINIMAL',
             video_card, "glass card surfaces are enabled only for glass-capable styles")
-    require(r'if \(useGlassCardSurface && !isSelected\)\s*\{\s*GlassComponents\.GlassMediaCardSurface\([\s\S]*?shape = cardShape',
-            video_card, "unselected glass-style cards use the shared glass surface with the app card shape")
     require(r'if \(isSelected\)\s*\{[\s\S]{0,150}tertiaryContainer', video_card,
             "selected cards retain their existing selection color instead of using the glass surface")
     require(r'if \(appTheme == AppTheme\.Aurora && !isSelected\)', video_card,
             "every unselected Aurora card keeps its gradient independently of glass style")
     require(
-        r'fun GlassMediaCardSurface\([\s\S]*?shape: Shape = [^\n]+[\s\S]*?GlassContainer\(\s*modifier = modifier,\s*shape = shape',
+        r'fun GlassMediaCardSurface\([\s\S]*?shape: Shape = [^\n]+[\s\S]*?GlassContainer\(modifier = modifier, shape = shape, content = content\)',
         glass_components,
-        "media-card glass surface forwards the caller-provided shape",
+        "media-card surface forwards the caller-provided shape",
     )
-    require(r'modifier\s*\.clip\(shape\)', glass_components, "glass clipping respects the caller-provided shape")
-    require(r'Modifier\.hazeGlass\([\s\S]*?input = HazeInput\.Backdrop\(hazeState\)', glass_components,
-            "glass surfaces render against the shared captured backdrop")
-    require(r'effectiveStyle\.supportsEdgeHighlight && !lightweightNav\) config\.edgeHighlight else EdgeHighlightMode\.OFF',
-            glass_components, "Cinema and unsupported styles, plus lightweight navigation, suppress glass edge highlights")
-    require(r'when \(effectiveEdgeHighlightMode\)', glass_components,
-            "surface borders follow the capability-filtered edge-highlight mode")
     for sheet in (audio_properties_sheet, equalizer_sheet):
         require(r'contentWindowInsets = \{[\s\S]*?WindowInsetsSides\.Top \+ WindowInsetsSides\.Horizontal', sheet,
-                "modal sheet leaves bottom inset available to its glass background")
+                "modal sheet leaves bottom inset available to its background")
         require(r'windowInsetsPadding\(WindowInsets\.navigationBars\.only\(WindowInsetsSides\.Bottom\)\)', sheet,
-                "glass sheet background paints behind the navigation-bar inset")
-    print("PASS: VideoCard glass rendering preserves selection, Classic/Minimal fallback, Aurora gradients, and card shape.")
+                "sheet background paints behind the navigation-bar inset")
+    print("PASS: VideoCard keeps selection, Aurora gradients, and card shape.")
 
     subtitle_installer = read("app/src/main/java/com/quantummpv/app/ui/player/SubtitleFontInstaller.kt")
     mpv_view = read("app/src/main/java/com/quantummpv/app/ui/player/MPVView.kt")

@@ -117,4 +117,33 @@ class PreferenceDefaultsGenerationTest {
   fun generationMarkerIsNotPartOfSettingsBackups() {
     assertTrue(SettingsBackupPolicy.isProtectedKey(PreferenceDefaultsGeneration.KEY))
   }
+
+  @Test
+  fun restoringTheClassicLayoutBringsBackEveryButtonAndLeavesNoneUnknown() {
+    // A fresh install starts on the trimmed recommended layout.
+    PreferenceDefaultsGeneration.apply(prefs, hasOtherAppData = false)
+    val appearance = appearance()
+    val recommended = listOf(
+      appearance.topRightControls, appearance.bottomRightControls,
+      appearance.bottomLeftControls, appearance.portraitBottomControls,
+    ).map { it.get() }
+
+    appearance.restoreClassicPlayerLayout()
+
+    val regions = listOf(
+      "top_right_controls" to appearance.topRightControls,
+      "bottom_right_controls" to appearance.bottomRightControls,
+      "bottom_left_controls" to appearance.bottomLeftControls,
+      "portrait_bottom_controls" to appearance.portraitBottomControls,
+    )
+    regions.forEachIndexed { index, (key, preference) ->
+      val classic = PreferenceDefaultsGeneration.legacyDefault(key) as String
+      assertEquals("$key is the layout earlier versions shipped", classic, preference.get())
+      val tokens = classic.split(",")
+      // A misspelt button name would be silently dropped from the player, so every token must exist.
+      tokens.forEach { token -> PlayerButton.valueOf(token) }
+      assertTrue("$key has more buttons than the recommended layout", tokens.size > recommended[index].split(",").size)
+    }
+    assertEquals(AppearancePreferences.DEFAULT_TOP_LEFT_CONTROLS, appearance.topLeftControls.get())
+  }
 }
