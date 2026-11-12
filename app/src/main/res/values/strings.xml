@@ -2696,12 +2696,17 @@
 
   <!-- Liquid Glass (experimental) -->
   <string name="pref_liquid_glass_title">Liquid Glass</string>
-  <string name="pref_liquid_glass_entry_summary">Experimental. Real blur and lens refraction on the navigation dock and mini player.</string>
+  <string name="pref_liquid_glass_entry_summary">Experimental. Real blur and lens refraction on the navigation dock, mini player and, optionally, the player controls.</string>
   <string name="pref_experimental_badge">Experimental</string>
   <string name="pref_liquid_glass_experimental_note">Records the screen behind the glass every frame, so it can use more battery. Applies to the navigation dock, its menu and the mini player.</string>
   <string name="pref_liquid_glass_enable_title">Use Liquid Glass</string>
   <string name="pref_liquid_glass_enable_summary">Replaces the dock and mini player surfaces with refracting glass.</string>
   <string name="pref_liquid_glass_enable_unavailable">Needs Android 12 or newer.</string>
+  <string name="pref_liquid_glass_player_section">Video player</string>
+  <string name="pref_liquid_glass_player_title">Glass player controls</string>
+  <string name="pref_liquid_glass_player_summary">Player buttons blur and refract the playing video. Moves the video onto a different surface, so turn this off if playback looks wrong. Uses more battery.</string>
+  <string name="pref_liquid_glass_player_hdr_title">Glass in HDR</string>
+  <string name="pref_liquid_glass_player_hdr_summary">HDR video keeps its own surface unless this is on. Turning it on shows HDR video tone-mapped to SDR so the glass can see it.</string>
   <string name="pref_liquid_glass_material">Material</string>
   <string name="pref_liquid_glass_frost">Frost</string>
   <string name="pref_liquid_glass_optics">Optics</string>

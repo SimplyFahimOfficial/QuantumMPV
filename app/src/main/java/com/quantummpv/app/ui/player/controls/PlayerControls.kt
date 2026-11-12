@@ -110,6 +110,7 @@ import androidx.compose.ui.zIndex
 import androidx.constraintlayout.compose.ConstraintLayout
 import androidx.constraintlayout.compose.Dimension
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.kyant.backdrop.backdrops.rememberLayerBackdrop
 import com.quantummpv.app.R
 import com.quantummpv.app.domain.torrent.TorrentStreamingState
 import com.quantummpv.app.domain.torrent.formatTorrentBytes
@@ -132,6 +133,7 @@ import com.quantummpv.app.ui.icons.Icons
 import com.quantummpv.app.ui.player.ControlsAnimationStyle
 import com.quantummpv.app.ui.player.DeclaredPlaybackMediaKind
 import com.quantummpv.app.ui.player.Decoder.Companion.getDecoderFromValue
+import com.quantummpv.app.ui.player.LocalPlayerGlassRenderer
 import com.quantummpv.app.ui.player.Panels
 import com.quantummpv.app.ui.player.PlaybackPhase
 import com.quantummpv.app.ui.player.PlaybackSession
@@ -157,12 +159,14 @@ import com.quantummpv.app.ui.player.controls.components.ResumedFromPlayerUpdate
 import com.quantummpv.app.ui.player.controls.components.SeekPlayerUpdate
 import com.quantummpv.app.ui.player.controls.components.SeekbarWithTimers
 import com.quantummpv.app.ui.player.controls.components.TextPlayerUpdate
+import com.quantummpv.app.ui.player.controls.components.VideoGlassBackdropSource
 import com.quantummpv.app.ui.player.controls.components.VolumeSlider
 import com.quantummpv.app.ui.player.controls.components.playerButtonBorderColor
 import com.quantummpv.app.ui.player.controls.components.playerButtonContainerColor
 import com.quantummpv.app.ui.player.controls.components.playerButtonContentColor
 import com.quantummpv.app.ui.player.controls.components.rememberBufferingState
 import com.quantummpv.app.ui.player.controls.components.rememberTvInitialFocusRequester
+import com.quantummpv.app.ui.player.controls.components.rememberVideoGlassSource
 import com.quantummpv.app.ui.player.controls.components.sheets.toFixed
 import com.quantummpv.app.ui.player.controls.components.tvFocusHighlight
 import com.quantummpv.app.ui.player.controls.components.tvInitialFocus
@@ -186,6 +190,9 @@ import kotlin.math.roundToInt
 
 @Suppress("CompositionLocalAllowlist")
 val LocalPlayerButtonsClickEvent = staticCompositionLocalOf { {} }
+
+/** What player buttons sample for glass; null means the regular solid buttons. */
+internal val LocalPlayerGlassBackdrop = staticCompositionLocalOf<com.kyant.backdrop.Backdrop?> { null }
 
 fun <T> playerControlsExitAnimationSpec(durationMillis: Int = AppMotion.Timing.CONTROLS_FADE_OUT): FiniteAnimationSpec<T> =
   tween(durationMillis = durationMillis, easing = FastOutSlowInEasing)
@@ -651,7 +658,19 @@ fun PlayerControls(
       modifier = Modifier.fillMaxSize(),
     )
 
+    val glassRenderer = LocalPlayerGlassRenderer.current
+    val textureActive = glassRenderer?.isTextureActive?.collectAsState()?.value == true
+    val frameReady = glassRenderer?.frameReady?.collectAsState()?.value == true
+    val glassHost = glassRenderer?.takeIf { textureActive }?.host
+    val glassSource = rememberVideoGlassSource(glassHost, glassRenderer?.backdrop)
+    // A fresh recorder per source, so a replaced video host can never replay the previous host's pixels.
+    val controlsVideoBackdrop =
+      key(glassSource) { rememberLayerBackdrop(onDraw = { with(glassSource) { drawVideo() } }) }
+    val playerGlassBackdrop = controlsVideoBackdrop.takeIf { textureActive && frameReady && glassSource.scene != null }
+    if (playerGlassBackdrop != null) VideoGlassBackdropSource(glassSource, controlsVideoBackdrop)
+
     CompositionLocalProvider(
+      LocalPlayerGlassBackdrop provides playerGlassBackdrop,
       LocalRippleConfiguration provides playerRippleConfiguration,
       LocalPlayerButtonsClickEvent provides { resetControlsTimestamp = System.currentTimeMillis() },
       LocalForceDarkPlayerButtonsBackground provides forceDarkButtonBackground,
