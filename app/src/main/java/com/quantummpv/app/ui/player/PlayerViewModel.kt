@@ -4879,6 +4879,7 @@ val isBrightnessSliderShown = MutableStateFlow(false)
   fun changeVideoAspect(
     aspect: VideoAspect,
     showUpdate: Boolean = true,
+    resetZoom: Boolean = true,
   ) {
     if (MpvConfigOverridePolicy.ownsAny(MpvConfigControlledFeatures.VIDEO_ASPECT)) return
     when (aspect) {
@@ -4923,6 +4924,9 @@ val isBrightnessSliderShown = MutableStateFlow(false)
       }
     }
 
+    // A selected preset replaces manual zoom and pan; internal reapplication preserves them (mpvRx b27989cb0).
+    if (resetZoom) resetVideoZoom()
+
     // Update the state
     playerPreferences.lastVideoAspect.set(aspect)
     playerPreferences.lastCustomAspectRatio.set(-1f)
@@ -4938,10 +4942,12 @@ val isBrightnessSliderShown = MutableStateFlow(false)
   fun setCustomAspectRatio(
     ratio: Double,
     showUpdate: Boolean = true,
+    resetZoom: Boolean = true,
   ) {
     if (MpvConfigOverridePolicy.ownsAny(MpvConfigControlledFeatures.VIDEO_ASPECT)) return
     PlaybackSession.setPropertyDouble("panscan", 0.0)
     PlaybackSession.setPropertyDouble("video-aspect-override", ratio)
+    if (resetZoom) resetVideoZoom()
     playerPreferences.lastCustomAspectRatio.set(ratio.toFloat())
     _currentAspectRatio.value = ratio
     if (showUpdate) {
@@ -4952,11 +4958,11 @@ val isBrightnessSliderShown = MutableStateFlow(false)
   fun restoreSavedVideoAspect(showUpdate: Boolean = false) {
     val customAspectRatio = playerPreferences.lastCustomAspectRatio.get()
     if (customAspectRatio > 0f) {
-      setCustomAspectRatio(customAspectRatio.toDouble(), showUpdate)
+      setCustomAspectRatio(customAspectRatio.toDouble(), showUpdate, resetZoom = false)
       return
     }
 
-    changeVideoAspect(playerPreferences.lastVideoAspect.get(), showUpdate)
+    changeVideoAspect(playerPreferences.lastVideoAspect.get(), showUpdate, resetZoom = false)
   }
 
   fun setAutoCropBlackBars(enabled: Boolean) {
@@ -5361,7 +5367,7 @@ val isBrightnessSliderShown = MutableStateFlow(false)
   private fun refreshStretchAspectAfterCropChange() {
     if (playerPreferences.lastCustomAspectRatio.get() > 0f) return
     if (playerPreferences.lastVideoAspect.get() != VideoAspect.Stretch) return
-    changeVideoAspect(VideoAspect.Stretch, showUpdate = false)
+    changeVideoAspect(VideoAspect.Stretch, showUpdate = false, resetZoom = false)
   }
 
   // ==================== Screen Rotation ====================

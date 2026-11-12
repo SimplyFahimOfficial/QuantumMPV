@@ -18,6 +18,8 @@ import fi.iki.elonen.NanoHTTPD
 import java.io.FilterInputStream
 import java.io.InputStream
 import java.net.Inet4Address
+import java.net.InetAddress
+import java.net.NetworkInterface
 import java.security.SecureRandom
 
 /**
@@ -174,9 +176,10 @@ internal class CastMediaServer private constructor(
       context: Context,
       source: Uri,
       mimeType: String,
+      receiver: InetAddress? = null,
     ): String? {
       stop()
-      val host = runCatching { findLanAddress(context) }.getOrNull() ?: return null
+      val host = runCatching { findLanAddress(context, receiver) }.getOrNull() ?: return null
       val token = ByteArray(16).also { SecureRandom().nextBytes(it) }.joinToString("") { "%02x".format(it) }
       val server =
         CastMediaServer(
@@ -215,16 +218,52 @@ internal class CastMediaServer private constructor(
       } ?: -1L
     }
 
-    private fun findLanAddress(context: Context): String? {
+    /**
+     * Address the receiver can reach, preferring the interface on the receiver's own subnet. A hotspot, VPN or
+     * mobile-data default network otherwise hides it (mpvRx 4c4216c80). Only private IPv4 addresses qualify, so
+     * the server, which binds to this address alone, is never exposed on a public or link-local interface.
+     */
+    private fun findLanAddress(
+      context: Context,
+      receiver: InetAddress?,
+    ): String? {
+      val local =
+        runCatching { NetworkInterface.getNetworkInterfaces()?.toList() }
+          .getOrNull()
+          .orEmpty()
+          .filter { runCatching { it.isUp && !it.isLoopback }.getOrDefault(false) }
+          .sortedBy { it.isVpn() }
+          .flatMap { network -> network.interfaceAddresses.map { network to it } }
+          .filter { (_, address) -> (address.address as? Inet4Address)?.isSiteLocalAddress == true }
+      if (receiver is Inet4Address) {
+        local
+          .firstOrNull { (_, address) -> sameSubnet(address.address, address.networkPrefixLength.toInt(), receiver) }
+          ?.let { return it.second.address.hostAddress }
+      }
       val connectivity = context.getSystemService(ConnectivityManager::class.java)
-      val properties = connectivity.getLinkProperties(connectivity.activeNetwork)
-      return properties
+      connectivity
+        .getLinkProperties(connectivity.activeNetwork)
         ?.linkAddresses
         ?.asSequence()
         ?.map { it.address }
         ?.filterIsInstance<Inet4Address>()
         ?.firstOrNull { !it.isLoopbackAddress && it.isSiteLocalAddress }
-        ?.hostAddress
+        ?.let { return it.hostAddress }
+      return local.firstOrNull { (network, _) -> !network.isVpn() }?.second?.address?.hostAddress
     }
+
+    private fun NetworkInterface.isVpn(): Boolean = name.startsWith("tun") || name.startsWith("ppp")
+
+    internal fun sameSubnet(
+      local: InetAddress,
+      prefixLength: Int,
+      target: InetAddress,
+    ): Boolean {
+      if (local !is Inet4Address || target !is Inet4Address || prefixLength !in 1..32) return false
+      val mask = -1 shl (32 - prefixLength)
+      return (local.ipv4Bits() and mask) == (target.ipv4Bits() and mask)
+    }
+
+    private fun InetAddress.ipv4Bits(): Int = address.fold(0) { bits, byte -> (bits shl 8) or (byte.toInt() and 0xFF) }
   }
 }

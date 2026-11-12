@@ -31,6 +31,12 @@
 
 ### Fixes
 
+- **File names with `#`**: A file such as `clip #edit.mp4` is now recognised as video or audio; the name was cut at the `#`, so its extension came out empty. (mpvRx #943)
+- **Library thumbnails and details**: A video whose first scan failed no longer keeps a blank duration for good. Failed scans are not stored, and entries already stored without a duration are scanned again.
+- **Casting local files**: The phone now advertises the address on the same network as the Cast device, so casting works when the TV is on a hotspot or the phone's default network is a VPN or mobile data. The server still listens only on that one private address. (mpvRx #944)
+- **Picture-in-picture**: The window hint used for the expand animation is no longer replaced with PiP-window bounds while in PiP. Not checked on a device.
+- **Aspect ratio**: Choosing an aspect ratio resets manual zoom and pan; restoring a saved one keeps them.
+- **Music player rotation**: Automatic orientation now follows Android's rotation lock.
 - **yt-dlp quality**: Opening a link no longer replaces the video quality chosen in settings with an empty value.
 - **HTTP headers**: A stream without its own headers now gets the headers from your `mpv.conf` back, instead of an empty list.
 - **Playback**: The `position` extra of an external "open with" intent keeps its milliseconds. Track and duration properties are read in the form mpv expects, so audio and subtitle state is right when a track is set to auto or off.

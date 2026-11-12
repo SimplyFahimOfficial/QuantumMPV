@@ -135,6 +135,24 @@ is in the "not ported" table above, so each of these needs a hand port:
 8. **mpvlib 1.1.4 native update.** QuantumMPV pins its own checksum-verified AARs (`mpvlib-v1.0.10`); updating them
    follows the native-artifact process, not a code port.
 
+### Third batch: fixes after v3.0.2
+
+Found by rewriting each upstream commit to QuantumMPV's package and dry-applying it to `master`: only 6 of 593 commits
+since v2.7.2 apply mechanically, so these were ported by hand after checking that the bug exists here.
+
+| Upstream | Change | Notes |
+|---|---|---|
+| `18470efc4` | `fileExtension()` keeps a `#` or `?` that is part of a file name | `MediaPathUtilsTest`. A scheme-less `a.mkv?t=1.5` still reads as `5` (`shortcut:` comment). |
+| `5a5e8186a` | Failed metadata probes are not cached; cached rows without a duration are probed again | Upstream only stopped new rows. The refresh rule was `.ts` only here, so old rows would have stayed. |
+| `4c4216c80` | Cast server advertises the interface on the receiver's subnet first | Only private IPv4 addresses qualify, because #106 binds the server to the advertised address. `CastMediaServerSubnetTest`. |
+| `1407597a2` (part) | No source-rect hint while already in PiP | The orientation half builds on `usesAdaptiveOrientation()`, which QuantumMPV does not have. |
+| `b27989cb0` | Choosing an aspect preset resets manual zoom; restoring a saved one does not | |
+| `47720b192` (part) | Audio "Auto" orientation uses `SCREEN_ORIENTATION_USER` | QuantumMPV has no `Free` option or in-app music player. |
+
+Checked and not needed: `66d1a4d68` (QuantumMPV already uses `hr-seek=no` with precise seeking under 120 s and during
+A-B loops, and has no `scrubTo`), `155fd0b98` (`onStartCommand` already promotes first, which covers the Android 16
+deadline), `171eb9066` (the legacy flags are already one assignment), `d9936e04e` (no clip subtitle loader here).
+
 ### Assessed in the second batch and left open
 
 - **Native event callbacks can deadlock during startup** (`20238d284`). The pattern is present: `PlaybackSession`
