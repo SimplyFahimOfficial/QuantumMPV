@@ -159,6 +159,17 @@ deadline), `171eb9066` (the legacy flags are already one assignment), `d9936e04e
 |---|---|---|
 | `1bf439137`, `eabbb3464` (part) | `fadingHorizontalScroll` on the landscape bottom-left group and the portrait bottom row | Edge alpha is a pure function (`FadingHorizontalScrollTest`). `shadowRoom` and `reverseScrolling` are not ported: QuantumMPV's buttons have no shadow and nothing here scrolls in reverse. The top-right and bottom-right groups keep their natural width, as upstream does. The layout-preview fade has no counterpart because QuantumMPV's preview wraps. |
 
+### Fifth batch: library, picker and manifest commits
+
+| Upstream | Change | Notes |
+|---|---|---|
+| `9b32eba35` (part) | Manifest declares exact media types instead of `*/mkv`, `application/mpeg*` and similar | Android matches exact types and `type/*` only ([data element](https://developer.android.com/guide/topics/manifest/data-element)). The `.m3u8*` patterns are kept: `*` repeats the previous character, so they still match `.m3u` and `.m3u8`. |
+| `dd068066d` (part) | `getAllStorageVolumes()` returns one entry per volume key; picker rows use `volume:`, `folder:` and `file:` keys | The crash log in upstream issue #931 is not readable, so a duplicated volume is the most likely cause, not a confirmed one. The off-main-thread directory listing is not ported. |
+
+Checked and not needed: `8169193f` (QuantumMPV never had the restore guard that reverted imports, and its import already reports skipped and failed entries), `cb2b7703f` (no `BitmapMemoryCache` or snapshot store), `e2068f753` (`PlaylistViewModel` has no `ContentObserver`), `6029d5b82` (no `bottomOverlayExempt` navigation inset), and the missing torrent host half of `9b32eba35` (`android:host="*"` is already there).
+
+Deferred: `9c9c089f9` replaces MediaInfo with platform probing on 32-bit devices in a 438-line rewrite. That changes which codec and subtitle details the browser shows, so it needs a device.
+
 ### Assessed in the second batch and left open
 
 - **Native event callbacks can deadlock during startup** (`20238d284`). The pattern is present: `PlaybackSession`

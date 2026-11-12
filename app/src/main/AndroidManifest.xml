@@ -177,19 +177,27 @@
 
                 <data android:mimeType="video/*" />
                 <data android:mimeType="audio/*" />
-                <data android:mimeType="*/rmvb" />
-                <data android:mimeType="*/avi" />
-                <data android:mimeType="*/mkv" />
-                <data android:mimeType="application/3gpp*" />
+                <!-- Android matches exact types and type/* only; a glob such as application/mpeg* or
+                     */mkv matches nothing. Standard 3GPP and Dolby audio/video types are covered by
+                     audio/* and video/* above (mpvRx 9b32eba35). -->
+                <data android:mimeType="application/rmvb" />
+                <data android:mimeType="application/avi" />
+                <data android:mimeType="application/mkv" />
+                <data android:mimeType="application/3gpp" />
+                <data android:mimeType="application/3gpp2" />
                 <data android:mimeType="application/mp4" />
-                <data android:mimeType="application/mpeg*" />
+                <data android:mimeType="application/mpeg" />
+                <data android:mimeType="application/mpeg4-generic" />
+                <data android:mimeType="application/mpeg4-iod" />
+                <data android:mimeType="application/mpeg4-iod-xmt" />
                 <data android:mimeType="application/ogg" />
                 <data android:mimeType="application/sdp" />
-                <data android:mimeType="application/vnd.3gp*" />
                 <data android:mimeType="application/vnd.apple.mpegurl" />
-                <data android:mimeType="application/vnd.dvd*" />
-                <data android:mimeType="application/vnd.dolby*" />
-                <data android:mimeType="application/vnd.rn-realmedia*" />
+                <data android:mimeType="application/vnd.dvd" />
+                <data android:mimeType="application/vnd.dolby.mobile.1" />
+                <data android:mimeType="application/vnd.dolby.mobile.2" />
+                <data android:mimeType="application/vnd.rn-realmedia" />
+                <data android:mimeType="application/vnd.rn-realmedia-vbr" />
                 <data android:mimeType="application/x-extension-mp4" />
                 <data android:mimeType="application/x-flac" />
                 <data android:mimeType="application/x-matroska" />
