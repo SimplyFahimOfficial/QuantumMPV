@@ -187,6 +187,12 @@ Not ported: glass sliders, seekbar thumb, sheets and panels, and the live-previe
 
 Verification: compiled, ktlint, detekt, Android lint and all 341 unit tests were run locally on a JDK 17 and Android SDK 37 toolchain, and in CI. Nothing runs the feature itself: no device or emulator was available (the sandbox has no KVM), so the renderer switch, the first frame, PiP, background playback, HDR and frame pacing are unverified.
 
+### Seventh batch: features from the full upstream audit
+
+| Upstream | Change | Notes |
+|---|---|---|
+| `4e4c8ed0`, `437114fc` | Thumbnail source: Native, Auto, MediaStore | `MediaStoreThumbnailLoader` ported from upstream. Unlike upstream, **Native stays the default**: upstream makes Auto the default, which changes every user's thumbnails and orphans their cache. Native adds no cache-key suffix, so existing thumbnails stay valid. Not ported: `90e463cc` (a 59-file refactor that also reworks media-info tabs and audio controls). `ThumbnailGeneratorTest`. |
+
 ### Assessed in the second batch and left open
 
 - **Native event callbacks can deadlock during startup** (`20238d284`). The pattern is present: `PlaybackSession`

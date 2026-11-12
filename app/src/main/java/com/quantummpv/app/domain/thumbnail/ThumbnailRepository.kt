@@ -504,6 +504,15 @@ class ThumbnailRepository(
     val mode = browserPreferences.thumbnailMode.get()
     val dimension = maxOf(widthPx, heightPx, MAX_THUMBNAIL_SIZE).coerceAtMost(thumbnailMaxSize())
 
+    val generator = browserPreferences.thumbnailGenerator.get()
+    if (generator.triesMediaStore) {
+      MediaStoreThumbnailLoader
+        .load(context, video, canonicalLocalPath(video), dimension, video.isAudio)
+        ?.let { return scaleBitmap(it, widthPx, heightPx) }
+      // MediaStore only: a missing index entry leaves the placeholder, as the mode promises.
+      if (!generator.triesNative) return null
+    }
+
     if (video.isAudio || mode == ThumbnailMode.Smart || mode == ThumbnailMode.EmbeddedThumbnail) {
       generateEmbeddedArtwork(video)?.let { return scaleBitmap(it, widthPx, heightPx) }
       if (video.isAudio) return null
@@ -1274,8 +1283,11 @@ class ThumbnailRepository(
     return md.digest().joinToString("") { byte -> "%02x".format(byte) }
   }
 
+  // The generator suffix is part of the mode key so memory and disk entries are never shared between sources.
+  // Native has no suffix, which keeps thumbnails cached before the generator setting existed.
   private fun thumbnailModeKey(): String =
-    browserPreferences.thumbnailMode.get().thumbnailModeCacheKey(browserPreferences.thumbnailFramePosition.get())
+    browserPreferences.thumbnailMode.get().thumbnailModeCacheKey(browserPreferences.thumbnailFramePosition.get()) +
+      browserPreferences.thumbnailGenerator.get().cacheSuffix
 
   private fun thumbnailQualityKey(): String = browserPreferences.thumbnailQuality.get().name
 
