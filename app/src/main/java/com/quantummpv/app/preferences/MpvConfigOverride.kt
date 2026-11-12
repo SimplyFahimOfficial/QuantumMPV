@@ -259,6 +259,9 @@ object MpvConfigControlledFeatures {
 
   val VIDEO_ZOOM = setOf("video-zoom")
 
+  // Only the FongMi mpv build can send Dolby Vision straight to MediaCodec.
+  val DOLBY_VISION_DIRECT = setOf("android-dolby-vision-output", "demuxer-dovi-profile7")
+
   val VIDEO_ASPECT = setOf("video-aspect-override", "panscan")
 
   val AUTO_CROP = setOf("video-crop")

@@ -187,6 +187,12 @@ Not ported: glass sliders, seekbar thumb, sheets and panels, and the live-previe
 
 Verification: compiled, ktlint, detekt, Android lint and all 341 unit tests were run locally on a JDK 17 and Android SDK 37 toolchain, and in CI. Nothing runs the feature itself: no device or emulator was available (the sandbox has no KVM), so the renderer switch, the first frame, PiP, background playback, HDR and frame pacing are unverified.
 
+### Seventh batch: features from the full upstream audit
+
+| Upstream | Change | Notes |
+|---|---|---|
+| `39472fff7` (part) | Dolby Vision direct output (FongMi only) | Needs **no** native update: the pinned FongMi 1.0.9 already has `android-dolby-vision-output`, `demuxer-dovi-profile7` and `attachOsdSurface` / `detachOsdSurface`, found by searching its libraries and classes. The overlay is a sibling `SurfaceView` (`OsdOverlayHost`) instead of upstream's host class. Direct output needs the real SurfaceView, so `PlayerGlassPolicy` turns glass off while it is on. The audio output / passthrough options and lyrics changes in the same commit are separate and not included. `PlayerGlassPolicyTest`. |
+
 ### Assessed in the second batch and left open
 
 - **Native event callbacks can deadlock during startup** (`20238d284`). The pattern is present: `PlaybackSession`

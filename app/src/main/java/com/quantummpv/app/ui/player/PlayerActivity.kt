@@ -305,6 +305,9 @@ class PlayerActivity :
   // Dormant unless the experimental player glass option is on: with it off nothing is added to the layout.
   internal val glassRenderer by lazy { PlayerGlassRenderer(binding.player, appearancePreferences, decoderPreferences, playerPreferences) }
 
+  // Subtitles and OSD for direct Dolby Vision (FongMi build, off by default). Nothing is added otherwise.
+  private val osdOverlay by lazy { OsdOverlayHost(binding.player) }
+
   override fun currentThumbnailSource(): String? = currentPlayableUri
 
   override fun isCurrentMediaKnownAudio(): Boolean {
@@ -1049,7 +1052,16 @@ class PlayerActivity :
 
   /** Evaluates the glass policy now and again whenever one of its inputs changes. */
   private fun setupPlayerGlass() {
+    osdOverlay.setEnabled(DolbyVisionDirect.isEnabled(decoderPreferences))
     glassRenderer.update()
+    lifecycleScope.launch {
+      // Direct Dolby Vision and glass both want the video Surface, and the policy lets only one have it, so the
+      // overlay is decided first and the renderer re-evaluated after.
+      decoderPreferences.dolbyVisionDirect.changes().distinctUntilChanged().collect {
+        osdOverlay.setEnabled(DolbyVisionDirect.isEnabled(decoderPreferences))
+        glassRenderer.update()
+      }
+    }
     lifecycleScope.launch {
       combine(
         appearancePreferences.liquidGlassPlayerEnabled.changes(),
@@ -1611,6 +1623,7 @@ class PlayerActivity :
     mpvInitialized = false
     player.onSurfaceReady = null
     glassRenderer.release()
+    osdOverlay.release()
     videoParamRefreshJob?.cancel()
     backgroundServiceSyncJob?.cancel()
     backgroundHandoffJob?.cancel()
@@ -2469,6 +2482,8 @@ class PlayerActivity :
     }
 
     player.onSurfaceReady = {
+      // The overlay may have been created before the core was ready; the video Surface being ready proves it is.
+      osdOverlay.rebind()
       if (!isDeviceScreenOffOrLocked() && (isInBackgroundPlayback || lastVid > 0)) {
         enableVideoAfterBackground()
       }
