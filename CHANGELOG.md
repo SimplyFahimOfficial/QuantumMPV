@@ -36,6 +36,8 @@
 - **Casting local files**: The phone now advertises the address on the same network as the Cast device, so casting works when the TV is on a hotspot or the phone's default network is a VPN or mobile data. The server still listens only on that one private address. (mpvRx #944)
 - **Picture-in-picture**: The window hint used for the expand animation is no longer replaced with PiP-window bounds while in PiP. Not checked on a device.
 - **Aspect ratio**: Choosing an aspect ratio resets manual zoom and pan; restoring a saved one keeps them.
+- **Opening media from other apps**: The player now declares the exact video and audio types that were listed as patterns Android cannot match (for example `application/mpeg*` and `*/mkv`), so files shared with those types can be opened with it. (mpvRx 9b32eba35)
+- **File and folder pickers**: A storage volume reported twice is listed once, and file, folder and volume rows have separate keys, so choosing an external subtitle or a folder cannot crash on a repeated key. Not confirmed on an affected device. (mpvRx #931)
 - **Music player rotation**: Automatic orientation now follows Android's rotation lock.
 - **Player controls on narrow screens**: With the full default layout, the bottom-left row in landscape and the bottom row in portrait scroll sideways when the buttons do not fit, and the edge fades to show there is more. Scrolling them keeps the controls on screen. The top-right and bottom-right groups keep their natural width. Not checked on a device.
 - **yt-dlp quality**: Opening a link no longer replaces the video quality chosen in settings with an empty value.

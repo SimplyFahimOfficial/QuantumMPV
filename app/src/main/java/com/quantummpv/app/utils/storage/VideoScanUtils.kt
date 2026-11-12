@@ -666,19 +666,24 @@ object StorageVolumeUtils {
   private const val TAG = "StorageVolumeUtils"
 
   /**
-   * Gets all mounted storage volumes
+   * Gets all mounted storage volumes, one per [volumeKey]. A volume listed twice would be scanned twice and give
+   * the pickers two rows with one list key, which crashes a LazyColumn (mpvRx dd068066d, issue #931).
    */
   fun getAllStorageVolumes(context: Context): List<StorageVolume> =
     try {
       val storageManager = context.getSystemService(Context.STORAGE_SERVICE) as StorageManager
-      storageManager.storageVolumes.filter { volume ->
-        volume.state == Environment.MEDIA_MOUNTED ||
-          (getVolumePath(volume)?.let { path -> File(path).exists() } == true)
-      }
+      storageManager.storageVolumes
+        .filter { volume ->
+          volume.state == Environment.MEDIA_MOUNTED ||
+            (getVolumePath(volume)?.let { path -> File(path).exists() } == true)
+        }.distinctBy { volumeKey(it) }
     } catch (e: Exception) {
       Log.e(TAG, "Error getting storage volumes", e)
       emptyList()
     }
+
+  /** Identity of a volume: its path, or its description when the path is unknown. */
+  fun volumeKey(volume: StorageVolume): String = getVolumePath(volume) ?: volume.toString()
 
   /**
    * Gets non-primary (external) storage volumes (SD cards, USB OTG)
