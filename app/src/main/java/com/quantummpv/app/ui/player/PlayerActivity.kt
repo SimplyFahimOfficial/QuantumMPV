@@ -839,7 +839,9 @@ class PlayerActivity :
         if (!mpvInitialized || !ownsPlaybackSession()) return@collect
         if (ignore) {
           abandonAudioFocus()
-        } else if (MediaPlaybackService.activityForeground && !isBackgroundPlaybackSessionActive &&
+        } else if (MediaPlaybackService.activityForeground &&
+          // activityForeground is false during the onStop handoff, so this never races the service.
+          // The background-session flag can still be set while foreground (PiP, or before onStart clears it).
           PlaybackSession.getPropertyBoolean("pause") == false && !requestAudioFocus()
         ) {
           PlaybackSession.setPropertyBoolean("pause", true)

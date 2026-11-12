@@ -498,7 +498,10 @@ class MediaPlaybackService :
         if (ignore) {
           abandonAudioOwnership()
         } else if (canHandleDetachedTransport() &&
-          PlaybackSession.getPropertyBoolean("pause") == false && !takeAudioOwnership()
+          // mpv loads paused, so a loading item that is about to play reads pause=yes.
+          (PlaybackSession.state.value.phase == PlaybackPhase.LOADING ||
+            PlaybackSession.getPropertyBoolean("pause") == false) &&
+          !takeAudioOwnership()
         ) {
           PlaybackSession.setPropertyBoolean("pause", true)
         }
