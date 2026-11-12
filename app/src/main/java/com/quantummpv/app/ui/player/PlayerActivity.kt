@@ -6166,7 +6166,8 @@ private suspend fun restorePlaybackPosition(state: PlaybackStateEntity?) {
     if (isCurrentMediaKnownAudio() || viewModel.isAudioOnly.value) {
       val audioOrient =
         when (audioPreferences.audioOrientation.get()) {
-          AudioPlayerOrientation.Auto -> ActivityInfo.SCREEN_ORIENTATION_SENSOR
+          // USER follows Android's rotation lock; SENSOR ignored it (mpvRx 47720b192).
+          AudioPlayerOrientation.Auto -> ActivityInfo.SCREEN_ORIENTATION_USER
           AudioPlayerOrientation.Portrait -> ActivityInfo.SCREEN_ORIENTATION_SENSOR_PORTRAIT
           AudioPlayerOrientation.Landscape -> ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE
         }

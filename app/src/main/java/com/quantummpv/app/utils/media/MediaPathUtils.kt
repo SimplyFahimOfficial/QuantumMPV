@@ -21,14 +21,27 @@ import com.quantummpv.app.ui.player.PlaybackSession
  * Example:
  * ```
  * "video.mkv?quality=1080#t=10".fileExtension() == "mkv"
+ * "/Audio/clip #edit.mp4".fileExtension() == "mp4"
  * "content://media/123".fileExtension() == ""
  * ```
+ *
+ * Ported from mpvRx 18470efc4 (#943).
  */
-fun String.fileExtension(): String =
-  substringBefore('?')
-    .substringBefore('#')
-    .substringAfterLast('.', "")
-    .lowercase()
+fun String.fileExtension(): String {
+  val scheme = substringBefore("://", missingDelimiterValue = "")
+  // '#' and '?' are legal in file names (e.g. hashtags), so paths keep them while they still end in an extension.
+  // shortcut: a scheme-less "a.mkv?t=1.5" reads as "5"; upgrade if such strings reach this function.
+  if (scheme.isEmpty() || scheme.equals("file", ignoreCase = true)) {
+    lastExtension(this).takeIf { it.isNotEmpty() && it.all(Char::isLetterOrDigit) }?.let { return it }
+  }
+  return lastExtension(substringBefore('?').substringBefore('#'))
+}
+
+private fun lastExtension(path: String): String {
+  val lastSlash = path.lastIndexOf('/')
+  val lastDot = path.lastIndexOf('.')
+  return if (lastDot > lastSlash && lastDot < path.length - 1) path.substring(lastDot + 1).lowercase() else ""
+}
 
 /**
  * Returns the MPV seek mode string based on the user's precise-seeking preference

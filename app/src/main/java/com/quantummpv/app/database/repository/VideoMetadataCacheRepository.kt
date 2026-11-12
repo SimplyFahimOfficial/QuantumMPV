@@ -42,14 +42,8 @@ class VideoMetadataCacheRepository(
     private const val MAINTENANCE_INTERVAL_MS = 7L * 24L * 60L * 60L * 1000L
   }
 
-  private fun shouldRefreshCachedMetadata(
-    file: File,
-    cached: VideoMetadataEntity,
-  ): Boolean {
-    val extension = file.extension.lowercase()
-    val transportStream = extension == "ts" || extension == "mts" || extension == "m2ts"
-    return transportStream && cached.duration <= 0L
-  }
+  // A row without a duration came from an incomplete probe (mpvRx 5a5e8186a); probe again instead of trusting it.
+  private fun shouldRefreshCachedMetadata(cached: VideoMetadataEntity): Boolean = cached.duration <= 0L
 
   /**
    * Get metadata from cache or extract using MediaInfo
@@ -68,7 +62,7 @@ class VideoMetadataCacheRepository(
 
       // Try cache first
       val cached = dao.getMetadata(path, dateModified, size)
-      if (cached != null && !shouldRefreshCachedMetadata(file, cached)) {
+      if (cached != null && !shouldRefreshCachedMetadata(cached)) {
         Log.d(TAG, "Cache hit for $displayName")
         val metadata = MediaInfoOps.VideoMetadata(
           sizeBytes = cached.size,
@@ -94,8 +88,8 @@ class VideoMetadataCacheRepository(
 
       result
         .onSuccess { metadata ->
-          // Save to cache
-          dao.insertMetadata(
+          // Do not persist failed/incomplete probes as permanent cache hits.
+          if (metadata.durationMs > 0L) dao.insertMetadata(
             VideoMetadataEntity(
               path = path,
               size = size,
@@ -148,7 +142,7 @@ class VideoMetadataCacheRepository(
         if (cached != null &&
           cached.dateModified == dateModified &&
           cached.size == size &&
-          !shouldRefreshCachedMetadata(file, cached)
+          !shouldRefreshCachedMetadata(cached)
         ) {
           // Cache hit - valid entry
           cachedFiles.add(Triple(path, file, cached))
@@ -191,7 +185,7 @@ class VideoMetadataCacheRepository(
                     val result = MediaInfoOps.extractBasicMetadata(context, uri, displayName)
                     result
                       .onSuccess { metadata ->
-                        synchronized(extractedMetadata) {
+                        if (metadata.durationMs > 0L) synchronized(extractedMetadata) {
                           extractedMetadata.add(
                             VideoMetadataEntity(
                               path = path,
