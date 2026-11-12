@@ -56,11 +56,23 @@ class AppearancePreferences(
   companion object {
     const val CUSTOM_WALLPAPER_URI_KEY = "custom_wallpaper_uri"
 
+    // The full layout: every region populated, so no button needs manual setup. Row overflow scrolls.
     const val DEFAULT_TOP_LEFT_CONTROLS = "BACK_ARROW,VIDEO_TITLE"
-    const val DEFAULT_TOP_RIGHT_CONTROLS = "SUBTITLES,AUDIO_TRACK,MORE_OPTIONS"
-    const val DEFAULT_BOTTOM_RIGHT_CONTROLS = "SCREEN_ROTATION,PICTURE_IN_PICTURE,ASPECT_RATIO"
-    const val DEFAULT_BOTTOM_LEFT_CONTROLS = "LOCK_CONTROLS,PLAYBACK_SPEED"
+    const val DEFAULT_TOP_RIGHT_CONTROLS = "CAST,CURRENT_CHAPTER,DECODER,AUDIO_TRACK,SUBTITLES,MORE_OPTIONS"
+    const val DEFAULT_BOTTOM_RIGHT_CONTROLS = "FRAME_NAVIGATION,CLIP,SCOPES,VIDEO_ZOOM,PICTURE_IN_PICTURE,ASPECT_RATIO"
+    const val DEFAULT_BOTTOM_LEFT_CONTROLS =
+      "BACKGROUND_PLAYBACK,LOCK_CONTROLS,SCREEN_ROTATION,PLAYBACK_SPEED,REPEAT_MODE,SHUFFLE,AB_LOOP"
     const val DEFAULT_PORTRAIT_BOTTOM_CONTROLS =
+      "CAST,SCREEN_ROTATION,DECODER,AUDIO_TRACK,SUBTITLES,BOOKMARKS_CHAPTERS,PLAYBACK_SPEED," +
+        "BACKGROUND_PLAYBACK,REPEAT_MODE,SHUFFLE,VIDEO_ZOOM,FRAME_NAVIGATION,CLIP,SCOPES,ASPECT_RATIO," +
+        "PICTURE_IN_PICTURE,LOCK_CONTROLS,MORE_OPTIONS"
+
+    // The trimmed layout that was the default in defaults generation 2. It is now an opt-in preset, and
+    // PreferenceDefaultsGeneration uses these to tell an untouched generation-2 install from a customized one.
+    const val COMPACT_TOP_RIGHT_CONTROLS = "SUBTITLES,AUDIO_TRACK,MORE_OPTIONS"
+    const val COMPACT_BOTTOM_RIGHT_CONTROLS = "SCREEN_ROTATION,PICTURE_IN_PICTURE,ASPECT_RATIO"
+    const val COMPACT_BOTTOM_LEFT_CONTROLS = "LOCK_CONTROLS,PLAYBACK_SPEED"
+    const val COMPACT_PORTRAIT_BOTTOM_CONTROLS =
       "LOCK_CONTROLS,SUBTITLES,AUDIO_TRACK,PLAYBACK_SPEED,SCREEN_ROTATION,MORE_OPTIONS"
   }
 
@@ -136,8 +148,8 @@ class AppearancePreferences(
   val showQuickPlayFab = preferenceStore.getBoolean("show_quick_play_fab", true)
   val quickPlayFabDirect = preferenceStore.getBoolean("quick_play_fab_direct", false)
 
-  // Recommended layout for new installs: the controls people reach for while watching, with the rest in
-  // More. Existing installs keep the layout they had (see PreferenceDefaultsGeneration).
+  // Full layout by default. Stored layouts are never rewritten, except a stored copy of the old compact
+  // default, which PreferenceDefaultsGeneration drops so it follows this default.
   val topLeftControls = preferenceStore.getString("top_left_controls", DEFAULT_TOP_LEFT_CONTROLS)
   val topRightControls = preferenceStore.getString("top_right_controls", DEFAULT_TOP_RIGHT_CONTROLS)
   val bottomRightControls = preferenceStore.getString("bottom_right_controls", DEFAULT_BOTTOM_RIGHT_CONTROLS)
@@ -153,30 +165,25 @@ class AppearancePreferences(
     }
   }
 
-  /** Replaces every player control region with the recommended layout. */
+  /** Switches to the trimmed preset: fewer buttons on screen, the rest in More. */
   fun resetPlayerLayoutToRecommended() {
+    topLeftControls.set(DEFAULT_TOP_LEFT_CONTROLS)
+    topRightControls.set(COMPACT_TOP_RIGHT_CONTROLS)
+    bottomRightControls.set(COMPACT_BOTTOM_RIGHT_CONTROLS)
+    bottomLeftControls.set(COMPACT_BOTTOM_LEFT_CONTROLS)
+    portraitBottomControls.set(COMPACT_PORTRAIT_BOTTOM_CONTROLS)
+  }
+
+  /**
+   * Puts all five regions back to the default layout. The controls drawer lives in
+   * [PlayerPreferences.showControlsDrawer]; the caller resets it too.
+   */
+  fun resetPlayerLayoutToDefault() {
     topLeftControls.set(DEFAULT_TOP_LEFT_CONTROLS)
     topRightControls.set(DEFAULT_TOP_RIGHT_CONTROLS)
     bottomRightControls.set(DEFAULT_BOTTOM_RIGHT_CONTROLS)
     bottomLeftControls.set(DEFAULT_BOTTOM_LEFT_CONTROLS)
     portraitBottomControls.set(DEFAULT_PORTRAIT_BOTTOM_CONTROLS)
-  }
-
-  /**
-   * Puts back the fuller layout every install had before the recommended one: all five regions as they
-   * shipped. The controls drawer lives in [PlayerPreferences.showControlsDrawer]; the caller restores it too.
-   */
-  fun restoreClassicPlayerLayout() {
-    fun classic(
-      key: String,
-      current: String,
-    ) = PreferenceDefaultsGeneration.legacyDefault(key) as? String ?: current
-
-    topLeftControls.set(classic("top_left_controls", DEFAULT_TOP_LEFT_CONTROLS))
-    topRightControls.set(classic("top_right_controls", DEFAULT_TOP_RIGHT_CONTROLS))
-    bottomRightControls.set(classic("bottom_right_controls", DEFAULT_BOTTOM_RIGHT_CONTROLS))
-    bottomLeftControls.set(classic("bottom_left_controls", DEFAULT_BOTTOM_LEFT_CONTROLS))
-    portraitBottomControls.set(classic("portrait_bottom_controls", DEFAULT_PORTRAIT_BOTTOM_CONTROLS))
   }
 
   fun parseButtons(

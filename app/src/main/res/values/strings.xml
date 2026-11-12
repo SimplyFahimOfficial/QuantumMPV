@@ -198,10 +198,10 @@
   <string name="pref_layout_reset_recommended_hint">Fewer buttons on screen. Everything else stays in More.</string>
   <string name="pref_layout_reset_recommended_title">Use the recommended layout?</string>
   <string name="pref_layout_reset_recommended_summary">Every control region will be replaced with the recommended buttons. Controls that are no longer on screen are listed in More.</string>
-  <string name="pref_layout_restore_classic">Restore classic layout</string>
-  <string name="pref_layout_restore_classic_hint">Bring back every button and the controls drawer from earlier versions.</string>
-  <string name="pref_layout_restore_classic_title">Restore the classic layout?</string>
-  <string name="pref_layout_restore_classic_summary">All five control regions go back to the full set of buttons earlier versions had, and the controls drawer is turned on. Your current button choices will be replaced.</string>
+  <string name="pref_layout_restore_classic">Reset to default layout</string>
+  <string name="pref_layout_restore_classic_hint">Show the full set of buttons in every region and turn the controls drawer on.</string>
+  <string name="pref_layout_restore_classic_title">Reset to the default layout?</string>
+  <string name="pref_layout_restore_classic_summary">All five control regions go back to the default set of buttons and the controls drawer is turned on. Your current button choices will be replaced.</string>
   <string name="player_more_controls_title">Controls</string>
   <string name="player_seekbar_description">Seek bar</string>
   <string name="player_seekbar_state">%1$s of %2$s</string>

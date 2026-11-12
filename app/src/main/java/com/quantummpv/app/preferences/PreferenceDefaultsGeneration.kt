@@ -47,7 +47,20 @@ internal object PreferenceDefaultsGeneration {
   /** Flags of migrations that no longer run; removed so they stop appearing in settings backups. */
   private val retiredKeys = listOf("cast_button_migration_complete", "clip_button_migration_complete")
 
-  val CURRENT: Int = replacedDefaults.keys.max()
+  /**
+   * Generation 3 makes the full layout the default again. It writes nothing for existing installs, because
+   * a preference they never stored should follow the new default. It only drops stored copies of the
+   * generation-2 compact layout (see [dropStoredCompactLayout]).
+   */
+  const val CURRENT: Int = 3
+
+  private val compactLayout: Map<String, String> =
+    mapOf(
+      "top_right_controls" to AppearancePreferences.COMPACT_TOP_RIGHT_CONTROLS,
+      "bottom_right_controls" to AppearancePreferences.COMPACT_BOTTOM_RIGHT_CONTROLS,
+      "bottom_left_controls" to AppearancePreferences.COMPACT_BOTTOM_LEFT_CONTROLS,
+      "portrait_bottom_controls" to AppearancePreferences.COMPACT_PORTRAIT_BOTTOM_CONTROLS,
+    )
 
   /** Old defaults an existing install keeps, in case a caller needs to show or test them. */
   fun legacyDefault(key: String): Any? =
@@ -84,10 +97,25 @@ internal object PreferenceDefaultsGeneration {
           if (key !in stored) editor.put(key, value)
         }
       }
+    if (from < 3) dropStoredCompactLayout(stored, editor)
     retiredKeys.forEach(editor::remove)
     editor.putInt(KEY, CURRENT)
     editor.apply()
     return from
+  }
+
+  /**
+   * The layout editor saves its list whenever it closes, so an install that merely opened it has the compact
+   * layout stored without ever choosing it. Dropping a value that is exactly the old compact default lets that
+   * region follow the new default; any other stored value is a real customization and stays.
+   * Shortcut: this also drops a compact layout picked on purpose with "Use recommended layout"; that button
+   * still sets it again.
+   */
+  private fun dropStoredCompactLayout(
+    stored: Map<String, *>,
+    editor: SharedPreferences.Editor,
+  ) {
+    compactLayout.forEach { (key, compact) -> if (stored[key] == compact) editor.remove(key) }
   }
 
   private fun SharedPreferences.Editor.put(
