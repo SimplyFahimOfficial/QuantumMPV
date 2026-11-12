@@ -1,8 +1,10 @@
 package com.quantummpv.app.ui.player.controls.components
 
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeout
@@ -31,8 +33,14 @@ class KeepControlsAliveWhileScrollingTest {
     runBlocking {
       val scrolling = MutableStateFlow(false)
       val activity = AtomicInteger()
-      val job = launch(Dispatchers.Default) { keepControlsAliveWhileScrolling(scrolling, 10) { activity.incrementAndGet() } }
-      delay(30)
+      // A StateFlow hands a late collector its current value first; the helper discards that one as "resting",
+      // so scrolling must not start before the collector has seen false.
+      val restingSeen = CompletableDeferred<Unit>()
+      val job =
+        launch(Dispatchers.Default) {
+          keepControlsAliveWhileScrolling(scrolling.onEach { restingSeen.complete(Unit) }, 10) { activity.incrementAndGet() }
+        }
+      withTimeout(5_000) { restingSeen.await() }
 
       scrolling.value = true
       waitUntil { activity.get() >= 4 }
