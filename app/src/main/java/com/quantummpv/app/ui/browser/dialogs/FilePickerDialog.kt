@@ -296,7 +296,7 @@ fun FilePickerDialog(
           ) {
             if (showStorageRoot) {
               // Show storage volumes
-              items(storageVolumes, key = { StorageVolumeUtils.getVolumePath(it) ?: it.toString() }) { volume ->
+              items(storageVolumes, key = { "volume:${StorageVolumeUtils.volumeKey(it)}" }) { volume ->
                 val volumePath = StorageVolumeUtils.getVolumePath(volume)
                 if (volumePath != null) {
                   StorageVolumeItem(
@@ -319,14 +319,14 @@ fun FilePickerDialog(
               }
             } else {
               // Show folders
-              items(folders, key = { it.absolutePath }) { folder ->
+              items(folders, key = { "folder:${it.absolutePath}" }) { folder ->
                 FolderItem(
                   folder = folder,
                   onClick = { selectedPath = folder.absolutePath },
                 )
               }
               // Show files
-              items(files, key = { it.absolutePath }) { file ->
+              items(files, key = { "file:${it.absolutePath}" }) { file ->
                 FileItem(
                   file = file,
                   onClick = { onFileSelected(file.absolutePath) },
