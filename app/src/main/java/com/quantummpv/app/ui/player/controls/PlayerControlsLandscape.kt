@@ -48,6 +48,7 @@ import com.quantummpv.app.ui.player.PlayerViewModel
 import com.quantummpv.app.ui.player.Sheets
 import com.quantummpv.app.ui.player.VideoAspect
 import com.quantummpv.app.ui.player.controls.components.ControlsButton
+import com.quantummpv.app.ui.player.controls.components.KeepControlsShownWhileScrolling
 import com.quantummpv.app.ui.player.controls.components.fadingHorizontalScroll
 import com.quantummpv.app.ui.player.controls.components.playerButtonBorderColor
 import com.quantummpv.app.ui.player.controls.components.playerButtonContainerColor
@@ -349,8 +350,10 @@ fun BottomLeftPlayerControlsLandscape(
 ) {
   PlayerButtonTheme(hideBackground) {
     // This group takes the space left of the bottom-right group, so a long layout scrolls instead of being cut off.
+    val scrollState = rememberScrollState()
+    KeepControlsShownWhileScrolling(scrollState)
     Row(
-      modifier = Modifier.fadingHorizontalScroll(rememberScrollState()),
+      modifier = Modifier.fadingHorizontalScroll(scrollState),
       verticalAlignment = Alignment.CenterVertically,
       horizontalArrangement = Arrangement.spacedBy(MaterialTheme.spacing.extraSmall),
     ) {

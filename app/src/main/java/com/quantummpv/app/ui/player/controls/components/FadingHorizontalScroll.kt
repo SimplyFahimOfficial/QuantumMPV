@@ -11,6 +11,11 @@ package com.quantummpv.app.ui.player.controls.components
 
 import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.horizontalScroll
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.geometry.Offset
@@ -23,6 +28,11 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
+import com.quantummpv.app.ui.player.controls.LocalPlayerButtonsClickEvent
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.drop
 
 /**
  * A horizontal scroller that fades the edge where more buttons are hidden, so a row that overflows reads as
@@ -88,3 +98,34 @@ internal fun fadeEdgeAlphas(
   val hiddenRight = if (firstItemOnRight) hiddenBefore else hiddenAfter
   return (1f - (hiddenLeft / fadePx).coerceIn(0f, 1f)) to (1f - (hiddenRight / fadePx).coerceIn(0f, 1f))
 }
+
+/**
+ * Restarts the controls' auto-hide timer while [state] is being scrolled. Only taps and seekbar changes did
+ * before, so a long drag toward a hidden button could outlast the hide delay and take the controls away.
+ */
+@Composable
+internal fun KeepControlsShownWhileScrolling(state: ScrollState) {
+  val onActivity by rememberUpdatedState(LocalPlayerButtonsClickEvent.current)
+  LaunchedEffect(state) {
+    keepControlsAliveWhileScrolling(snapshotFlow { state.isScrollInProgress }) { onActivity() }
+  }
+}
+
+/** Calls [onActivity] when a scroll starts, every [intervalMs] while it lasts, and when it stops. */
+internal suspend fun keepControlsAliveWhileScrolling(
+  scrolling: Flow<Boolean>,
+  intervalMs: Long = SCROLL_ACTIVITY_INTERVAL_MS,
+  onActivity: () -> Unit,
+) {
+  // The first value is the resting state on composition, which is not user activity.
+  scrolling.drop(1).collectLatest { active ->
+    onActivity()
+    while (active) {
+      delay(intervalMs)
+      onActivity()
+    }
+  }
+}
+
+// Shorter than the smallest hide delay offered in settings (500 ms), so one scroll never lets the timer expire.
+private const val SCROLL_ACTIVITY_INTERVAL_MS = 250L
