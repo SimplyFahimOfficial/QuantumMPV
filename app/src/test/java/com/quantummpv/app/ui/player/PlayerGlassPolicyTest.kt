@@ -12,8 +12,8 @@ class PlayerGlassPolicyTest {
     hdr: Boolean = false,
     confOwnsHdr: Boolean = false,
     inHdr: Boolean = false,
-    ambient: Boolean = false,
-  ) = PlayerGlassPolicy.usesTextureSurface(glass, sdk, hdr, confOwnsHdr, inHdr, ambient)
+    youTubeAmbient: Boolean = false,
+  ) = PlayerGlassPolicy.usesTextureSurface(glass, sdk, hdr, confOwnsHdr, inHdr, youTubeAmbient)
 
   @Test
   fun offByDefaultSoPlaybackKeepsTheNativeSurface() {
@@ -46,9 +46,44 @@ class PlayerGlassPolicyTest {
   }
 
   @Test
-  fun theAmbientBackgroundKeepsItsSurfaceView() {
-    assertFalse(texture(ambient = true))
-    assertFalse(texture(ambient = true, hdr = true, inHdr = true))
+  fun theYouTubeAmbientBackgroundKeepsItsSurfaceView() {
+    assertFalse(texture(youTubeAmbient = true))
+    assertFalse(texture(youTubeAmbient = true, hdr = true, inHdr = true))
+  }
+
+  @Test
+  fun theAnswerOnlyDependsOnSettingsSoSwitchingSurfacesCannotChangeIt() {
+    // The ambient capture needs a bound SurfaceView, so it appears and disappears as the renderer switches.
+    // If the renderer were chosen from that, it would flip back and forth. The policy has no such input:
+    // identical settings must always give the identical answer.
+    val flags = listOf(true, false)
+    val combinations =
+      flags.flatMap { glass ->
+        flags.flatMap { hdr ->
+          flags.flatMap { conf ->
+            flags.flatMap { inHdr -> flags.map { ambient -> listOf(glass, hdr, conf, inHdr, ambient) } }
+          }
+        }
+      }
+    assertEquals(32, combinations.size)
+    combinations.forEach { (glass, hdr, conf, inHdr, ambient) ->
+      val first = texture(glass, 34, hdr, conf, inHdr, ambient)
+      repeat(3) { assertEquals(first, texture(glass, 34, hdr, conf, inHdr, ambient)) }
+    }
+  }
+
+  @Test
+  fun addingAnInputToTheRuleMeansReadingThisFirst() {
+    // The ambient capture only works while a SurfaceView is bound, so it appears and disappears as the renderer
+    // switches. An input such as "a frame was captured" or "the surface is attached" would therefore make the
+    // rule flip the renderer back and forth (found in review). Every input must be a stored setting or a device
+    // fact. If this fails because a parameter was added, check that it is neither before updating the list.
+    val shape =
+      PlayerGlassPolicy::class.java.declaredMethods
+        .single { it.name == "usesTextureSurface" }
+        .parameterTypes
+        .map { it.simpleName }
+    assertEquals(listOf("boolean", "int", "boolean", "boolean", "boolean", "boolean"), shape)
   }
 
   @Test

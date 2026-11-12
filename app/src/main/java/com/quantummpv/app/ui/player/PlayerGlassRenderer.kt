@@ -19,6 +19,7 @@ import com.quantummpv.app.preferences.AppearancePreferences
 import com.quantummpv.app.preferences.DecoderPreferences
 import com.quantummpv.app.preferences.MpvConfigControlledFeatures
 import com.quantummpv.app.preferences.MpvConfigOverridePolicy
+import com.quantummpv.app.preferences.PlayerPreferences
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 
@@ -33,6 +34,7 @@ internal class PlayerGlassRenderer(
   private val video: MPVView,
   private val appearance: AppearancePreferences,
   private val decoder: DecoderPreferences,
+  private val player: PlayerPreferences,
 ) {
   internal var host: MpvTextureHost? = null
     private set
@@ -49,7 +51,7 @@ internal class PlayerGlassRenderer(
     get() = host?.frameReadyState
 
   /** Re-evaluates the policy. Call when any of its inputs change, and once after the layout exists. */
-  fun update(ambientPresentation: Boolean) {
+  fun update() {
     // After teardown a late preference change must not mount a host into a player that is going away.
     if (released) return
     val wantTexture =
@@ -59,7 +61,8 @@ internal class PlayerGlassRenderer(
         hdrOutput = decoder.hdrScreenMode.get() != HdrScreenMode.OFF,
         hdrOwnedByMpvConf = MpvConfigOverridePolicy.ownsAny(MpvConfigControlledFeatures.HDR_OUTPUT),
         glassInHdr = appearance.liquidGlassInHdr.get(),
-        ambientPresentation = ambientPresentation,
+        youTubeAmbientSelected =
+          player.isAmbientEnabled.get() && player.ambientStyle.get() == AmbientStyle.YouTube,
       )
     if (wantTexture == textureActive.value) return
     if (wantTexture) mount() else unmount()
@@ -105,6 +108,7 @@ internal class PlayerGlassRenderer(
     textureActive.value = false
     video.releaseExternalSurface()
     (current.parent as? ViewGroup)?.removeView(current)
+    current.dispose()
   }
 
   private fun mount() {
@@ -145,6 +149,7 @@ internal class PlayerGlassRenderer(
     video.visibility = current.visibility
     video.setExternalSurface(false)
     (current.parent as? ViewGroup)?.removeView(current)
+    current.dispose()
   }
 }
 

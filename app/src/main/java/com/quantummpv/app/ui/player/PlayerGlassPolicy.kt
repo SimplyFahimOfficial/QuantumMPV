@@ -28,11 +28,13 @@ internal object PlayerGlassPolicy {
     hdrOutput: Boolean,
     hdrOwnedByMpvConf: Boolean,
     glassInHdr: Boolean,
-    ambientPresentation: Boolean,
+    youTubeAmbientSelected: Boolean,
   ): Boolean {
     if (!glassEnabled || sdkInt < MIN_SDK) return false
-    // The Ambient background samples the SurfaceView with PixelCopy and resizes it; keep that path as it is.
-    if (ambientPresentation) return false
+    // The YouTube ambient background samples the SurfaceView with PixelCopy and resizes it, so it keeps that
+    // view. This is the user's setting, not whether a frame was captured: the capture depends on which surface
+    // is bound, so choosing the surface from it would flip the surface, which would stop the capture, and so on.
+    if (youTubeAmbientSelected) return false
     // A TextureView is composited into the window's SDR buffer, so HDR output stays native unless the user
     // accepted that trade. An mpv.conf that owns HDR output must never be overridden by a UI preference.
     if (hdrOutput || hdrOwnedByMpvConf) return glassInHdr && !hdrOwnedByMpvConf

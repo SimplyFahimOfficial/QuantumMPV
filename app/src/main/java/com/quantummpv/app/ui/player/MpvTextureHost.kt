@@ -86,6 +86,14 @@ internal class MpvTextureHost(
     addView(composeView, LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT))
   }
 
+  /**
+   * Ends the Compose scene and its recorded layer now. The scene is otherwise disposed with the activity, so a
+   * host that was removed and replaced would keep its graphics layer alive until the player closed.
+   */
+  fun dispose() {
+    composeView.disposeComposition()
+  }
+
   /** Forget the last frame, for example after a colour-space change that replaces the pixels in place. */
   fun invalidateFrame() {
     frameReady.value = false

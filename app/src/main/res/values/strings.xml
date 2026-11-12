@@ -2706,7 +2706,7 @@
   <string name="pref_liquid_glass_player_title">Glass player controls</string>
   <string name="pref_liquid_glass_player_summary">Player buttons blur and refract the playing video. Moves the video onto a different surface, so turn this off if playback looks wrong. Uses more battery.</string>
   <string name="pref_liquid_glass_player_hdr_title">Glass in HDR</string>
-  <string name="pref_liquid_glass_player_hdr_summary">HDR video keeps its own surface unless this is on. Turning it on shows HDR video tone-mapped to SDR so the glass can see it.</string>
+  <string name="pref_liquid_glass_player_hdr_summary">With HDR screen output on, the video keeps its own surface unless this is on. Turning it on tone-maps the output to SDR so the glass can see it.</string>
   <string name="pref_liquid_glass_material">Material</string>
   <string name="pref_liquid_glass_frost">Frost</string>
   <string name="pref_liquid_glass_optics">Optics</string>

@@ -303,7 +303,7 @@ class PlayerActivity :
   val player by lazy { binding.player }
 
   // Dormant unless the experimental player glass option is on: with it off nothing is added to the layout.
-  internal val glassRenderer by lazy { PlayerGlassRenderer(binding.player, appearancePreferences, decoderPreferences) }
+  internal val glassRenderer by lazy { PlayerGlassRenderer(binding.player, appearancePreferences, decoderPreferences, playerPreferences) }
 
   override fun currentThumbnailSource(): String? = currentPlayableUri
 
@@ -1049,15 +1049,15 @@ class PlayerActivity :
 
   /** Evaluates the glass policy now and again whenever one of its inputs changes. */
   private fun setupPlayerGlass() {
-    glassRenderer.update(ambientPresentation = isVideoAmbientPresentationActive)
+    glassRenderer.update()
     lifecycleScope.launch {
       combine(
         appearancePreferences.liquidGlassPlayerEnabled.changes(),
         appearancePreferences.liquidGlassInHdr.changes(),
         decoderPreferences.hdrScreenMode.changes(),
-      ) { _, _, _ -> }.collect {
-        glassRenderer.update(ambientPresentation = isVideoAmbientPresentationActive)
-      }
+        playerPreferences.isAmbientEnabled.changes(),
+        playerPreferences.ambientStyle.changes(),
+      ) { _, _, _, _, _ -> }.collect { glassRenderer.update() }
     }
   }
 
@@ -1159,7 +1159,6 @@ class PlayerActivity :
 
   private fun setVideoAmbientPresentationActive(active: Boolean) {
     isVideoAmbientPresentationActive = active
-    glassRenderer.update(ambientPresentation = active)
     binding.ambientBackground.visibility = if (active) View.VISIBLE else View.GONE
     if (active) {
       updateVideoAmbientPlayerBounds()
