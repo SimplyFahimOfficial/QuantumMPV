@@ -21,6 +21,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -47,6 +48,7 @@ import com.quantummpv.app.ui.player.PlayerViewModel
 import com.quantummpv.app.ui.player.Sheets
 import com.quantummpv.app.ui.player.VideoAspect
 import com.quantummpv.app.ui.player.controls.components.ControlsButton
+import com.quantummpv.app.ui.player.controls.components.fadingHorizontalScroll
 import com.quantummpv.app.ui.player.controls.components.playerButtonBorderColor
 import com.quantummpv.app.ui.player.controls.components.playerButtonContainerColor
 import com.quantummpv.app.ui.player.controls.components.playerButtonContentColor
@@ -346,7 +348,9 @@ fun BottomLeftPlayerControlsLandscape(
   activity: PlayerActivity,
 ) {
   PlayerButtonTheme(hideBackground) {
+    // This group takes the space left of the bottom-right group, so a long layout scrolls instead of being cut off.
     Row(
+      modifier = Modifier.fadingHorizontalScroll(rememberScrollState()),
       verticalAlignment = Alignment.CenterVertically,
       horizontalArrangement = Arrangement.spacedBy(MaterialTheme.spacing.extraSmall),
     ) {
