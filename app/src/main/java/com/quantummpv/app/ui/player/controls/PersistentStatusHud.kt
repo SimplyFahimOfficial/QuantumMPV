@@ -60,6 +60,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.content.ContextCompat
 import com.quantummpv.app.R
 import com.quantummpv.app.preferences.PersistentStatusPosition
 import com.quantummpv.app.preferences.PersistentStatusSlot
@@ -94,7 +95,6 @@ internal fun PersistentStatusHud(
   val showSpeed by preferences.persistentStatusShowSpeed.collectAsState()
   val microBattery by preferences.persistentStatusMicroBattery.collectAsState()
   val showProgressLine by preferences.persistentStatusProgressLine.collectAsState()
-  val safeAreaWindow by preferences.safeAreaWindow.collectAsState()
   val clockFormat by preferences.clockFormat.collectAsState()
   val playbackPosition = viewModel.precisePosition.collectAsState().value
   val battery = rememberHudBatteryLevel()
@@ -122,18 +122,13 @@ internal fun PersistentStatusHud(
       batteryLevel = battery,
       nowMillis = now,
       clockFormat = clockFormat,
-      // The portrait top HUD always clears the camera; other placements follow Safe area window.
       modifier = Modifier
         .align(if (isTop) Alignment.TopCenter else Alignment.BottomCenter)
-        .then(
-          if (safeAreaWindow || portraitTop) {
-            Modifier.windowInsetsPadding(
-              hudInsets.only(
-                WindowInsetsSides.Horizontal +
-                  if (isTop) WindowInsetsSides.Top else WindowInsetsSides.Bottom,
-              ),
-            )
-          } else Modifier,
+        .windowInsetsPadding(
+          hudInsets.only(
+            WindowInsetsSides.Horizontal +
+              if (isTop) WindowInsetsSides.Top else WindowInsetsSides.Bottom,
+          ),
         )
         .padding(vertical = 8.dp),
     )
@@ -197,7 +192,7 @@ private fun rememberHudBatteryLevel(): Int {
       }
     }
     // BATTERY_CHANGED is a protected system broadcast and supplies the initial sticky value.
-    context.registerReceiver(receiver, filter)
+    ContextCompat.registerReceiver(context, receiver, filter, ContextCompat.RECEIVER_NOT_EXPORTED)
     onDispose { runCatching { context.unregisterReceiver(receiver) } }
   }
   return level
@@ -222,6 +217,10 @@ internal fun PersistentStatusHudRow(
 ) {
   val context = LocalContext.current
   val wallTime = remember(nowMillis, clockFormat) { formatClock(context, clockFormat, nowMillis) }
+  // Sampled together with the position: the minute-aligned clock would make the estimate drift back.
+  val estimateBase = remember(positionSeconds) { System.currentTimeMillis() }
+  val unknownText = stringResource(R.string.pref_persistent_status_time_unknown)
+  val estimatePrefix = stringResource(R.string.pref_persistent_status_est_prefix)
   val validDuration = durationSeconds.isFinite() && durationSeconds > 0f
   val remainingSeconds =
     if (validDuration && positionSeconds.isFinite()) {
@@ -230,12 +229,11 @@ internal fun PersistentStatusHudRow(
   val validSpeed = playbackSpeed.isFinite() && playbackSpeed > 0.01f
   val progressText =
     if (!validDuration) {
-      context.getString(R.string.pref_persistent_status_time_unknown)
+      unknownText
     } else if (preferFinishTime && validSpeed) {
       val extraMillis = ((remainingSeconds / playbackSpeed) * 1000.0).toLong()
         .coerceIn(0L, 30L * 24 * 60 * 60 * 1000)
-      context.getString(R.string.pref_persistent_status_est_prefix) +
-        " " + formatClock(context, clockFormat, nowMillis + extraMillis)
+      estimatePrefix + " " + formatClock(context, clockFormat, estimateBase + extraMillis)
     } else {
       DateUtils.formatElapsedTime(positionSeconds.coerceAtLeast(0f).toLong()) +
         " / " + DateUtils.formatElapsedTime(durationSeconds.toLong())
