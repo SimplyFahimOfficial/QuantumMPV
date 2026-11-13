@@ -194,6 +194,7 @@ Approved in the November 2026 plan (see the feature order in the PR list).
 | Upstream | Change | Notes |
 |---|---|---|
 | `fd7e000ff` | "Play with other apps" (ignore audio focus) | Same logic in `MediaPlaybackService` and `PlayerActivity`. The headphone-unplug receiver now uses `canHandleDetachedTransport()`, so it pauses even without focus. Strings are English only; the fork's locale files do not carry these keys. `AudioPreferencesTest`. |
+| `b1aa34d1`..`f5f616b5` | Ambient styles Cinema, Echo, Mirror, Ambilight | `FxAmbientShaderBuilder` is upstream's final builder (GLES precision guards, IGN dither, B-spline sampling) without its unused `Context` parameter and default-spec overloads. It runs through the existing Glow pipeline in `PlayerViewModel.updateAmbientStretch`, so the video-scale, thermal sample cap and cache logic are shared. Per-style parameters use upstream's preference keys (`ambient_<style>_*`). Not taken: upstream's `AmbientGeometry` rewrite (picture centre, edge blend), which would also change Glow. `FxAmbientShaderBuilderTest` builds every style at several sample counts and scales; the output also passed `glslangValidator` as ESSL 3.00 and 3.10 (run by hand, not in CI). |
 
 ### Assessed in the second batch and left open
 

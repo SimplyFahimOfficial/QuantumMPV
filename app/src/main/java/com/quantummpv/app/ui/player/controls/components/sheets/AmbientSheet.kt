@@ -54,9 +54,9 @@ import com.quantummpv.app.presentation.components.PlayerSheet
 import com.quantummpv.app.presentation.components.SliderItem
 import com.quantummpv.app.ui.components.themedSegmentedButtonColors
 import com.quantummpv.app.ui.icons.Icons
-import com.quantummpv.app.ui.player.AmbientShaderPresets
 import com.quantummpv.app.ui.player.AmbientStyle
 import com.quantummpv.app.ui.player.PlayerViewModel
+import com.quantummpv.app.ui.player.ambientPresetsFor
 import com.quantummpv.app.ui.player.components.expressive.SectionHeader
 import com.quantummpv.app.ui.player.matchesGlowPreset
 import com.quantummpv.app.ui.theme.AppMotion
@@ -80,21 +80,21 @@ fun AmbientSheet(
   val opacity by viewModel.ambientOpacity.collectAsState()
   val isFast =
     remember(
-      blurSamples, maxRadius, glowIntensity, satBoost, vignetteStrength, warmth, fadeCurve, opacity,
+      ambientStyle, blurSamples, maxRadius, glowIntensity, satBoost, vignetteStrength, warmth, fadeCurve, opacity,
     ) {
-      matchesGlowPreset(AmbientShaderPresets.glowFast, blurSamples, maxRadius, glowIntensity, satBoost, vignetteStrength, warmth, fadeCurve, opacity)
+      matchesGlowPreset(ambientPresetsFor(ambientStyle).first, blurSamples, maxRadius, glowIntensity, satBoost, vignetteStrength, warmth, fadeCurve, opacity)
     }
   val isBalanced =
     remember(
-      blurSamples, maxRadius, glowIntensity, satBoost, vignetteStrength, warmth, fadeCurve, opacity,
+      ambientStyle, blurSamples, maxRadius, glowIntensity, satBoost, vignetteStrength, warmth, fadeCurve, opacity,
     ) {
-      matchesGlowPreset(AmbientShaderPresets.glowBalanced, blurSamples, maxRadius, glowIntensity, satBoost, vignetteStrength, warmth, fadeCurve, opacity)
+      matchesGlowPreset(ambientPresetsFor(ambientStyle).second, blurSamples, maxRadius, glowIntensity, satBoost, vignetteStrength, warmth, fadeCurve, opacity)
     }
   val isHQ =
     remember(
-      blurSamples, maxRadius, glowIntensity, satBoost, vignetteStrength, warmth, fadeCurve, opacity,
+      ambientStyle, blurSamples, maxRadius, glowIntensity, satBoost, vignetteStrength, warmth, fadeCurve, opacity,
     ) {
-      matchesGlowPreset(AmbientShaderPresets.glowHighQuality, blurSamples, maxRadius, glowIntensity, satBoost, vignetteStrength, warmth, fadeCurve, opacity)
+      matchesGlowPreset(ambientPresetsFor(ambientStyle).third, blurSamples, maxRadius, glowIntensity, satBoost, vignetteStrength, warmth, fadeCurve, opacity)
     }
   val configuration = LocalConfiguration.current
   val customMaxHeight =
@@ -154,7 +154,7 @@ fun AmbientSheet(
         color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f),
       )
 
-      if (ambientStyle == AmbientStyle.Glow) {
+      if (ambientStyle != AmbientStyle.YouTube) {
       // ── Quality Presets ──────────────────────────────────────────────
       Row(
         modifier =
@@ -189,7 +189,7 @@ fun AmbientSheet(
       // ── Section: Glow ────────────────────────────────────────────────
       var glowExpanded by remember { mutableStateOf(true) }
       SectionHeader(
-        title = stringResource(R.string.ambient_glow),
+        title = stringResource(ambientStyle.titleRes),
         isExpanded = glowExpanded,
         onClick = { glowExpanded = !glowExpanded },
       )
