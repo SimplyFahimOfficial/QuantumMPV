@@ -1413,7 +1413,7 @@ private fun FileSystemBrowserContent(
     else -> {
       // Unified thumbnail generation - starts with initial batch and continues as needed
       // This avoids the overhead of multiple conflicting LaunchedEffect calls
-      LaunchedEffect(folderId, showVideoThumbnails, thumbWidthPx, thumbHeightPx, videos.size) {
+      LaunchedEffect(folderId, showVideoThumbnails, thumbWidthPx, thumbHeightPx, videos.size, thumbnailGenerator) {
         if (showVideoThumbnails && videos.isNotEmpty()) {
           // Start with all videos - the ThumbnailRepository will handle batching internally
           // This avoids redundant job restarts when scrolling

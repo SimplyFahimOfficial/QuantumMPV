@@ -1088,6 +1088,7 @@ internal fun VideoListContent(
           videoGridColumns,
           isViewportScrolling,
           isScrollbarDragging,
+          thumbnailGenerator,
         ) {
           val generationId = "$folderId:${mediaLayoutMode.name}"
           if (!showVideoThumbnails || latestVideosWithInfo.isEmpty() || !allowThumbnailLoading) {
