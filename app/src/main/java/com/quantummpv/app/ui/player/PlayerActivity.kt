@@ -1265,7 +1265,9 @@ class PlayerActivity :
           viewModel.videoZoom,
           viewModel.videoPanX,
           viewModel.videoPanY,
-        ) { zoom, panX, panY ->
+          // Subtitles move to the untransformed overlay when this changes, so the layout is recomputed.
+          decoderPreferences.dolbyVisionDirect.changes().distinctUntilChanged(),
+        ) { zoom, panX, panY, _ ->
           Triple(zoom, panX, panY)
         }.collect { (zoom, panX, panY) ->
           val scale = 2f.pow(zoom)
@@ -1285,7 +1287,10 @@ class PlayerActivity :
             val h = player.height.takeIf { it > 0 }?.toFloat()
               ?: resources.displayMetrics.heightPixels.toFloat()
 
-            if (scaleByWindow && (scale != 1f || panX != 0f || panY != 0f)) {
+            // The overlay Surface is a sibling of the zoomed video view, so its subtitles already keep their
+            // window-relative size and position; compensating would shrink and shift them.
+            val subtitlesOnOverlay = DolbyVisionDirect.isEnabled(decoderPreferences)
+            if (scaleByWindow && !subtitlesOnOverlay && (scale != 1f || panX != 0f || panY != 0f)) {
               val compensatedSubScale = (baseSubScale / scale).coerceIn(0.05f, 10f)
               val compensatedSecondarySubScale = (baseSecondarySubScale / scale).coerceIn(0.05f, 10f)
               PlaybackSession.setPropertyFloat("sub-scale", compensatedSubScale)

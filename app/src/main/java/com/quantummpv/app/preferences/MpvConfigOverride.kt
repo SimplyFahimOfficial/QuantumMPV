@@ -38,6 +38,9 @@ enum class MpvConfigOverride(
         "hwdec-codecs",
         "vd-lavc-dr",
         "vd-lavc-film-grain",
+        // The FongMi-only Dolby Vision direct switch lives on the decoder screen.
+        "android-dolby-vision-output",
+        "demuxer-dovi-profile7",
       ),
   ),
   HDR_AND_SHADERS(
@@ -259,7 +262,8 @@ object MpvConfigControlledFeatures {
 
   val VIDEO_ZOOM = setOf("video-zoom")
 
-  // Only the FongMi mpv build can send Dolby Vision straight to MediaCodec.
+  // Only the FongMi mpv build can send Dolby Vision straight to MediaCodec. Both names are also in
+  // MpvConfigOverride.DECODER, so mpv.conf can take them over.
   val DOLBY_VISION_DIRECT = setOf("android-dolby-vision-output", "demuxer-dovi-profile7")
 
   val VIDEO_ASPECT = setOf("video-aspect-override", "panscan")
