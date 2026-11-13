@@ -194,6 +194,7 @@ Approved in the November 2026 plan (see the feature order in the PR list).
 | Upstream | Change | Notes |
 |---|---|---|
 | `fd7e000ff` | "Play with other apps" (ignore audio focus) | Same logic in `MediaPlaybackService` and `PlayerActivity`. The headphone-unplug receiver now uses `canHandleDetachedTransport()`, so it pauses even without focus. Strings are English only; the fork's locale files do not carry these keys. `AudioPreferencesTest`. |
+| `e17c41b2` (lyrics editor part) | Lyrics editor | `LyricsDraft` and `EditedLyricsStore` are upstream's (atomic file writes, 2 MB cap, hash-named files, a corrupt file is reported and kept, never deleted). The fork's `LyricsRepository` is the older single-source one, so saved edits are read first and replace the embedded lyrics for that track; only that hook was added, not upstream's provider registry. The 675-line editor sheet is rewritten as a full-screen dialog with the same features (per-line time, Set time, ±0.1 s, paste plain/LRC, clear times, restore, discard prompt) on the fork's components. Seeking from a line is exact (`absolute+exact`). Word-level background vocals and end times do not exist in the fork's lyrics model, so they are not handled. `LyricsDraftTest`, `EditedLyricsStoreTest`. |
 
 ### Assessed in the second batch and left open
 

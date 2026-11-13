@@ -16,6 +16,7 @@ import com.quantummpv.app.utils.media.LyricsUtils
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import java.io.File
 import java.util.Locale
 
 data class LyricsResult(
@@ -24,6 +25,8 @@ data class LyricsResult(
   val activeLyrics: Lyrics? = null,
   val selectedSource: LyricsSourceType = LyricsSourceType.EMBEDDED,
   val availableSources: List<LyricsSourceType> = emptyList(),
+  /** Whether the user has saved their own edit of this track's lyrics. */
+  val hasSavedEdits: Boolean = false,
 )
 
 class LyricsRepository(
@@ -42,6 +45,8 @@ class LyricsRepository(
     private val UNKNOWN_ARTISTS = setOf("", "unknown", "unknown artist", "<unknown>", "various artists", "various")
     private const val MAX_ONLINE_LOOKUP_ATTEMPTS = 8
   }
+
+  private val editedLyricsStore = EditedLyricsStore(File(context.filesDir, "lyrics/edited-v1"))
 
   // Cache by media path -> LyricsResult
   private val cache = LruCache<String, LyricsResult>(64)
@@ -98,8 +103,13 @@ class LyricsRepository(
 
     Log.d(TAG, "Loading lyrics for: $title by $artist ($mediaPath)")
 
-    // 1. Check embedded lyrics first
-    val embedded = EmbeddedLyricsExtractor.extractEmbeddedLyrics(context, mediaPath)
+    // 1. The user's own edit wins; an unreadable edit is kept on disk and the original is shown,
+    // so the editor can still replace or restore it.
+    val edited =
+      runCatching { editedLyricsStore.read(mediaPath) }
+        .onFailure { Log.w(TAG, "Saved lyric edits could not be read", it) }
+        .getOrNull()
+    val embedded = edited ?: EmbeddedLyricsExtractor.extractEmbeddedLyrics(context, mediaPath)
 
     // 2. Fetch online lyrics from LRCLIB
     val online = fetchOnlineLyrics(title, artist, durationSeconds)
@@ -130,6 +140,7 @@ class LyricsRepository(
       activeLyrics = active,
       selectedSource = defaultSelected,
       availableSources = sources.distinct(),
+      hasSavedEdits = editedLyricsStore.contains(mediaPath),
     )
 
     cache.put(mediaPath, result)
@@ -288,4 +299,19 @@ class LyricsRepository(
     cache.put(mediaPath, updated)
     return updated
   }
+
+  suspend fun saveEditedLyrics(
+    mediaPath: String,
+    lyrics: Lyrics,
+  ) = withContext(Dispatchers.IO) {
+    editedLyricsStore.write(mediaPath, lyrics)
+    // The next load reads the saved file; a stale cached result would hide the edit.
+    cache.remove(mediaPath)
+  }
+
+  suspend fun removeEditedLyrics(mediaPath: String) =
+    withContext(Dispatchers.IO) {
+      editedLyricsStore.remove(mediaPath)
+      cache.remove(mediaPath)
+    }
 }
