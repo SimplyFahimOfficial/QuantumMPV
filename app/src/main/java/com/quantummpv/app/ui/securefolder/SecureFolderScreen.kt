@@ -133,6 +133,7 @@ data object SecureFolderScreen : Screen {
     val showDurationField by browserPreferences.showDurationField.collectAsState()
     val centerGridTitles by browserPreferences.centerGridTitles.collectAsState()
     val thumbnailQuality by browserPreferences.thumbnailQuality.collectAsState()
+    val thumbnailGenerator by browserPreferences.thumbnailGenerator.collectAsState()
 
     val manualGridColumnsEnabled by browserPreferences.manualGridColumnsEnabled.collectAsState()
     val videoGridColumnsPortrait by browserPreferences.videoGridColumnsPortrait.collectAsState()
@@ -154,6 +155,7 @@ data object SecureFolderScreen : Screen {
         showDurationField,
         centerGridTitles,
         thumbnailQuality,
+        thumbnailGenerator,
       ) {
         VideoCardUiConfig(
           unlimitedNameLines = unlimitedNameLines,
@@ -170,6 +172,7 @@ data object SecureFolderScreen : Screen {
           showDurationField = showDurationField,
           centerGridTitles = centerGridTitles,
           thumbnailQuality = thumbnailQuality,
+          thumbnailGenerator = thumbnailGenerator,
         )
       }
 

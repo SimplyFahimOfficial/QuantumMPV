@@ -1314,6 +1314,7 @@ private fun FileSystemBrowserContent(
   val showDurationField by browserPreferences.showDurationField.collectAsState()
   val centerGridTitles by browserPreferences.centerGridTitles.collectAsState()
   val thumbnailQuality by browserPreferences.thumbnailQuality.collectAsState()
+  val thumbnailGenerator by browserPreferences.thumbnailGenerator.collectAsState()
   val videoCardUiConfig =
     remember(
       unlimitedNameLines,
@@ -1330,6 +1331,7 @@ private fun FileSystemBrowserContent(
       centerGridTitles,
       showCodecSupportIndicator,
       thumbnailQuality,
+      thumbnailGenerator,
     ) {
       VideoCardUiConfig(
         unlimitedNameLines = unlimitedNameLines,
@@ -1346,6 +1348,7 @@ private fun FileSystemBrowserContent(
         showDurationField = showDurationField,
         centerGridTitles = centerGridTitles,
         thumbnailQuality = thumbnailQuality,
+        thumbnailGenerator = thumbnailGenerator,
       )
     }
 
@@ -1410,7 +1413,7 @@ private fun FileSystemBrowserContent(
     else -> {
       // Unified thumbnail generation - starts with initial batch and continues as needed
       // This avoids the overhead of multiple conflicting LaunchedEffect calls
-      LaunchedEffect(folderId, showVideoThumbnails, thumbWidthPx, thumbHeightPx, videos.size) {
+      LaunchedEffect(folderId, showVideoThumbnails, thumbWidthPx, thumbHeightPx, videos.size, thumbnailGenerator) {
         if (showVideoThumbnails && videos.isNotEmpty()) {
           // Start with all videos - the ThumbnailRepository will handle batching internally
           // This avoids redundant job restarts when scrolling
@@ -1741,6 +1744,7 @@ private fun FileSystemSearchContent(
   val showDurationField by browserPreferences.showDurationField.collectAsState()
   val centerGridTitles by browserPreferences.centerGridTitles.collectAsState()
   val thumbnailQuality by browserPreferences.thumbnailQuality.collectAsState()
+  val thumbnailGenerator by browserPreferences.thumbnailGenerator.collectAsState()
   val videoCardUiConfig =
     remember(
       unlimitedNameLines,
@@ -1757,6 +1761,7 @@ private fun FileSystemSearchContent(
       centerGridTitles,
       showCodecSupportIndicator,
       thumbnailQuality,
+      thumbnailGenerator,
     ) {
       VideoCardUiConfig(
         unlimitedNameLines = unlimitedNameLines,
@@ -1773,6 +1778,7 @@ private fun FileSystemSearchContent(
         showDurationField = showDurationField,
         centerGridTitles = centerGridTitles,
         thumbnailQuality = thumbnailQuality,
+        thumbnailGenerator = thumbnailGenerator,
       )
     }
 

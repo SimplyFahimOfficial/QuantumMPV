@@ -12,6 +12,7 @@ package com.quantummpv.app.ui.preferences
 import androidx.annotation.StringRes
 import com.quantummpv.app.R
 import com.quantummpv.app.presentation.Screen
+import com.quantummpv.app.ui.player.DolbyVisionDirect
 import java.text.Normalizer
 import kotlin.math.abs
 import kotlin.math.min
@@ -148,6 +149,15 @@ object SearchablePreferences {
           titleRes = R.string.pref_appearance_show_video_thumbnails_title,
           summaryRes = R.string.pref_appearance_show_video_thumbnails_summary,
           keywords = listOf("thumbnail", "thumbnails", "preview", "poster", "video"),
+          category = "Appearance",
+          screen = AppearancePreferencesScreen,
+        ),
+      )
+      add(
+        SearchablePreference(
+          titleRes = R.string.pref_appearance_thumbnail_source_title,
+          summaryRes = R.string.pref_appearance_thumbnail_source_summary,
+          keywords = listOf("thumbnail", "mediastore", "native", "auto", "source", "generator", "system", "preview"),
           category = "Appearance",
           screen = AppearancePreferencesScreen,
         ),
@@ -774,6 +784,17 @@ object SearchablePreferences {
           screen = DecoderPreferencesScreen,
         ),
       )
+      if (DolbyVisionDirect.isBuildSupported) {
+        add(
+          SearchablePreference(
+            titleRes = R.string.pref_decoder_dolby_vision_direct_title,
+            summaryRes = R.string.pref_decoder_dolby_vision_direct_summary,
+            keywords = listOf("dolby", "vision", "dv", "hdr", "mediacodec", "direct", "passthrough", "profile"),
+            category = "Decoder",
+            screen = DecoderPreferencesScreen,
+          ),
+        )
+      }
       add(
         SearchablePreference(
           titleRes = R.string.pref_decoder_yuv420p_title,

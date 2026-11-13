@@ -63,6 +63,7 @@ internal class PlayerGlassRenderer(
         glassInHdr = appearance.liquidGlassInHdr.get(),
         youTubeAmbientSelected =
           player.isAmbientEnabled.get() && player.ambientStyle.get() == AmbientStyle.YouTube,
+        dolbyVisionDirect = DolbyVisionDirect.isEnabled(decoder),
       )
     if (wantTexture == textureActive.value) return
     if (wantTexture) mount() else unmount()
