@@ -21,7 +21,10 @@ import android.provider.MediaStore
 import android.util.Size
 import com.quantummpv.app.domain.media.model.Video
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
 import java.util.concurrent.atomic.AtomicLong
@@ -39,6 +42,9 @@ import kotlin.coroutines.resume
 internal object MediaStoreThumbnailLoader {
   private val requestSequence = AtomicLong()
 
+  // The cancel runs on whichever thread cancels the job, often Main; on API 28 and older it is a blocking query.
+  private val legacyCancelScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+
   suspend fun load(
     context: Context,
     video: Video,
@@ -54,7 +60,9 @@ internal object MediaStoreThumbnailLoader {
         continuation.invokeOnCancellation {
           signal.cancel()
           legacyRequest.get()?.let { (videoId, groupId) ->
-            runCatching { MediaStore.Video.Thumbnails.cancelThumbnailRequest(resolver, videoId, groupId) }
+            legacyCancelScope.launch {
+              runCatching { MediaStore.Video.Thumbnails.cancelThumbnailRequest(resolver, videoId, groupId) }
+            }
           }
         }
         try {

@@ -74,6 +74,7 @@ import com.quantummpv.app.domain.media.model.Video
 import com.quantummpv.app.domain.thumbnail.ThumbnailRepository
 import com.quantummpv.app.preferences.AppearancePreferences
 import com.quantummpv.app.preferences.BrowserPreferences
+import com.quantummpv.app.preferences.ThumbnailGenerator
 import com.quantummpv.app.preferences.ThumbnailQuality
 import com.quantummpv.app.preferences.preference.collectAsState
 import com.quantummpv.app.ui.icons.Icon
@@ -114,6 +115,7 @@ data class VideoCardUiConfig(
   val showDurationField: Boolean = true,
   val centerGridTitles: Boolean = false,
   val thumbnailQuality: ThumbnailQuality = ThumbnailQuality.High,
+  val thumbnailGenerator: ThumbnailGenerator = ThumbnailGenerator.Native,
 )
 
 /** Hoist this once per screen and pass the result to every card rather than collecting per item. */
@@ -136,6 +138,7 @@ fun rememberVideoCardUiConfig(): VideoCardUiConfig {
   val showDurationFieldConfig by browserPreferences.showDurationField.collectAsState()
   val centerGridTitles by browserPreferences.centerGridTitles.collectAsState()
   val thumbnailQuality by browserPreferences.thumbnailQuality.collectAsState()
+  val thumbnailGenerator by browserPreferences.thumbnailGenerator.collectAsState()
 
   return remember(
     unlimitedNameLines,
@@ -152,6 +155,7 @@ fun rememberVideoCardUiConfig(): VideoCardUiConfig {
     showDurationFieldConfig,
     centerGridTitles,
     thumbnailQuality,
+    thumbnailGenerator,
   ) {
     VideoCardUiConfig(
       unlimitedNameLines = unlimitedNameLines,
@@ -168,6 +172,7 @@ fun rememberVideoCardUiConfig(): VideoCardUiConfig {
       showDurationField = showDurationFieldConfig,
       centerGridTitles = centerGridTitles,
       thumbnailQuality = thumbnailQuality,
+      thumbnailGenerator = thumbnailGenerator,
     )
   }
 }
@@ -210,6 +215,7 @@ fun VideoCard(
 
   val showThumbnails = resolvedUiConfig.showThumbnails
   val thumbnailQuality = resolvedUiConfig.thumbnailQuality
+  val thumbnailGenerator = resolvedUiConfig.thumbnailGenerator
   val showFramerateInResolution = resolvedUiConfig.showFramerateInResolution
   val showCodecSupportIndicator = resolvedUiConfig.showCodecSupportIndicator
   val showProgressBar = resolvedUiConfig.showProgressBar
@@ -392,6 +398,7 @@ fun VideoCard(
               resolvedThumbWidthPx,
               resolvedThumbHeightPx,
               thumbnailQuality,
+              thumbnailGenerator,
             ) {
               Any()
             }
@@ -723,6 +730,7 @@ fun VideoCard(
               thumbWidthPx,
               thumbHeightPx,
               thumbnailQuality,
+              thumbnailGenerator,
             ) {
               Any()
             }

@@ -110,6 +110,7 @@ fun FolderCard(
   val centerGridTitles by browserPreferences.centerGridTitles.collectAsState()
   val showFolderThumbnails by browserPreferences.showFolderThumbnails.collectAsState()
   val thumbnailQuality by browserPreferences.thumbnailQuality.collectAsState()
+  val thumbnailGenerator by browserPreferences.thumbnailGenerator.collectAsState()
   val includeAudio by browserPreferences.includeAudioBrowser.collectAsState()
   val manualGridColumnsEnabled by browserPreferences.manualGridColumnsEnabled.collectAsState()
   val folderGridColumnsPortrait by browserPreferences.folderGridColumnsPortrait.collectAsState()
@@ -126,6 +127,7 @@ fun FolderCard(
     folder.bucketId,
     showFolderThumbnails,
     thumbnailQuality,
+    thumbnailGenerator,
     isGridMode,
     manualGridColumnsEnabled,
     folderGridColumnsPortrait,

@@ -760,8 +760,13 @@ object AppearancePreferencesScreen : Screen {
                     scope.launch {
                       // Entries are keyed by generator, so clearing is not required for correctness; it frees
                       // the space of images the previous source made, as the quality selector does.
-                      withContext(Dispatchers.IO) {
-                        thumbnailRepository.clearThumbnailCache()
+                      // A failed cleanup must not lose the user's choice.
+                      runCatching {
+                        withContext(Dispatchers.IO) {
+                          thumbnailRepository.clearThumbnailCache()
+                        }
+                      }.onFailure { error ->
+                        if (error is kotlinx.coroutines.CancellationException) throw error
                       }
                       browserPreferences.thumbnailGenerator.set(newGenerator)
                     }
