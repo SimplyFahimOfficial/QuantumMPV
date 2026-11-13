@@ -189,8 +189,11 @@ Verification: compiled, ktlint, detekt, Android lint and all 341 unit tests were
 
 ### Seventh batch: features from the full upstream audit
 
+Approved in the November 2026 plan (see the feature order in the PR list).
+
 | Upstream | Change | Notes |
 |---|---|---|
+| `fd7e000ff` | "Play with other apps" (ignore audio focus) | Same logic in `MediaPlaybackService` and `PlayerActivity`. The headphone-unplug receiver now uses `canHandleDetachedTransport()`, so it pauses even without focus. Strings are English only; the fork's locale files do not carry these keys. `AudioPreferencesTest`. |
 | `39472fff7` (part) | Dolby Vision direct output (FongMi only) | Needs **no** native update: the pinned FongMi 1.0.9 already has `android-dolby-vision-output`, `demuxer-dovi-profile7` and `attachOsdSurface` / `detachOsdSurface`, found by searching its libraries and classes. The overlay is a sibling `SurfaceView` (`OsdOverlayHost`) instead of upstream's host class. Direct output needs the real SurfaceView, so `PlayerGlassPolicy` turns glass off while it is on. The audio output / passthrough options and lyrics changes in the same commit are separate and not included. `PlayerGlassPolicyTest`. |
 
 ### Assessed in the second batch and left open

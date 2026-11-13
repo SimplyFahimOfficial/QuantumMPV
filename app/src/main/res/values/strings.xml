@@ -651,6 +651,8 @@
   </plurals>
   <!-- Background Playback -->
   <string name="background_playback_title">Background playback</string>
+  <string name="pref_ignore_audio_focus_title">Play with other apps</string>
+  <string name="pref_ignore_audio_focus_summary">Do not take audio focus, so other apps keep playing and nothing pauses or ducks this player. Unplugging headphones still pauses.</string>
   <string name="pref_audio_background_playback_title">Audio Player Background Playback</string>
   <string name="pref_audio_background_playback_summary">Keep audio playing when leaving the audio player or turning off screen</string>
   <string name="pref_video_background_playback_title">Video Player Background Playback</string>
