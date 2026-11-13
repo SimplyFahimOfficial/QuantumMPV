@@ -107,6 +107,13 @@ class AppearancePreferences(
   val liquidGlassHighlightWidth = preferenceStore.getFloat("liquid_glass_highlight_width", 1f)
   val liquidGlassHighlightBlur = preferenceStore.getFloat("liquid_glass_highlight_blur", 1f)
 
+  // Experimental glass on the player controls. Separate from the switch above because it moves the video onto a
+  // TextureView, which changes the playback path; both stay off until the user opts in.
+  val liquidGlassPlayerEnabled = preferenceStore.getBoolean("liquid_glass_player", false)
+
+  // A TextureView shows HDR tone-mapped to SDR, so HDR output keeps the native surface unless this is on.
+  val liquidGlassInHdr = preferenceStore.getBoolean("liquid_glass_in_hdr", false)
+
   /** Back to the defaults for every Liquid Glass tuning option; the on/off switch is left alone. */
   fun resetLiquidGlassOptions() {
     listOf<Preference<*>>(

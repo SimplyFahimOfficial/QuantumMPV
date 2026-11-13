@@ -15,6 +15,7 @@ import android.util.AttributeSet
 import android.util.Log
 import android.view.KeyCharacterMap
 import android.view.KeyEvent
+import android.view.Surface
 import androidx.core.view.WindowInsetsCompat
 import com.quantummpv.app.BuildConfig
 import com.quantummpv.app.domain.anime4k.Anime4KManager
@@ -68,6 +69,17 @@ class MPVView(
   var onSurfaceReady: (() -> Unit)? = null
 
   /**
+   * While true, a [MpvTextureHost] supplies the Surface and this SurfaceView stays out of the way: it neither
+   * binds nor reports readiness. Off by default, so playback uses this view exactly as before.
+   */
+  private var externalSurface = false
+
+  // The texture host binds under its own token. PlaybackSession ignores an unbind from a non-owner, so a late
+  // callback from whichever renderer was replaced cannot detach the one that replaced it.
+  private val externalOwner = Any()
+  private var externalSurfaceValid: Surface? = null
+
+  /**
    * Configures the process-wide player and binds this view as its current rendering surface.
    * Re-entering the player reuses the live core; it never creates a second native instance.
    */
@@ -99,8 +111,12 @@ class MPVView(
       )
     if (result.isSuccess) {
       holder.removeCallback(this)
-      holder.addCallback(this)
-      if (holder.surface.isValid && !isSurfaceReady) surfaceCreated(holder)
+      if (externalSurface) {
+        externalSurfaceValid?.let { bindExternalSurface(it, width, height) }
+      } else {
+        holder.addCallback(this)
+        if (holder.surface.isValid && !isSurfaceReady) surfaceCreated(holder)
+      }
     }
     return result
   }
@@ -110,7 +126,70 @@ class MPVView(
     if (isSurfaceReady || PlaybackSession.state.value.surfaceAttached) {
       isSurfaceReady = false
       PlaybackSession.unbindSurface(this)
+      PlaybackSession.unbindSurface(externalOwner)
     }
+  }
+
+  /**
+   * Switches between this SurfaceView and a [MpvTextureHost]. Hands mpv over by detaching the old owner first,
+   * so exactly one surface is ever bound.
+   */
+  fun setExternalSurface(enabled: Boolean) {
+    if (externalSurface == enabled) return
+    externalSurface = enabled
+    if (enabled) {
+      holder.removeCallback(this)
+      if (isSurfaceReady) {
+        isSurfaceReady = false
+        PlaybackSession.unbindSurface(this)
+      }
+    } else {
+      externalSurfaceValid = null
+      PlaybackSession.unbindSurface(externalOwner)
+      isSurfaceReady = false
+      if (PlaybackSession.isInitialized) {
+        holder.removeCallback(this)
+        holder.addCallback(this)
+        if (holder.surface.isValid) surfaceCreated(holder)
+      }
+    }
+  }
+
+  fun bindExternalSurface(
+    surface: Surface,
+    surfaceWidth: Int,
+    surfaceHeight: Int,
+  ) {
+    externalSurfaceValid = surface
+    if (!externalSurface || isExiting || !PlaybackSession.isInitialized) return
+    isSurfaceReady = PlaybackSession.bindSurface(surface, surfaceWidth, surfaceHeight, externalOwner)
+    applyFrameRate()
+    post { if (isSurfaceReady && surface.isValid) onSurfaceReady?.invoke() }
+  }
+
+  fun resizeExternalSurface(
+    surfaceWidth: Int,
+    surfaceHeight: Int,
+  ) {
+    if (externalSurface) PlaybackSession.resizeSurface(surfaceWidth, surfaceHeight, externalOwner)
+  }
+
+  fun unbindExternalSurface() {
+    externalSurfaceValid = null
+    if (!externalSurface) return
+    isSurfaceReady = false
+    PlaybackSession.unbindSurface(externalOwner)
+  }
+
+  /**
+   * Teardown: detaches the texture and leaves this SurfaceView unregistered. [setExternalSurface] would hand mpv
+   * back to the SurfaceView, which is wrong while the player is being destroyed.
+   */
+  fun releaseExternalSurface() {
+    externalSurface = false
+    externalSurfaceValid = null
+    isSurfaceReady = false
+    PlaybackSession.unbindSurface(externalOwner)
   }
 
   private data class RenderBackendSelection(
@@ -428,9 +507,10 @@ class MPVView(
   private fun applyFrameRate() {
     if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.R) {
       val fps = PlaybackSession.getPropertyDouble("container-fps") ?: 0.0
-      if (fps > 0.0 && holder?.surface?.isValid == true) {
+      val liveSurface = if (externalSurface) externalSurfaceValid else holder?.surface
+      if (fps > 0.0 && liveSurface?.isValid == true) {
         try {
-          holder.surface.setFrameRate(
+          liveSurface.setFrameRate(
             fps.toFloat(),
             android.view.Surface.FRAME_RATE_COMPATIBILITY_FIXED_SOURCE,
           )
