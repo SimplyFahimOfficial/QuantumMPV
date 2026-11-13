@@ -187,6 +187,14 @@ Not ported: glass sliders, seekbar thumb, sheets and panels, and the live-previe
 
 Verification: compiled, ktlint, detekt, Android lint and all 341 unit tests were run locally on a JDK 17 and Android SDK 37 toolchain, and in CI. Nothing runs the feature itself: no device or emulator was available (the sandbox has no KVM), so the renderer switch, the first frame, PiP, background playback, HDR and frame pacing are unverified.
 
+### Seventh batch: features from the full upstream audit
+
+Approved in the November 2026 plan (see the feature order in the PR list).
+
+| Upstream | Change | Notes |
+|---|---|---|
+| `fd7e000ff` | "Play with other apps" (ignore audio focus) | Same logic in `MediaPlaybackService` and `PlayerActivity`. The headphone-unplug receiver now uses `canHandleDetachedTransport()`, so it pauses even without focus. Strings are English only; the fork's locale files do not carry these keys. `AudioPreferencesTest`. |
+
 ### Assessed in the second batch and left open
 
 - **Native event callbacks can deadlock during startup** (`20238d284`). The pattern is present: `PlaybackSession`
