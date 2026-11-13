@@ -211,6 +211,15 @@ object SearchablePreferences {
       )
       add(
         SearchablePreference(
+          titleRes = R.string.pref_persistent_status_title,
+          summaryRes = R.string.pref_persistent_status_summary,
+          keywords = listOf("status", "hud", "clock", "battery", "time", "progress", "persistent", "overlay"),
+          category = "Appearance",
+          screen = PlayerControlsPreferencesScreen,
+        ),
+      )
+      add(
+        SearchablePreference(
           titleRes = R.string.pref_layout_reset_recommended,
           summaryRes = R.string.pref_layout_reset_recommended_hint,
           keywords = listOf("reset", "recommended", "default", "layout", "controls", "buttons"),

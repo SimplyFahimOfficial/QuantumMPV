@@ -658,6 +658,14 @@ fun PlayerControls(
       modifier = Modifier.fillMaxSize(),
     )
 
+    // Stays visible after the controls fade away; kept outside their constraint layout.
+    PersistentStatusHud(
+      viewModel = viewModel,
+      preferences = playerPreferences,
+      durationSeconds = seekbarDuration,
+      playbackSpeed = playbackSpeed ?: 1f,
+    )
+
     val glassRenderer = LocalPlayerGlassRenderer.current
     val textureActive = glassRenderer?.isTextureActive?.collectAsState()?.value == true
     val frameReady = glassRenderer?.frameReady?.collectAsState()?.value == true

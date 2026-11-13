@@ -194,6 +194,7 @@ Approved in the November 2026 plan (see the feature order in the PR list).
 | Upstream | Change | Notes |
 |---|---|---|
 | `fd7e000ff` | "Play with other apps" (ignore audio focus) | Same logic in `MediaPlaybackService` and `PlayerActivity`. The headphone-unplug receiver now uses `canHandleDetachedTransport()`, so it pauses even without focus. Strings are English only; the fork's locale files do not carry these keys. `AudioPreferencesTest`. |
+| `c91f1371`, `08c53f05` | Persistent status bar | `PersistentStatusHud` and its settings screen, linked from Player Controls. Takes upstream's final form: fixed 8 dp inset, only the display cutout (plus status bar in portrait at the top) is avoided, clock and speed use the existing `formatClock` and `formatSpeed` (made `internal`). Left out: Android TV overscan and battery-slot hiding, since the fork has no TV mode. Strings are English only. |
 
 ### Assessed in the second batch and left open
 

@@ -304,7 +304,7 @@ private fun PreviewMultipleSpeedPlayerUpdate() {
   MultipleSpeedPlayerUpdate(currentSpeed = 2f)
 }
 
-private fun Float.formatSpeed(): String =
+internal fun Float.formatSpeed(): String =
   if (this % 1.0f == 0.0f) {
     this.toInt().toString()
   } else {
