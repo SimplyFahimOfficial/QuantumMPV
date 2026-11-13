@@ -991,6 +991,15 @@ object SearchablePreferences {
       )
       add(
         SearchablePreference(
+          titleRes = R.string.pref_ignore_audio_focus_title,
+          summaryRes = R.string.pref_ignore_audio_focus_summary,
+          keywords = listOf("audio", "focus", "ignore", "mix", "simultaneous", "other apps", "concurrent"),
+          category = "Audio",
+          screen = AudioPreferencesScreen,
+        ),
+      )
+      add(
+        SearchablePreference(
           titleRes = R.string.pref_audio_background_playback_title,
           summaryRes = R.string.pref_audio_background_playback_summary,
           keywords = listOf("background", "playback", "audio", "service", "music"),
@@ -1631,6 +1640,15 @@ object SearchablePreferences {
           titleRes = R.string.pref_liquid_glass_title,
           summaryRes = R.string.pref_liquid_glass_entry_summary,
           keywords = listOf("liquid", "glass", "blur", "refraction", "lens", "frost", "experimental", "dock", "mini player"),
+          category = "Appearance",
+          screen = LiquidGlassPreferencesScreen,
+        ),
+      )
+      add(
+        SearchablePreference(
+          titleRes = R.string.pref_liquid_glass_player_title,
+          summaryRes = R.string.pref_liquid_glass_player_summary,
+          keywords = listOf("liquid", "glass", "player", "controls", "buttons", "video", "blur", "hdr", "experimental"),
           category = "Appearance",
           screen = LiquidGlassPreferencesScreen,
         ),
