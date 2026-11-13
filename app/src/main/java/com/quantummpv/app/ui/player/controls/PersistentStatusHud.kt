@@ -23,6 +23,7 @@ import androidx.compose.foundation.layout.displayCutout
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -106,9 +107,12 @@ internal fun PersistentStatusHud(
       LocalConfiguration.current.orientation == Configuration.ORIENTATION_PORTRAIT
     // Some OEMs expose the notch reservation only as a status-bar inset in immersive mode.
     // Union takes the larger inset, so a cutout and status bar never add padding twice.
-    val hudInsets = if (portraitTop) {
-      WindowInsets.displayCutout.union(WindowInsets.statusBarsIgnoringVisibility)
-    } else WindowInsets.displayCutout
+    // A visible navigation bar would cover a bottom HUD row, so bottom placement also clears it.
+    val hudInsets = when {
+      portraitTop -> WindowInsets.displayCutout.union(WindowInsets.statusBarsIgnoringVisibility)
+      isTop -> WindowInsets.displayCutout
+      else -> WindowInsets.displayCutout.union(WindowInsets.navigationBars)
+    }
     PersistentStatusHudRow(
       leftSlot = left,
       centerSlot = center,
@@ -136,7 +140,7 @@ internal fun PersistentStatusHud(
       PersistentPlaybackProgressLine(
         positionSeconds = playbackPosition,
         durationSeconds = durationSeconds,
-        modifier = Modifier.align(Alignment.BottomCenter),
+        modifier = Modifier.align(Alignment.BottomCenter).windowInsetsPadding(WindowInsets.navigationBars.only(WindowInsetsSides.Bottom)),
       )
     }
   }
