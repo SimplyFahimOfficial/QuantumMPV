@@ -41,7 +41,9 @@ import androidx.compose.ui.unit.dp
 import com.quantummpv.app.ui.icons.AppIcon
 import com.quantummpv.app.ui.icons.Icon
 import com.quantummpv.app.ui.icons.Icons
+import com.quantummpv.app.ui.liquidglass.liquidGlassSurface
 import com.quantummpv.app.ui.player.controls.LocalPlayerButtonsClickEvent
+import com.quantummpv.app.ui.player.controls.LocalPlayerGlassBackdrop
 import com.quantummpv.app.ui.player.controls.PlayerButtonAlpha
 import com.quantummpv.app.ui.theme.AppMotion
 import com.quantummpv.app.ui.theme.LocalDarkAppColorScheme
@@ -103,6 +105,8 @@ fun ControlsButton(
   val label = title ?: LocalPlayerButtonLabel.current
 
   val clickEvent = LocalPlayerButtonsClickEvent.current
+  // Live glass over the video while the experimental player glass is on; null keeps the solid button below.
+  val glassBackdrop = LocalPlayerGlassBackdrop.current.takeIf { !hideBackground }
   // Same press language as the dock and menu tiles: a short spring down to 0.92, read in the layer
   // phase so it never recomposes the HUD. Off under Reduced motion.
   val isPressed by interactionSource.collectIsPressedAsState()
@@ -122,7 +126,13 @@ fun ControlsButton(
           scaleX = pressScale
           scaleY = pressScale
         }.tvFocusHighlight(CircleShape, enabled)
-        .clip(CircleShape)
+        .then(
+          if (glassBackdrop != null) {
+            Modifier.liquidGlassSurface(glassBackdrop, CircleShape, playerButtonContainerColor(), lightweight = true)
+          } else {
+            Modifier
+          },
+        ).clip(CircleShape)
         .combinedClickable(
           enabled = enabled,
           onClick = {
@@ -138,12 +148,12 @@ fun ControlsButton(
           role = Role.Button,
         ),
     shape = CircleShape,
-    color = if (hideBackground) Color.Transparent else playerButtonContainerColor(),
+    color = if (hideBackground || glassBackdrop != null) Color.Transparent else playerButtonContainerColor(),
     contentColor = resolvedColor,
     tonalElevation = 0.dp,
     shadowElevation = 0.dp,
     border =
-      if (hideBackground) {
+      if (hideBackground || glassBackdrop != null) {
         null
       } else {
         BorderStroke(
