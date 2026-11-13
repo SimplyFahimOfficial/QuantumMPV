@@ -88,6 +88,8 @@ android {
       buildConfigField("boolean", "SCOPED_STORAGE_ONLY", "false")
       buildConfigField("boolean", "MPV_SUPPORTS_VULKAN", "true")
       buildConfigField("boolean", "MPV_SUPPORTS_MEDIACODEC_VULKAN", "false")
+      // FongMi's mpv can send Dolby Vision straight to MediaCodec with a separate subtitle Surface.
+      buildConfigField("boolean", "MPV_SUPPORTS_DOLBY_VISION_DIRECT", "false")
 
       buildConfigField("String", "NATIVE_ARTIFACT_REVISION", "\"${nativeProperty("standard", "artifact_revision")}\"")
       buildConfigField("String", "MPV_REVISION", "\"${nativeProperty("standard", "mpv_revision")}\"")
@@ -103,6 +105,8 @@ android {
       buildConfigField("boolean", "SCOPED_STORAGE_ONLY", "false")
       buildConfigField("boolean", "MPV_SUPPORTS_VULKAN", "false")
       buildConfigField("boolean", "MPV_SUPPORTS_MEDIACODEC_VULKAN", "false")
+      // FongMi's mpv can send Dolby Vision straight to MediaCodec with a separate subtitle Surface.
+      buildConfigField("boolean", "MPV_SUPPORTS_DOLBY_VISION_DIRECT", "false")
       buildConfigField("String", "NATIVE_ARTIFACT_REVISION", "\"${nativeProperty("noVulkan", "artifact_revision")}\"")
       buildConfigField("String", "MPV_REVISION", "\"${nativeProperty("noVulkan", "mpv_revision")}\"")
       buildConfigField("String", "FFMPEG_REVISION", "\"${nativeProperty("noVulkan", "ffmpeg_revision")}\"")
@@ -117,6 +121,8 @@ android {
       buildConfigField("boolean", "SCOPED_STORAGE_ONLY", "false")
       buildConfigField("boolean", "MPV_SUPPORTS_VULKAN", "true")
       buildConfigField("boolean", "MPV_SUPPORTS_MEDIACODEC_VULKAN", "true")
+      // FongMi's mpv can send Dolby Vision straight to MediaCodec with a separate subtitle Surface.
+      buildConfigField("boolean", "MPV_SUPPORTS_DOLBY_VISION_DIRECT", "true")
 
       buildConfigField("String", "NATIVE_ARTIFACT_REVISION", "\"${nativeProperty("fongmi", "artifact_revision")}\"")
       buildConfigField("String", "MPV_REVISION", "\"${nativeProperty("fongmi", "mpv_revision")}\"")

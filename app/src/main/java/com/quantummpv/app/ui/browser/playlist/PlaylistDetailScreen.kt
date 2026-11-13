@@ -709,6 +709,7 @@ private fun PlaylistVideoListContent(
   val centerGridTitles by browserPreferences.centerGridTitles.collectAsState()
   val musicCoverArtSize by browserPreferences.musicCoverArtSize.collectAsState()
   val thumbnailQuality by browserPreferences.thumbnailQuality.collectAsState()
+  val thumbnailGenerator by browserPreferences.thumbnailGenerator.collectAsState()
   val density = LocalDensity.current
   val audioThumbnailSizePx = with(density) { musicCoverArtSize.dp.roundToPx() }
   val videoCardUiConfig =
@@ -727,6 +728,7 @@ private fun PlaylistVideoListContent(
       showDurationField,
       centerGridTitles,
       thumbnailQuality,
+      thumbnailGenerator,
     ) {
       VideoCardUiConfig(
         unlimitedNameLines = unlimitedNameLines,
@@ -743,6 +745,7 @@ private fun PlaylistVideoListContent(
         showDurationField = showDurationField,
         centerGridTitles = centerGridTitles,
         thumbnailQuality = thumbnailQuality,
+        thumbnailGenerator = thumbnailGenerator,
       )
     }
 

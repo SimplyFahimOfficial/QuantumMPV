@@ -24,6 +24,7 @@ import com.quantummpv.app.data.network.client.NetworkMimeTypes
 import com.quantummpv.app.data.network.proxy.NetworkStreamingProxy
 import com.quantummpv.app.domain.media.model.Video
 import com.quantummpv.app.domain.network.NetworkConnection
+import com.quantummpv.app.preferences.ThumbnailGenerator
 import com.quantummpv.app.preferences.ThumbnailMode
 import com.quantummpv.app.repository.NetworkRepository
 import com.quantummpv.app.ui.player.resolveLocalPath
@@ -133,7 +134,9 @@ class ThumbnailRepository(
     heightPx: Int,
   ): Bitmap? =
     withContext(Dispatchers.IO) {
-      val key = thumbnailKey(video, widthPx, heightPx)
+      // Read once: a source change mid-request must not file this image under the new source's key.
+      val generator = browserPreferences.thumbnailGenerator.get()
+      val key = thumbnailKey(video, widthPx, heightPx, generator)
 
       if (isNetworkUrl(video.path) && !isNetworkThumbnailAllowed(video.path)) {
         return@withContext null
@@ -147,7 +150,7 @@ class ThumbnailRepository(
 
       val candidate =
         async(start = CoroutineStart.LAZY) {
-          getCachedThumbnail(video, widthPx, heightPx)?.let { cached ->
+          getCachedThumbnail(video, widthPx, heightPx, generator)?.let { cached ->
             synchronized(memoryCache) {
               memoryCache.put(key, cached)
             }
@@ -164,7 +167,7 @@ class ThumbnailRepository(
               isNetworkUrl(video.path) -> null
               else ->
                 localGenerationSemaphore.withPermit {
-                  generateLocalThumbnail(video, widthPx, heightPx)
+                  generateLocalThumbnail(video, widthPx, heightPx, generator)
                 }
             } ?: return@async null
 
@@ -172,7 +175,7 @@ class ThumbnailRepository(
           synchronized(memoryCache) {
             memoryCache.put(key, bitmap)
           }
-          writeBitmapToDisk(diskCacheKey(video), bitmap, isNetworkUrl(video.path))
+          writeBitmapToDisk(diskCacheKey(video, generator), bitmap, isNetworkUrl(video.path))
           _thumbnailReadyKeys.tryEmit(key)
           bitmap
         }
@@ -194,19 +197,20 @@ class ThumbnailRepository(
     video: Video,
     widthPx: Int,
     heightPx: Int,
+    generator: ThumbnailGenerator = browserPreferences.thumbnailGenerator.get(),
   ): Bitmap? =
     withContext(Dispatchers.IO) {
       if (isNetworkUrl(video.path) && !isNetworkThumbnailAllowed(video.path)) {
         return@withContext null
       }
 
-      val key = thumbnailKey(video, widthPx, heightPx)
+      val key = thumbnailKey(video, widthPx, heightPx, generator)
       synchronized(memoryCache) {
         memoryCache.get(key)
       }?.let { return@withContext it }
 
       val decoded =
-        readBitmapFromDisk(diskCacheKey(video), isNetworkUrl(video.path))
+        readBitmapFromDisk(diskCacheKey(video, generator), isNetworkUrl(video.path))
           ?: return@withContext null
       val scaled = scaleBitmap(decoded, widthPx, heightPx)
       synchronized(memoryCache) {
@@ -346,7 +350,8 @@ class ThumbnailRepository(
     video: Video,
     width: Int,
     height: Int,
-  ): String = "${videoBaseKey(video)}|$width|$height|${thumbnailModeKey()}|${thumbnailQualityKey()}"
+    generator: ThumbnailGenerator = browserPreferences.thumbnailGenerator.get(),
+  ): String = "${videoBaseKey(video)}|$width|$height|${thumbnailModeKey(generator)}|${thumbnailQualityKey()}"
 
   /**
    * Folder prefetch and a visible card may request different sizes for the same source.
@@ -362,8 +367,10 @@ class ThumbnailRepository(
 
   // Keep extraction-quality changes from reusing smaller legacy images that were
   // cached without their requested dimensions in the key.
-  fun diskCacheKey(video: Video): String =
-    "video-thumb-v2|${diskVideoBaseKey(video)}|${thumbnailModeKey()}|${thumbnailQualityKey()}"
+  fun diskCacheKey(
+    video: Video,
+    generator: ThumbnailGenerator = browserPreferences.thumbnailGenerator.get(),
+  ): String = "video-thumb-v2|${diskVideoBaseKey(video)}|${thumbnailModeKey(generator)}|${thumbnailQualityKey()}"
 
   private fun canonicalLocalPath(video: Video): String {
     val raw = video.path.ifBlank { video.uri.toString() }
@@ -500,9 +507,18 @@ class ThumbnailRepository(
     video: Video,
     widthPx: Int,
     heightPx: Int,
+    generator: ThumbnailGenerator,
   ): Bitmap? {
     val mode = browserPreferences.thumbnailMode.get()
     val dimension = maxOf(widthPx, heightPx, MAX_THUMBNAIL_SIZE).coerceAtMost(thumbnailMaxSize())
+
+    if (generator.triesMediaStore) {
+      MediaStoreThumbnailLoader
+        .load(context, video, canonicalLocalPath(video), dimension, video.isAudio)
+        ?.let { return scaleBitmap(it, widthPx, heightPx) }
+      // MediaStore only: a missing index entry leaves the placeholder, as the mode promises.
+      if (!generator.triesNative) return null
+    }
 
     if (video.isAudio || mode == ThumbnailMode.Smart || mode == ThumbnailMode.EmbeddedThumbnail) {
       generateEmbeddedArtwork(video)?.let { return scaleBitmap(it, widthPx, heightPx) }
@@ -1274,8 +1290,11 @@ class ThumbnailRepository(
     return md.digest().joinToString("") { byte -> "%02x".format(byte) }
   }
 
-  private fun thumbnailModeKey(): String =
-    browserPreferences.thumbnailMode.get().thumbnailModeCacheKey(browserPreferences.thumbnailFramePosition.get())
+  // The generator suffix is part of the mode key so memory and disk entries are never shared between sources.
+  // Native has no suffix, which keeps thumbnails cached before the generator setting existed.
+  private fun thumbnailModeKey(generator: ThumbnailGenerator = browserPreferences.thumbnailGenerator.get()): String =
+    browserPreferences.thumbnailMode.get().thumbnailModeCacheKey(browserPreferences.thumbnailFramePosition.get()) +
+      generator.cacheSuffix
 
   private fun thumbnailQualityKey(): String = browserPreferences.thumbnailQuality.get().name
 
