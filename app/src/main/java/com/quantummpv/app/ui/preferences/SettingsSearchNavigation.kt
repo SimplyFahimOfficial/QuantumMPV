@@ -148,6 +148,7 @@ private val settingsSearchListAnchors: Map<Screen, List<SettingsSearchListAnchor
         SettingsSearchListAnchor(titleRes = R.string.pref_decoder_vulkan_experimental_title, itemIndex = 1),
         SettingsSearchListAnchor(titleRes = R.string.pref_decoder_debanding_title, itemIndex = 1),
         SettingsSearchListAnchor(titleRes = R.string.pref_decoder_yuv420p_title, itemIndex = 1),
+        SettingsSearchListAnchor(titleRes = R.string.pref_decoder_dolby_vision_direct_title, itemIndex = 1),
         SettingsSearchListAnchor(titleRes = R.string.pref_anime4k_title, itemIndex = 1),
       ),
     AudioPreferencesScreen to

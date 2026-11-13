@@ -23,6 +23,10 @@ class DecoderPreferences(
   val gpuNext = preferenceStore.getBoolean("gpu_next")
   val useVulkan = preferenceStore.getBoolean("use_vulkan", false)
   val hdrScreenOutput = preferenceStore.getBoolean("hdr_screen_output", false)
+
+  /** FongMi build only: let MediaCodec render Dolby Vision directly, with subtitles on an overlay. Off by default. */
+  val dolbyVisionDirect = preferenceStore.getBoolean("dolby_vision_direct", false)
+
   val hdrScreenMode = preferenceStore.getEnum("hdr_screen_mode", HdrScreenMode.OFF)
   val lastHdrMode = preferenceStore.getEnum("hdr_last_selected_mode", HdrScreenMode.BT_2020)
 
