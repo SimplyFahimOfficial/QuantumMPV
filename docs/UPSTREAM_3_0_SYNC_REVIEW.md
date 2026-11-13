@@ -194,6 +194,7 @@ Approved in the November 2026 plan (see the feature order in the PR list).
 | Upstream | Change | Notes |
 |---|---|---|
 | `fd7e000ff` | "Play with other apps" (ignore audio focus) | Same logic in `MediaPlaybackService` and `PlayerActivity`. The headphone-unplug receiver now uses `canHandleDetachedTransport()`, so it pauses even without focus. Strings are English only; the fork's locale files do not carry these keys. `AudioPreferencesTest`. |
+| `a45ed217` (AutoEq part), `ea449b49` | AutoEq headphone correction | `AutoEq.kt` is upstream's, with its download rules kept: HTTPS, host `cdn.jsdelivr.net` only, fixed AutoEq path, no redirects, 64 KB cap, gain/Q/frequency/band-count bounds, and only whitelisted filter types become mpv filters. It differs from upstream in three ways. The fork's equalizer is Android audiofx plus a chain built in `PlayerViewModel.updateMpvAfProperty`, so AutoEq is one more entry in that chain instead of `PlaybackSession` plumbing. It has its own switch, because the fork's manual equalizer state is not persisted. And it applies to video as well as music, where upstream limits it to audio-only items. The SOFA/HRTF half of `a45ed217` waits for the native update. `AutoEqTest`. |
 
 ### Assessed in the second batch and left open
 

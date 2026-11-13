@@ -1,0 +1,15 @@
+AutoEq data sources
+
+autoeq_index.tsv lists headphone presets from the public jaakkopasanen/AutoEq
+results repository (https://github.com/jaakkopasanen/AutoEq). The app downloads
+the selected preset from cdn.jsdelivr.net when the user picks it; see PRIVACY.md.
+
+harman_in_ear_2019v2.csv and harman_over_ear_2018.csv are the AutoEq target
+curves "Harman in-ear 2019" and "Harman over-ear 2018". The files are copied
+unchanged from mpvRx (Riteshp2001/mpvRx).
+
+AutoEq is MIT licensed; its license is in LICENSE-AutoEq.txt. Individual
+measurements and brand names keep their own attribution and rights.
+
+Harman curves are frequency-response references, not correction gains. The app
+applies the selected headphone's downloaded preset, including its preamp.
