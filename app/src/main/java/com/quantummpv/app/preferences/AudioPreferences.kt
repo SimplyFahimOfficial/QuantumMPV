@@ -23,6 +23,9 @@ class AudioPreferences(
   val audioPitchCorrection = preferenceStore.getBoolean("audio_pitch_correction", true)
   val audioChannels = preferenceStore.getEnum("audio_channels", AudioChannels.AutoSafe)
   val volumeBoostCap = preferenceStore.getInt("audio_volume_boost_cap", 30)
+
+  // Mix with other apps instead of taking audio focus (mpvRx fd7e000ff). Off by default.
+  val ignoreAudioFocus = preferenceStore.getBoolean("ignore_audio_focus", false)
   val backgroundPlayback = preferenceStore.getBoolean("automatic_background_playback", false)
 
   /** Audio-player-only background playback; video retains [backgroundPlayback]. */
