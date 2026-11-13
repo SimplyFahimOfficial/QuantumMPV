@@ -43,6 +43,8 @@
   <string name="pref_appearance_thumbnail_generation_summary">Choose how thumbnails are generated, including embedded artwork or a specific frame position</string>
   <string name="pref_appearance_thumbnail_generation_change_title">Change thumbnail strategy?</string>
   <string name="pref_appearance_thumbnail_generation_change_summary">This will clear cached thumbnails. New thumbnails will be generated with the selected strategy as you browse.</string>
+  <string name="pref_appearance_thumbnail_source_title">Thumbnail source</string>
+  <string name="pref_appearance_thumbnail_source_summary">Where thumbnails come from. Native uses the extraction built into this app. Auto asks the Android MediaStore first and falls back to native. MediaStore only shows what Android has indexed. Changing it clears the thumbnail cache.</string>
   <string name="pref_appearance_thumbnail_quality_title">Thumbnail quality</string>
   <string name="pref_appearance_thumbnail_quality_summary">Maximum thumbnail resolution: %1$d px. Higher quality uses more storage and may generate more slowly.</string>
   <string name="pref_appearance_thumbnail_position_title">Thumbnail frame position</string>
