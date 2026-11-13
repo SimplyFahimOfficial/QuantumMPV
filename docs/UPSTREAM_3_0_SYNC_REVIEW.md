@@ -189,8 +189,11 @@ Verification: compiled, ktlint, detekt, Android lint and all 341 unit tests were
 
 ### Seventh batch: features from the full upstream audit
 
+Approved in the November 2026 plan (see the feature order in the PR list).
+
 | Upstream | Change | Notes |
 |---|---|---|
+| `fd7e000ff` | "Play with other apps" (ignore audio focus) | Same logic in `MediaPlaybackService` and `PlayerActivity`. The headphone-unplug receiver now uses `canHandleDetachedTransport()`, so it pauses even without focus. Strings are English only; the fork's locale files do not carry these keys. `AudioPreferencesTest`. |
 | `4e4c8ed0`, `437114fc` | Thumbnail source: Native, Auto, MediaStore | `MediaStoreThumbnailLoader` ported from upstream. Unlike upstream, **Native stays the default**: upstream makes Auto the default, which changes every user's thumbnails and orphans their cache. Native adds no cache-key suffix, so existing thumbnails stay valid. Not ported: `90e463cc` (a 59-file refactor that also reworks media-info tabs and audio controls). `ThumbnailGeneratorTest`. |
 
 ### Assessed in the second batch and left open
