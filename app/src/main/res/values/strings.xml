@@ -1299,6 +1299,10 @@
   <string name="ui_view_options">View Options</string>
   <string name="ambient_glow">Glow</string>
   <string name="ambient_style_youtube">YouTube</string>
+  <string name="ambient_cinema">Cinema</string>
+  <string name="ambient_echo">Echo</string>
+  <string name="ambient_mirror">Mirror</string>
+  <string name="ambient_ambilight">Ambilight</string>
   <string name="ambient_color">Color</string>
   <string name="ambient_compositing">Compositing</string>
   <string name="ambient_visual_style">Visual Style</string>
@@ -2860,6 +2864,24 @@
   <string name="lyrics_editor_confirm">OK</string>
   <string name="lyrics_editor_play">Play</string>
   <string name="lyrics_editor_pause">Pause</string>
+  <!-- AutoEq headphone correction (mpvRx a45ed217) -->
+  <string name="autoeq_title">AutoEq</string>
+  <string name="autoeq_headphone_correction">Headphone correction</string>
+  <string name="autoeq_correction_enabled">Enabled</string>
+  <string name="autoeq_no_headphones">No headphones selected</string>
+  <string name="autoeq_loading_preset">Loading preset</string>
+  <string name="autoeq_searching">Searching headphones</string>
+  <string name="autoeq_choose_headphones">Choose headphones</string>
+  <string name="autoeq_search">Headphone or measurement source</string>
+  <string name="autoeq_preset_details">Preamp %1$.1f dB, %2$d filters</string>
+  <string name="autoeq_unavailable">The saved AutoEq profile could not be read. Choose the headphones again.</string>
+  <string name="autoeq_download_failed">The preset could not be loaded or is unsupported. Try another profile or retry.</string>
+  <string name="autoeq_no_matches">No matching headphones</string>
+  <string name="autoeq_reference_target">Harman reference target</string>
+  <string name="autoeq_harman_in_ear">In-ear 2019</string>
+  <string name="autoeq_harman_over_ear">Over-ear 2018</string>
+  <string name="autoeq_retry">Retry</string>
+  <string name="autoeq_close">Close</string>
   <!-- Persistent status bar (mpvRx c91f1371, 08c53f05) -->
   <string name="pref_persistent_status_title">Persistent status bar</string>
   <string name="pref_persistent_status_summary">Always-visible video HUD with time, battery and playback progress</string>

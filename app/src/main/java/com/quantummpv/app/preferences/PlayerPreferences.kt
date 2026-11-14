@@ -10,8 +10,10 @@
 package com.quantummpv.app.preferences
 
 import com.quantummpv.app.preferences.preference.DependentBooleanPreference
+import com.quantummpv.app.preferences.preference.Preference
 import com.quantummpv.app.preferences.preference.PreferenceStore
 import com.quantummpv.app.preferences.preference.getEnum
+import com.quantummpv.app.ui.player.AmbientGlowPreset
 import com.quantummpv.app.ui.player.AmbientStyle
 import com.quantummpv.app.ui.player.ControlsAnimationStyle
 import com.quantummpv.app.ui.player.NavigationAnimStyle
@@ -20,6 +22,7 @@ import com.quantummpv.app.ui.player.RepeatMode
 import com.quantummpv.app.ui.player.ResumePlaybackMode
 import com.quantummpv.app.ui.player.VideoAspect
 import com.quantummpv.app.ui.player.VideoOpenAnimation
+import com.quantummpv.app.ui.player.ambientPresetsFor
 import com.quantummpv.app.ui.player.screenshot.ScreenshotFormat
 
 enum class IntroSegmentProvider(
@@ -32,6 +35,17 @@ enum class IntroSegmentProvider(
   ANIME_SKIP("Anime Skip", "animeskip"),
   HYBRID("Hybrid (Fastest)", "hybrid"),
 }
+
+class AmbientFxPrefs(
+  val blurSamples: Preference<Int>,
+  val spread: Preference<Float>,
+  val intensity: Preference<Float>,
+  val satBoost: Preference<Float>,
+  val vignette: Preference<Float>,
+  val warmth: Preference<Float>,
+  val fadeCurve: Preference<Float>,
+  val opacity: Preference<Float>,
+)
 
 /** Slot content for the optional always-visible in-video status HUD. */
 enum class PersistentStatusSlot {
@@ -186,6 +200,29 @@ class PlayerPreferences(
   val ambientFadeCurve = preferenceStore.getFloat("ambient_fade_curve", 1.5f)
   val ambientOpacity = preferenceStore.getFloat("ambient_opacity", 1.0f)
   val isAmbientEnabled = preferenceStore.getBoolean("ambient_enabled", false)
+
+  /** Per-style parameters of the shader ambient styles other than Glow (keys match mpvRx). */
+  private fun ambientFxPrefs(
+    preferenceStore: PreferenceStore,
+    style: AmbientStyle,
+    preset: AmbientGlowPreset,
+  ): AmbientFxPrefs {
+    val p = "ambient_${style.name.lowercase()}"
+    return AmbientFxPrefs(
+      blurSamples = preferenceStore.getInt("${p}_blur_samples", preset.blurSamples),
+      spread = preferenceStore.getFloat("${p}_spread", preset.maxRadius),
+      intensity = preferenceStore.getFloat("${p}_intensity", preset.glowIntensity),
+      satBoost = preferenceStore.getFloat("${p}_sat_boost", preset.satBoost),
+      vignette = preferenceStore.getFloat("${p}_vignette", preset.vignetteStrength),
+      warmth = preferenceStore.getFloat("${p}_warmth", preset.warmth),
+      fadeCurve = preferenceStore.getFloat("${p}_fade_curve", preset.fadeCurve),
+      opacity = preferenceStore.getFloat("${p}_opacity", preset.opacity),
+    )
+  }
+
+  val ambientFx: Map<AmbientStyle, AmbientFxPrefs> =
+    listOf(AmbientStyle.Cinema, AmbientStyle.Echo, AmbientStyle.Mirror, AmbientStyle.Ambilight)
+      .associateWith { ambientFxPrefs(preferenceStore, it, ambientPresetsFor(it).second) }
   val ambientBatterySaver = preferenceStore.getBoolean("ambient_battery_saver", false)
 
   /** Show the vertical volume pill while swiping for volume. */
