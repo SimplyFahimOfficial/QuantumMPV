@@ -1038,6 +1038,22 @@ object AppearancePreferencesScreen : Screen {
 
               PreferenceDivider()
 
+              val showMoreMenuButton by preferences.showMoreMenuButton.collectAsState()
+              SwitchPreference(
+                modifier = Modifier.settingsSearchTarget(R.string.pref_more_menu_button_title),
+                value = showMoreMenuButton,
+                onValueChange = preferences::setMoreMenuButtonVisible,
+                title = { Text(text = stringResource(id = R.string.pref_more_menu_button_title)) },
+                summary = {
+                  Text(
+                    text = stringResource(id = R.string.pref_more_menu_button_summary),
+                    color = MaterialTheme.colorScheme.outline,
+                  )
+                },
+              )
+
+              PreferenceDivider()
+
               Preference(
                 modifier = Modifier.settingsSearchTarget(R.string.pref_more_menu_title),
                 title = { Text(text = stringResource(id = R.string.pref_more_menu_title)) },
