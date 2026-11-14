@@ -160,6 +160,7 @@ enum class Sheets {
   AudioProperties,
   VisualizerStyle,
   Lyrics,
+  LyricsEditor,
   Scopes,
   AudiobookRewind,
   AudiobookSleepTimer,
