@@ -106,6 +106,20 @@ enum class AmbientStyle(
 
   /** Soft blurred projection of the whole frame, like YouTube's Ambient Mode. */
   YouTube(R.string.ambient_style_youtube),
+
+  // The styles below are mpv OUTPUT hook shaders ported from mpvRx's fx_ambient set.
+
+  /** Whole-frame soft projection extending into the bars; blur grows with bar depth. */
+  Cinema(R.string.ambient_cinema),
+
+  /** Edge-parallel smear that simulates light propagating outward. */
+  Echo(R.string.ambient_echo),
+
+  /** Reflected UV mirror of the video edge; blur grows with depth. */
+  Mirror(R.string.ambient_mirror),
+
+  /** Each edge lights the dark beside it with two-phase emitter curves and B-spline diffusion. */
+  Ambilight(R.string.ambient_ambilight),
 }
 
 enum class MPVProfile(
