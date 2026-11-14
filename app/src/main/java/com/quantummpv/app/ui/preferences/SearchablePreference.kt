@@ -221,6 +221,15 @@ object SearchablePreferences {
       )
       add(
         SearchablePreference(
+          titleRes = R.string.pref_persistent_status_title,
+          summaryRes = R.string.pref_persistent_status_summary,
+          keywords = listOf("status", "hud", "clock", "battery", "time", "progress", "persistent", "overlay"),
+          category = "Appearance",
+          screen = PlayerControlsPreferencesScreen,
+        ),
+      )
+      add(
+        SearchablePreference(
           titleRes = R.string.pref_layout_reset_recommended,
           summaryRes = R.string.pref_layout_reset_recommended_hint,
           keywords = listOf("reset", "recommended", "default", "layout", "controls", "buttons"),
@@ -1402,13 +1411,13 @@ object SearchablePreferences {
       addSearchEntries(
         category = "Appearance",
         screen = PlayerControlsPreferencesScreen,
-        anchorItemIndex = 5,
+        anchorItemIndex = 7,
         SearchEntrySpec(R.string.pref_section_seekbar_style, listOf("seekbar", "style", "thick", "thin", "squiggly", "wavy")),
       )
       addSearchEntries(
         category = "Appearance",
         screen = PlayerControlsPreferencesScreen,
-        anchorItemIndex = 7,
+        anchorItemIndex = 10,
         SearchEntrySpec(R.string.ui_portrait_playback_buttons, listOf("portrait", "playback", "buttons", "position")),
         SearchEntrySpec(R.string.ui_time_network_clock, listOf("clock", "time", "network", "format", "12 hour", "24 hour")),
       )

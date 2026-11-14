@@ -82,13 +82,14 @@ private val settingsSearchListAnchors: Map<Screen, List<SettingsSearchListAnchor
         SettingsSearchListAnchor(titleRes = R.string.pref_layout_portrait_bottom_controls, itemIndex = 3),
         SettingsSearchListAnchor(titleRes = R.string.pref_layout_reset_recommended, itemIndex = 4),
         SettingsSearchListAnchor(titleRes = R.string.pref_layout_restore_classic, itemIndex = 4),
-        SettingsSearchListAnchor(titleRes = R.string.pref_player_buttons_opacity, itemIndex = 8),
-        SettingsSearchListAnchor(titleRes = R.string.pref_appearance_hide_player_buttons_background_title, itemIndex = 8),
+        SettingsSearchListAnchor(titleRes = R.string.pref_persistent_status_title, itemIndex = 6),
+        SettingsSearchListAnchor(titleRes = R.string.pref_player_buttons_opacity, itemIndex = 10),
+        SettingsSearchListAnchor(titleRes = R.string.pref_appearance_hide_player_buttons_background_title, itemIndex = 10),
         SettingsSearchListAnchor(
           titleRes = R.string.pref_appearance_force_dark_player_buttons_background_title,
-          itemIndex = 8,
+          itemIndex = 10,
         ),
-        SettingsSearchListAnchor(titleRes = R.string.pref_player_display_hide_player_control_time, itemIndex = 8),
+        SettingsSearchListAnchor(titleRes = R.string.pref_player_display_hide_player_control_time, itemIndex = 10),
       ),
     PlayerPreferencesScreen to
       listOf(

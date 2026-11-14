@@ -2269,6 +2269,14 @@ is PlayerUpdates.FrameInfo -> {
         )
       }
     }
+
+    // Last child of the root box, so the controls' scrims never dim it. It handles no touches.
+    PersistentStatusHud(
+      viewModel = viewModel,
+      preferences = playerPreferences,
+      durationSeconds = seekbarDuration,
+      playbackSpeed = playbackSpeed ?: 1f,
+    )
   }
 }
 
