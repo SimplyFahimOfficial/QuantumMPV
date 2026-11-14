@@ -18,7 +18,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.File
 import java.util.Locale
-import java.util.concurrent.atomic.AtomicLong
 
 data class LyricsResult(
   val embeddedLyrics: Lyrics? = null,
@@ -49,10 +48,9 @@ class LyricsRepository(
 
   private val editedLyricsStore = EditedLyricsStore(File(context.filesDir, "lyrics/edited-v1"))
 
-  // Bumped after every edit or restore. A load that started before it must not cache its now-stale result.
-  private val editRevision = AtomicLong()
-
-  // Guards the revision check against cache writes, so a save cannot land between the check and the put.
+  // Per track: bumped after every edit or restore of that track. A load that started before the bump
+  // must not cache its now-stale result. Guarded by editLock, which also covers the cache write.
+  private val editRevisions = HashMap<String, Long>()
   private val editLock = Any()
 
   // Cache by media path -> LyricsResult
@@ -109,7 +107,7 @@ class LyricsRepository(
     if (!forceRefresh) {
       cache.get(editKey)?.let { return@withContext it }
     }
-    val revision = editRevision.get()
+    val revision = synchronized(editLock) { editRevisions[editKey] ?: 0L }
 
     Log.d(TAG, "Loading lyrics for: $title by $artist ($mediaPath)")
 
@@ -154,7 +152,7 @@ class LyricsRepository(
     )
 
     synchronized(editLock) {
-      if (editRevision.get() == revision) cache.put(editKey, result)
+      if ((editRevisions[editKey] ?: 0L) == revision) cache.put(editKey, result)
     }
     result
   }
@@ -319,7 +317,7 @@ class LyricsRepository(
     editedLyricsStore.write(editKey, lyrics)
     // The next load reads the saved file; a stale cached result would hide the edit.
     synchronized(editLock) {
-      editRevision.incrementAndGet()
+      editRevisions[editKey] = (editRevisions[editKey] ?: 0L) + 1
       cache.remove(editKey)
     }
   }
@@ -328,7 +326,7 @@ class LyricsRepository(
     withContext(Dispatchers.IO) {
       editedLyricsStore.remove(editKey)
       synchronized(editLock) {
-        editRevision.incrementAndGet()
+        editRevisions[editKey] = (editRevisions[editKey] ?: 0L) + 1
         cache.remove(editKey)
       }
     }
