@@ -59,7 +59,6 @@ import androidx.compose.material3.LoadingIndicator
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.LocalRippleConfiguration
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
@@ -154,6 +153,7 @@ import com.quantummpv.app.ui.player.controls.components.LocalHidePlayerButtonsBa
 import com.quantummpv.app.ui.player.controls.components.LocalPlayerButtonsOpacity
 import com.quantummpv.app.ui.player.controls.components.MediaScopesOverlay
 import com.quantummpv.app.ui.player.controls.components.MultipleSpeedPlayerUpdate
+import com.quantummpv.app.ui.player.controls.components.PlayerGlassSurface
 import com.quantummpv.app.ui.player.controls.components.ResumeAvailablePlayerUpdate
 import com.quantummpv.app.ui.player.controls.components.ResumedFromPlayerUpdate
 import com.quantummpv.app.ui.player.controls.components.SeekPlayerUpdate
@@ -1205,7 +1205,7 @@ is PlayerUpdates.FrameInfo -> {
               leftCustomButtons.forEach { button ->
                 key(button.id) {
                   val buttonInteractionSource = remember { MutableInteractionSource() }
-                  Surface(
+                  PlayerGlassSurface(
                     shape = CircleShape,
                     color = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.85f),
                     contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
@@ -1269,7 +1269,7 @@ is PlayerUpdates.FrameInfo -> {
               rightCustomButtons.forEach { button ->
                 key(button.id) {
                   val buttonInteractionSource = remember { MutableInteractionSource() }
-                  Surface(
+                  PlayerGlassSurface(
                     shape = CircleShape,
                     color = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.85f),
                     contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
@@ -1334,7 +1334,7 @@ is PlayerUpdates.FrameInfo -> {
               customButtons.forEach { button ->
                 key(button.id) {
                   val buttonInteractionSource = remember { MutableInteractionSource() }
-                  Surface(
+                  PlayerGlassSurface(
                     shape = CircleShape,
                     color = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.85f),
                     contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
@@ -1444,7 +1444,7 @@ is PlayerUpdates.FrameInfo -> {
                 blue = segmentColor.blue * 0.72f,
                 alpha = 0.96f,
               )
-            Surface(
+            PlayerGlassSurface(
               shape = RoundedCornerShape(999.dp),
               color = segmentSurfaceColor,
               border = BorderStroke(1.5.dp, segmentBorderColor),
@@ -1510,7 +1510,7 @@ is PlayerUpdates.FrameInfo -> {
                     "Buffering (${String.format(java.util.Locale.ROOT, "%.1f", cacheSeconds)}s)"
                   else -> stringResource(R.string.ui_buffering)
                 }
-              Surface(
+              PlayerGlassSurface(
                 shape = CircleShape,
                 color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.9f),
                 border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.3f)),
@@ -1565,7 +1565,7 @@ is PlayerUpdates.FrameInfo -> {
                 horizontalArrangement = Arrangement.spacedBy(24.dp),
                 verticalAlignment = Alignment.CenterVertically,
               ) {
-                Surface(
+                PlayerGlassSurface(
                   modifier =
                     Modifier
                       .size(56.dp)
@@ -1624,7 +1624,7 @@ is PlayerUpdates.FrameInfo -> {
                   )
                 }
 
-                Surface(
+                PlayerGlassSurface(
                   modifier =
                   Modifier
                     .size(64.dp)
@@ -1671,7 +1671,7 @@ is PlayerUpdates.FrameInfo -> {
                   )
                 }
 
-                Surface(
+                PlayerGlassSurface(
                   modifier =
                     Modifier
                       .size(56.dp)
@@ -1731,7 +1731,7 @@ is PlayerUpdates.FrameInfo -> {
                 }
               }
             } else {
-              Surface(
+              PlayerGlassSurface(
                 modifier =
                   Modifier
                     .size(64.dp)

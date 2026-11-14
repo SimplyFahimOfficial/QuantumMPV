@@ -15,7 +15,6 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -160,7 +159,7 @@ fun BrightnessSlider(
   val percentText = remember(percentInt) { "$percentInt%" }
   val label = stringResource(R.string.player_brightness_label)
   // Announced politely so hardware-key and gesture changes are spoken without flooding TalkBack.
-  Surface(
+  PlayerGlassSurface(
     modifier =
       modifier.semantics(mergeDescendants = true) {
         contentDescription = label
@@ -218,7 +217,7 @@ fun VolumeSlider(
   val percentage = volumePercentage.coerceIn(0, 100)
   val label = stringResource(R.string.player_volume_label)
   val spokenVolume = if (mpvVolume > 100) "$mpvVolume%" else "$percentage%"
-  Surface(
+  PlayerGlassSurface(
     modifier =
       modifier.semantics(mergeDescendants = true) {
         contentDescription = label
