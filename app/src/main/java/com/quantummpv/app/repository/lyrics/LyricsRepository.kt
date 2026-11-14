@@ -52,6 +52,9 @@ class LyricsRepository(
   // Bumped after every edit or restore. A load that started before it must not cache its now-stale result.
   private val editRevision = AtomicLong()
 
+  // Guards the revision check against cache writes, so a save cannot land between the check and the put.
+  private val editLock = Any()
+
   // Cache by media path -> LyricsResult
   private val cache = LruCache<String, LyricsResult>(64)
 
@@ -104,7 +107,7 @@ class LyricsRepository(
     editKey: String = mediaPath,
   ): LyricsResult = withContext(Dispatchers.IO) {
     if (!forceRefresh) {
-      cache.get(mediaPath)?.let { return@withContext it }
+      cache.get(editKey)?.let { return@withContext it }
     }
     val revision = editRevision.get()
 
@@ -150,7 +153,9 @@ class LyricsRepository(
       hasSavedEdits = editedLyricsStore.contains(editKey),
     )
 
-    if (editRevision.get() == revision) cache.put(mediaPath, result)
+    synchronized(editLock) {
+      if (editRevision.get() == revision) cache.put(editKey, result)
+    }
     result
   }
 
@@ -293,8 +298,8 @@ class LyricsRepository(
     return if (parsed.isValid()) parsed else null
   }
 
-  fun switchSource(mediaPath: String, sourceType: LyricsSourceType): LyricsResult? {
-    val existing = cache.get(mediaPath) ?: return null
+  fun switchSource(editKey: String, sourceType: LyricsSourceType): LyricsResult? {
+    val existing = cache.get(editKey) ?: return null
     val newActive = when (sourceType) {
       LyricsSourceType.EMBEDDED, LyricsSourceType.LOCAL -> existing.embeddedLyrics ?: existing.onlineLyrics
       LyricsSourceType.ONLINE -> existing.onlineLyrics ?: existing.embeddedLyrics
@@ -303,27 +308,28 @@ class LyricsRepository(
       selectedSource = sourceType,
       activeLyrics = newActive,
     )
-    cache.put(mediaPath, updated)
+    cache.put(editKey, updated)
     return updated
   }
 
   suspend fun saveEditedLyrics(
-    mediaPath: String,
     editKey: String,
     lyrics: Lyrics,
   ) = withContext(Dispatchers.IO) {
     editedLyricsStore.write(editKey, lyrics)
-    editRevision.incrementAndGet()
     // The next load reads the saved file; a stale cached result would hide the edit.
-    cache.remove(mediaPath)
+    synchronized(editLock) {
+      editRevision.incrementAndGet()
+      cache.remove(editKey)
+    }
   }
 
-  suspend fun removeEditedLyrics(
-    mediaPath: String,
-    editKey: String,
-  ) = withContext(Dispatchers.IO) {
-    editedLyricsStore.remove(editKey)
-    editRevision.incrementAndGet()
-    cache.remove(mediaPath)
-  }
+  suspend fun removeEditedLyrics(editKey: String) =
+    withContext(Dispatchers.IO) {
+      editedLyricsStore.remove(editKey)
+      synchronized(editLock) {
+        editRevision.incrementAndGet()
+        cache.remove(editKey)
+      }
+    }
 }

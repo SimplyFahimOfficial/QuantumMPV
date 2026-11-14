@@ -942,13 +942,13 @@ class PlayerViewModel : ViewModel(),
     }
     val lyrics = draft.toLyrics()
     persistLyricsEdit(R.string.lyrics_editor_save_failed, restoredOriginal = false) { target ->
-      lyricsRepository.saveEditedLyrics(target.mediaPath, target.editKey, lyrics)
+      lyricsRepository.saveEditedLyrics(target.editKey, lyrics)
     }
   }
 
   fun restoreOriginalLyrics() {
     persistLyricsEdit(R.string.lyrics_editor_restore_failed, restoredOriginal = true) { target ->
-      lyricsRepository.removeEditedLyrics(target.mediaPath, target.editKey)
+      lyricsRepository.removeEditedLyrics(target.editKey)
     }
   }
 
@@ -1215,7 +1215,7 @@ class PlayerViewModel : ViewModel(),
       return
     }
 
-    val updatedResult = lyricsRepository.switchSource(path, sourceType)
+    val updatedResult = lyricsRepository.switchSource(currentLyricsEditKey() ?: path, sourceType)
     if (updatedResult != null) {
       val activeLyrics = updatedResult.activeLyrics
       val activeIndex = com.quantummpv.app.utils.media.LyricsUtils.getActiveLineIndex(
