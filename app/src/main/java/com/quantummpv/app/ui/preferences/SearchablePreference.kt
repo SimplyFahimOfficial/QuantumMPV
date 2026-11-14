@@ -1396,6 +1396,7 @@ object SearchablePreferences {
         SearchEntrySpec(R.string.pref_nav_jellyfin_title, listOf("jellyfin", "server", "tab", "navigation")),
         SearchEntrySpec(R.string.pref_quick_play_fab_title, listOf("quick play", "fab", "floating button", "random")),
         SearchEntrySpec(R.string.pref_quick_play_fab_direct_title, listOf("quick play", "direct", "random", "chooser")),
+        SearchEntrySpec(R.string.pref_more_menu_button_title, listOf("menu", "button", "three dot", "overflow", "hide", "remove")),
         SearchEntrySpec(R.string.pref_more_menu_title, listOf("more", "menu", "overflow", "three dot", "shortcut", "customize")),
       )
       addSearchEntries(

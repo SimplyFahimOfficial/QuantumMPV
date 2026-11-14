@@ -21,4 +21,18 @@ class MoreMenuShortcutTest {
   fun emptySelectionLeavesOnlyFixedRows() {
     assertEquals(emptyList<MoreMenuShortcut>(), MoreMenuShortcut.resolve(emptySet()))
   }
+
+  @Test
+  fun menuHasItemsWhileAnyRowIsOn() {
+    assertEquals(true, MoreMenuShortcut.hasItems(settings = true, support = false, stored = emptySet()))
+    assertEquals(true, MoreMenuShortcut.hasItems(settings = false, support = true, stored = emptySet()))
+    assertEquals(true, MoreMenuShortcut.hasItems(settings = false, support = false, stored = setOf("AUDIO")))
+  }
+
+  @Test
+  fun menuIsEmptyOnlyWhenEveryRowIsOff() {
+    assertEquals(false, MoreMenuShortcut.hasItems(settings = false, support = false, stored = emptySet()))
+    // Names from other builds are not rows.
+    assertEquals(false, MoreMenuShortcut.hasItems(settings = false, support = false, stored = setOf("GONE_LATER")))
+  }
 }
