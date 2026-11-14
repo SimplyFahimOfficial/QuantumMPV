@@ -1634,6 +1634,10 @@ val isBrightnessSliderShown = MutableStateFlow(false)
   private val _ambientOpacity = MutableStateFlow(playerPreferences.ambientOpacity.get())
   val ambientOpacity: StateFlow<Float> = _ambientOpacity.asStateFlow()
 
+  init {
+    syncAmbientParamsForStyle(_ambientStyle.value)
+  }
+
   @Volatile private var lastAmbientScaleX = -1.0
   @Volatile private var lastAmbientScaleY = -1.0
   private var ambientDebounceJob: kotlinx.coroutines.Job? = null
@@ -1658,7 +1662,7 @@ val isBrightnessSliderShown = MutableStateFlow(false)
    * @Volatile: written on renderPrepDispatcher (background), read and nulled on
    * the main thread in disableAmbientShader() / restartAmbientIfActive().
    */
-  @Volatile private var lastCompiledSpec: AmbientGlowShaderSpec? = null
+  @Volatile private var lastCompiledSpec: Any? = null
 
   /**
    * Latest device thermal headroom reading ([0f] = at thermal limit, [1f] = cool).
@@ -6594,15 +6598,16 @@ val isBrightnessSliderShown = MutableStateFlow(false)
       _isAmbientEnabled.value &&
       !MpvConfigOverridePolicy.ownsAny(MpvConfigControlledFeatures.AMBIENT)
 
-  private fun isAmbientGlowRuntimeActive(): Boolean =
-    isAmbientRuntimeActive() && _ambientStyle.value == AmbientStyle.Glow
+  /** Every style except YouTube is an mpv shader pass; YouTube is captured frames. */
+  private fun isAmbientShaderRuntimeActive(): Boolean =
+    isAmbientRuntimeActive() && _ambientStyle.value != AmbientStyle.YouTube
 
   fun toggleAmbientMode() {
     if (MpvConfigOverridePolicy.ownsAny(MpvConfigControlledFeatures.AMBIENT)) return
     _isAmbientEnabled.value = !_isAmbientEnabled.value
     playerPreferences.isAmbientEnabled.set(_isAmbientEnabled.value)
     if (_isAmbientEnabled.value) {
-      if (_ambientStyle.value == AmbientStyle.Glow) {
+      if (_ambientStyle.value != AmbientStyle.YouTube) {
         lastAmbientScaleX = -1.0
         scheduleAmbientUpdate(0)
       }
@@ -6613,17 +6618,49 @@ val isBrightnessSliderShown = MutableStateFlow(false)
     }
   }
 
-  /** Switches between the shader-backed Glow and frame-captured YouTube styles. */
+  /** Loads the saved parameters of [style] into the sliders; YouTube has none. */
+  private fun syncAmbientParamsForStyle(style: AmbientStyle) {
+    val fx = playerPreferences.ambientFx[style]
+    if (fx != null) {
+      _ambientBlurSamples.value = fx.blurSamples.get()
+      _ambientMaxRadius.value = fx.spread.get()
+      _ambientGlowIntensity.value = fx.intensity.get()
+      _ambientSatBoost.value = fx.satBoost.get()
+      _ambientVignetteStrength.value = fx.vignette.get()
+      _ambientWarmth.value = fx.warmth.get()
+      _ambientFadeCurve.value = fx.fadeCurve.get()
+      _ambientOpacity.value = fx.opacity.get()
+    } else if (style == AmbientStyle.Glow) {
+      _ambientBlurSamples.value = playerPreferences.ambientBlurSamples.get()
+      _ambientMaxRadius.value = playerPreferences.ambientMaxRadius.get()
+      _ambientGlowIntensity.value = playerPreferences.ambientGlowIntensity.get()
+      _ambientSatBoost.value = playerPreferences.ambientSatBoost.get()
+      _ambientVignetteStrength.value = playerPreferences.ambientVignetteStrength.get()
+      _ambientWarmth.value = playerPreferences.ambientWarmth.get()
+      _ambientFadeCurve.value = playerPreferences.ambientFadeCurve.get()
+      _ambientOpacity.value = playerPreferences.ambientOpacity.get()
+    }
+  }
+
+  /** Switches between the shader-backed styles and the frame-captured YouTube style. */
   fun setAmbientStyle(style: AmbientStyle) {
     if (MpvConfigOverridePolicy.ownsAny(MpvConfigControlledFeatures.AMBIENT)) return
     if (_ambientStyle.value == style) return
+    // Put the outgoing style's pre-battery-saver values back first, so its snapshot is saved under its own style.
+    val throttled = ambientWasOnBattery
+    restoreFromBatterySaver()
     _ambientStyle.value = style
     playerPreferences.ambientStyle.set(style)
+    syncAmbientParamsForStyle(style)
+    // The incoming style was throttled too; it takes its own snapshot and gets the fast profile.
+    if (throttled && _isAmbientBatterySaver.value) applyBatterySaverPolicy()
     playerUpdate.value =
       PlayerUpdates.ShowText(
         appContext.getString(R.string.ambient_style_update, appContext.getString(style.titleRes)),
       )
-    if (style == AmbientStyle.Glow) {
+    if (style != AmbientStyle.YouTube) {
+      // A new style must never reuse the previous style's compiled shader.
+      lastCompiledSpec = null
       lastAmbientScaleX = -1.0
       scheduleAmbientUpdate(0)
     } else {
@@ -6659,7 +6696,7 @@ val isBrightnessSliderShown = MutableStateFlow(false)
 
   /** Called when the device orientation changes. Refreshes Glow for the new output dimensions. */
   fun onOrientationChanged() {
-    if (!isAmbientGlowRuntimeActive()) return
+    if (!isAmbientShaderRuntimeActive()) return
 
     // The compiled spec is the cache key; scale sentinels alone do not force a rebuild.
     lastCompiledSpec = null
@@ -6681,7 +6718,7 @@ val isBrightnessSliderShown = MutableStateFlow(false)
    * Called after shader-stack changes so ambient stays as the last OUTPUT pass.
    */
   fun restartAmbientIfActive() {
-    if (!isAmbientGlowRuntimeActive()) return
+    if (!isAmbientShaderRuntimeActive()) return
     disableAmbientShader()
     // Small delay to let Anime4K shaders settle.
     scheduleAmbientUpdate(200)
@@ -6706,22 +6743,34 @@ val isBrightnessSliderShown = MutableStateFlow(false)
     _ambientFadeCurve.value = fadeCurve
     _ambientOpacity.value = opacity
 
-    // Persist to preferences
-    playerPreferences.ambientBlurSamples.set(blurSamples)
-    playerPreferences.ambientMaxRadius.set(maxRadius)
-    playerPreferences.ambientGlowIntensity.set(glowIntensity)
-    playerPreferences.ambientSatBoost.set(satBoost)
-    playerPreferences.ambientVignetteStrength.set(vignetteStrength)
-    playerPreferences.ambientWarmth.set(warmth)
-    playerPreferences.ambientFadeCurve.set(fadeCurve)
-    playerPreferences.ambientOpacity.set(opacity)
+    // Persist to the current style's preferences
+    val fx = playerPreferences.ambientFx[_ambientStyle.value]
+    if (fx != null) {
+      fx.blurSamples.set(blurSamples)
+      fx.spread.set(maxRadius)
+      fx.intensity.set(glowIntensity)
+      fx.satBoost.set(satBoost)
+      fx.vignette.set(vignetteStrength)
+      fx.warmth.set(warmth)
+      fx.fadeCurve.set(fadeCurve)
+      fx.opacity.set(opacity)
+    } else {
+      playerPreferences.ambientBlurSamples.set(blurSamples)
+      playerPreferences.ambientMaxRadius.set(maxRadius)
+      playerPreferences.ambientGlowIntensity.set(glowIntensity)
+      playerPreferences.ambientSatBoost.set(satBoost)
+      playerPreferences.ambientVignetteStrength.set(vignetteStrength)
+      playerPreferences.ambientWarmth.set(warmth)
+      playerPreferences.ambientFadeCurve.set(fadeCurve)
+      playerPreferences.ambientOpacity.set(opacity)
+    }
 
     scheduleAmbientUpdate()
   }
 
   private fun scheduleAmbientUpdate(delayMs: Long = 150L) {
     synchronized(ambientScheduleLock) {
-      if (!isAmbientGlowRuntimeActive()) return
+      if (!isAmbientShaderRuntimeActive()) return
 
       val generation = ambientUpdateGeneration.incrementAndGet()
       ambientDebounceJob?.cancel()
@@ -6734,7 +6783,7 @@ val isBrightnessSliderShown = MutableStateFlow(false)
   }
 
   fun applyAmbientProfileFast() {
-    val preset = AmbientShaderPresets.glowFast
+    val preset = ambientPresetsFor(_ambientStyle.value).first
     updateAmbientParams(
       blurSamples = preset.blurSamples,
       maxRadius = preset.maxRadius,
@@ -6749,7 +6798,7 @@ val isBrightnessSliderShown = MutableStateFlow(false)
 
   /** Balanced profile — good quality/performance trade-off for most devices. */
   fun applyAmbientProfileBalanced() {
-    val preset = AmbientShaderPresets.glowBalanced
+    val preset = ambientPresetsFor(_ambientStyle.value).second
     updateAmbientParams(
       blurSamples = preset.blurSamples,
       maxRadius = preset.maxRadius,
@@ -6764,7 +6813,7 @@ val isBrightnessSliderShown = MutableStateFlow(false)
 
   /** High Quality profile — maximum visual fidelity for high-end devices. */
   fun applyAmbientProfileHighQuality() {
-    val preset = AmbientShaderPresets.glowHighQuality
+    val preset = ambientPresetsFor(_ambientStyle.value).third
     updateAmbientParams(
       blurSamples = preset.blurSamples,
       maxRadius = preset.maxRadius,
@@ -6828,7 +6877,7 @@ val isBrightnessSliderShown = MutableStateFlow(false)
   }
 
   private suspend fun updateAmbientStretch(generation: Long) {
-    if (!isAmbientGlowRuntimeActive() || generation != ambientUpdateGeneration.get()) return
+    if (!isAmbientShaderRuntimeActive() || generation != ambientUpdateGeneration.get()) return
 
     runCatching {
       val osdW = PlaybackSession.getPropertyInt("osd-width") ?: 1920
@@ -6865,19 +6914,36 @@ val isBrightnessSliderShown = MutableStateFlow(false)
       val opacity = _ambientOpacity.value
 
       // ── Generate GLSL shader ───────────────────────────────────────────────
-      val spec =
-        buildAmbientSpec(
-          sx = sx,
-          sy = sy,
-          blurSamples = samples,
-          maxRadius = radius,
-          glowIntensity = glow,
-          satBoost = sat,
-          vignetteStrength = vignette,
-          warmth = warmth,
-          fadeCurve = curve,
-          opacity = opacity,
-        )
+      val style = _ambientStyle.value
+      val spec: Any =
+        if (style == AmbientStyle.Glow) {
+          buildAmbientSpec(
+            sx = sx,
+            sy = sy,
+            blurSamples = samples,
+            maxRadius = radius,
+            glowIntensity = glow,
+            satBoost = sat,
+            vignetteStrength = vignette,
+            warmth = warmth,
+            fadeCurve = curve,
+            opacity = opacity,
+          )
+        } else {
+          FxAmbientShaderSpec(
+            style = style,
+            scaleX = sx,
+            scaleY = sy,
+            blurSamples = samples,
+            spread = radius,
+            intensity = glow,
+            satBoost = sat,
+            vignetteStrength = vignette,
+            warmth = warmth,
+            fadeCurve = curve,
+            opacity = opacity,
+          )
+        }
 
       // ── Shader parameter cache ──────────────────────────────────────────────────────
       // Compare the AmbientGlowShaderSpec data class (cheap equality) before building
@@ -6895,7 +6961,12 @@ val isBrightnessSliderShown = MutableStateFlow(false)
 
       // Each reload gets a unique filename so MPV never reuses a cached
       // compiled shader — incrementing seq guarantees a fresh compile every time.
-      val shaderCode = AmbientShaderBuilder.build(appContext, spec)
+      val shaderCode =
+        when (spec) {
+          is AmbientGlowShaderSpec -> AmbientShaderBuilder.build(appContext, spec)
+          is FxAmbientShaderSpec -> FxAmbientShaderBuilder.build(spec)
+          else -> return
+        }
       val newFile = File(appContext.cacheDir, "ambient_${ambientShaderSeq.incrementAndGet()}.glsl")
       // Blocking file write — dispatched to IO pool to avoid stalling renderPrepDispatcher.
       // Catch CancellationException here: IO is not preemptible, so the write always
@@ -6911,7 +6982,7 @@ val isBrightnessSliderShown = MutableStateFlow(false)
       currentCoroutineContext().ensureActive()
 
       synchronized(ambientRenderLock) {
-        if (!isAmbientGlowRuntimeActive() || generation != ambientUpdateGeneration.get()) {
+        if (!isAmbientShaderRuntimeActive() || generation != ambientUpdateGeneration.get()) {
           newFile.delete()
           return@synchronized
         }
