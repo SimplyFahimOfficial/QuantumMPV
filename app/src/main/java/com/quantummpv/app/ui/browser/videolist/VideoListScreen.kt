@@ -918,6 +918,7 @@ internal fun VideoListContent(
   val showDurationField by browserPreferences.showDurationField.collectAsState()
   val centerGridTitles by browserPreferences.centerGridTitles.collectAsState()
   val thumbnailQuality by browserPreferences.thumbnailQuality.collectAsState()
+  val thumbnailGenerator by browserPreferences.thumbnailGenerator.collectAsState()
   val manualGridColumnsEnabled by browserPreferences.manualGridColumnsEnabled.collectAsState()
   val videoGridColumnsPortrait by browserPreferences.videoGridColumnsPortrait.collectAsState()
   val videoGridColumnsLandscape by browserPreferences.videoGridColumnsLandscape.collectAsState()
@@ -939,6 +940,7 @@ internal fun VideoListContent(
       showDurationField,
       centerGridTitles,
       thumbnailQuality,
+      thumbnailGenerator,
     ) {
       VideoCardUiConfig(
         unlimitedNameLines = unlimitedNameLines,
@@ -955,6 +957,7 @@ internal fun VideoListContent(
         showDurationField = showDurationField,
         centerGridTitles = centerGridTitles,
         thumbnailQuality = thumbnailQuality,
+        thumbnailGenerator = thumbnailGenerator,
       )
     }
 
@@ -1085,6 +1088,7 @@ internal fun VideoListContent(
           videoGridColumns,
           isViewportScrolling,
           isScrollbarDragging,
+          thumbnailGenerator,
         ) {
           val generationId = "$folderId:${mediaLayoutMode.name}"
           if (!showVideoThumbnails || latestVideosWithInfo.isEmpty() || !allowThumbnailLoading) {

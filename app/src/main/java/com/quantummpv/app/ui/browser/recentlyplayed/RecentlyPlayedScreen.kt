@@ -792,6 +792,7 @@ private fun RecentItemsContent(
   val showDurationField by browserPreferences.showDurationField.collectAsState()
   val centerGridTitles by browserPreferences.centerGridTitles.collectAsState()
   val thumbnailQuality by browserPreferences.thumbnailQuality.collectAsState()
+  val thumbnailGenerator by browserPreferences.thumbnailGenerator.collectAsState()
   val manualGridColumnsEnabled by browserPreferences.manualGridColumnsEnabled.collectAsState()
   val videoGridColumnsPortrait by browserPreferences.videoGridColumnsPortrait.collectAsState()
   val videoGridColumnsLandscape by browserPreferences.videoGridColumnsLandscape.collectAsState()
@@ -845,6 +846,7 @@ private fun RecentItemsContent(
       showDurationField,
       centerGridTitles,
       thumbnailQuality,
+      thumbnailGenerator,
     ) {
       VideoCardUiConfig(
         unlimitedNameLines = unlimitedNameLines,
@@ -861,6 +863,7 @@ private fun RecentItemsContent(
         showDurationField = showDurationField,
         centerGridTitles = centerGridTitles,
         thumbnailQuality = thumbnailQuality,
+        thumbnailGenerator = thumbnailGenerator,
       )
     }
 
@@ -871,7 +874,7 @@ private fun RecentItemsContent(
 
   // Unified thumbnail generation - starts with initial batch and continues as needed
   // This avoids the overhead of multiple conflicting LaunchedEffect calls
-  LaunchedEffect(showVideoThumbnails, thumbWidthPx, thumbHeightPx, recentItems.size) {
+  LaunchedEffect(showVideoThumbnails, thumbWidthPx, thumbHeightPx, recentItems.size, thumbnailGenerator) {
     if (showVideoThumbnails && recentVideos.isNotEmpty()) {
       // Start with all videos - the ThumbnailRepository will handle batching internally
       // This avoids redundant job restarts when scrolling
