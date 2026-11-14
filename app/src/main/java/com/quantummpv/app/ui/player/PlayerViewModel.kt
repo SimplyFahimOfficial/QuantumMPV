@@ -1302,6 +1302,10 @@ class PlayerViewModel : ViewModel(),
       filterList.add("pan=[stereo|c0=c1|c1=c0]")
     }
 
+    // 5. AutoEq headphone correction. It has its own switch because the manual equalizer
+    // state is not persisted, while a chosen headphone profile should survive restarts.
+    // Keep it last so DRC and normalization see the uncorrected signal.
+    val autoEq = autoEqFilter()
     // 5. Equalizer filters (if enabled)
     if (state.isEnabled) {
       val maxGain = state.bandGains.maxOrNull() ?: 0
@@ -1320,9 +1324,18 @@ class PlayerViewModel : ViewModel(),
       }
     }
 
+    autoEq?.let(filterList::add)
+
     val afString = filterList.joinToString(",")
     PlaybackSession.setPropertyString("af", afString)
   }
+
+  private fun autoEqFilter(): String? =
+    if (audioPreferences.autoEqEnabled.get()) {
+      AutoEq.restore(audioPreferences.autoEqProfile.get())?.mpvFilter()
+    } else {
+      null
+    }
 
   fun updateAlbumArtBounds(rect: android.graphics.Rect?) {
     albumArtBounds.value = rect
@@ -1941,7 +1954,9 @@ val isBrightnessSliderShown = MutableStateFlow(false)
         audioPreferences.volumeNormalization.changes(),
         audioPreferences.drcEnabled.changes(),
         audioPreferences.audioChannels.changes(),
-      ) { _, _, _ -> }.collect {
+        audioPreferences.autoEqProfile.changes(),
+        audioPreferences.autoEqEnabled.changes(),
+      ) { _, _, _, _, _ -> }.collect {
         if (!isMpvCoreReadyFlow.value) return@collect
         applyEqualizerMpvFilters(immediate = true)
       }
