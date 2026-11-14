@@ -876,9 +876,122 @@ class PlayerViewModel : ViewModel(),
     val availableSources: List<com.quantummpv.app.domain.lyrics.LyricsSourceType> = emptyList(),
     val syncOffsetMs: Int = 0,
     val errorMessage: String? = null,
+    val hasSavedEdits: Boolean = false,
   )
 
   val lyricsUiState = MutableStateFlow(LyricsUiState())
+
+  /** The track and lyrics a lyric edit belongs to; kept even if playback moves to another track. */
+  data class LyricsEditTarget(
+    val mediaPath: String,
+    val editKey: String,
+    val title: String,
+    val lyrics: com.quantummpv.app.domain.lyrics.Lyrics?,
+    val hasSavedEdits: Boolean,
+  )
+
+  data class LyricsEditUiState(
+    val isSaving: Boolean = false,
+    val completed: Boolean = false,
+    val restoredOriginal: Boolean = false,
+    val errorMessage: String? = null,
+  )
+
+  val lyricsEditTarget = MutableStateFlow<LyricsEditTarget?>(null)
+  val lyricsEditDraft = MutableStateFlow(com.quantummpv.app.domain.lyrics.LyricsDraft.from(null))
+  val lyricsEditUiState = MutableStateFlow(LyricsEditUiState())
+
+  private fun currentLyricsPath(): String? =
+    (PlaybackSession.getPropertyString("path") ?: PlaybackSession.getPropertyString("stream-open-filename"))
+      ?.takeIf { it.isNotBlank() }
+
+  /** fd:// and memory:// paths are reused or renumbered between opens, so edits follow the source URI. */
+  private fun currentLyricsEditKey(): String? =
+    currentLyricsPath()?.takeUnless { it.startsWith("fd://") || it.startsWith("memory://") }
+      ?: PlaybackSession.state.value.currentItem?.originalUri?.takeIf(String::isNotBlank)
+      ?: currentLyricsPath()
+
+  fun openLyricsEditor() {
+    val path = currentLyricsPath()
+    val state = lyricsUiState.value
+    val session = PlaybackSession.state.value
+    if (path.isNullOrBlank() || path != lastLyricsLoadRequest?.path || state.isLoading ||
+      lyricsEditUiState.value.isSaving || session.currentItem?.audiobook != null
+    ) {
+      Toast.makeText(appContext, appContext.getString(R.string.lyrics_editor_unavailable), Toast.LENGTH_SHORT).show()
+      return
+    }
+    val title = currentMediaTitle.ifBlank { path.substringAfterLast('/') }
+    lyricsEditTarget.value = LyricsEditTarget(path, currentLyricsEditKey() ?: path, title, state.originalLyrics, state.hasSavedEdits)
+    lyricsEditDraft.value = com.quantummpv.app.domain.lyrics.LyricsDraft.from(state.originalLyrics)
+    lyricsEditUiState.value = LyricsEditUiState()
+    sheetShown.value = Sheets.LyricsEditor
+  }
+
+  fun isLyricsEditTrackCurrent(target: LyricsEditTarget): Boolean = currentLyricsPath() == target.mediaPath
+
+  /** Exact-position seek for timing a lyric line. */
+  fun seekToLyricTime(timeMs: Int) {
+    PlaybackSession.command("seek", (timeMs / 1000.0).toString(), "absolute+exact")
+  }
+
+  fun saveEditedLyrics(draft: com.quantummpv.app.domain.lyrics.LyricsDraft) {
+    if (draft.validationError() != null) {
+      lyricsEditUiState.value = LyricsEditUiState(errorMessage = appContext.getString(R.string.lyrics_editor_invalid_draft))
+      return
+    }
+    val lyrics = draft.toLyrics()
+    persistLyricsEdit(R.string.lyrics_editor_save_failed, restoredOriginal = false) { target ->
+      lyricsRepository.saveEditedLyrics(target.editKey, lyrics)
+    }
+  }
+
+  fun restoreOriginalLyrics() {
+    persistLyricsEdit(R.string.lyrics_editor_restore_failed, restoredOriginal = true) { target ->
+      lyricsRepository.removeEditedLyrics(target.editKey)
+    }
+  }
+
+  private fun persistLyricsEdit(
+    @androidx.annotation.StringRes failureMessage: Int,
+    restoredOriginal: Boolean,
+    action: suspend (LyricsEditTarget) -> Unit,
+  ) {
+    if (lyricsEditUiState.value.isSaving) return
+    val target = lyricsEditTarget.value
+    if (target == null) {
+      lyricsEditUiState.value = LyricsEditUiState(errorMessage = appContext.getString(R.string.lyrics_editor_unavailable))
+      return
+    }
+    lyricsEditUiState.value = LyricsEditUiState(isSaving = true, restoredOriginal = restoredOriginal)
+    viewModelScope.launch {
+      if (isLyricsEditTrackCurrent(target)) {
+        // A load for the old text must not land after the edit.
+        lyricsLoadJob?.cancel()
+        lyricsTranslateJob?.cancel()
+        lastLyricsLoadRequest = null
+        lyricsUiState.value = lyricsUiState.value.copy(isLoading = false, isTranslating = false)
+      }
+      try {
+        action(target)
+      } catch (error: java.io.IOException) {
+        Log.e(TAG, "Unable to persist lyric edits.", error)
+        // Reload anyway: the failed save leaves lastLyricsLoadRequest cleared, which blocks reopening the editor.
+        if (isLyricsEditTrackCurrent(target)) loadLyricsForCurrentTrack(forceRefresh = true)
+        lyricsEditUiState.value = LyricsEditUiState(errorMessage = appContext.getString(failureMessage))
+        return@launch
+      }
+      // forceRefresh replaces a load that started during the save instead of returning on the matching request.
+      if (isLyricsEditTrackCurrent(target)) loadLyricsForCurrentTrack(forceRefresh = true)
+      lyricsEditUiState.value = LyricsEditUiState(completed = true, restoredOriginal = restoredOriginal)
+    }
+  }
+
+  fun finishLyricsEditing() {
+    lyricsEditTarget.value = null
+    lyricsEditDraft.value = com.quantummpv.app.domain.lyrics.LyricsDraft.from(null)
+    lyricsEditUiState.value = LyricsEditUiState()
+  }
 
   private val _mediaScopesUiState =
     MutableStateFlow(
@@ -1006,6 +1119,7 @@ class PlayerViewModel : ViewModel(),
         artist = artist,
         durationSeconds = duration,
         forceRefresh = forceRefresh,
+        editKey = currentLyricsEditKey() ?: path,
       )
 
       // The track may have changed again while this fetch was in-flight; only apply the
@@ -1034,6 +1148,7 @@ class PlayerViewModel : ViewModel(),
         selectedSource = result.selectedSource,
         availableSources = result.availableSources,
         syncOffsetMs = 0,
+        hasSavedEdits = result.hasSavedEdits,
       )
 
       val hasSynced = result.activeLyrics?.synced?.isNotEmpty() == true
@@ -1100,7 +1215,7 @@ class PlayerViewModel : ViewModel(),
       return
     }
 
-    val updatedResult = lyricsRepository.switchSource(path, sourceType)
+    val updatedResult = lyricsRepository.switchSource(currentLyricsEditKey() ?: path, sourceType)
     if (updatedResult != null) {
       val activeLyrics = updatedResult.activeLyrics
       val activeIndex = com.quantummpv.app.utils.media.LyricsUtils.getActiveLineIndex(
@@ -1302,6 +1417,10 @@ class PlayerViewModel : ViewModel(),
       filterList.add("pan=[stereo|c0=c1|c1=c0]")
     }
 
+    // 5. AutoEq headphone correction. It has its own switch because the manual equalizer
+    // state is not persisted, while a chosen headphone profile should survive restarts.
+    // Keep it last so DRC and normalization see the uncorrected signal.
+    val autoEq = autoEqFilter()
     // 5. Equalizer filters (if enabled)
     if (state.isEnabled) {
       val maxGain = state.bandGains.maxOrNull() ?: 0
@@ -1320,9 +1439,18 @@ class PlayerViewModel : ViewModel(),
       }
     }
 
+    autoEq?.let(filterList::add)
+
     val afString = filterList.joinToString(",")
     PlaybackSession.setPropertyString("af", afString)
   }
+
+  private fun autoEqFilter(): String? =
+    if (audioPreferences.autoEqEnabled.get()) {
+      AutoEq.restore(audioPreferences.autoEqProfile.get())?.mpvFilter()
+    } else {
+      null
+    }
 
   fun updateAlbumArtBounds(rect: android.graphics.Rect?) {
     albumArtBounds.value = rect
@@ -1941,7 +2069,9 @@ val isBrightnessSliderShown = MutableStateFlow(false)
         audioPreferences.volumeNormalization.changes(),
         audioPreferences.drcEnabled.changes(),
         audioPreferences.audioChannels.changes(),
-      ) { _, _, _ -> }.collect {
+        audioPreferences.autoEqProfile.changes(),
+        audioPreferences.autoEqEnabled.changes(),
+      ) { _, _, _, _, _ -> }.collect {
         if (!isMpvCoreReadyFlow.value) return@collect
         applyEqualizerMpvFilters(immediate = true)
       }

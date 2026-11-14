@@ -2,7 +2,7 @@
 
 **QuantumMPV does not collect, transmit, or sell any personal data.**
 
-Last updated: 2026-10-31
+Last updated: 2026-11-13
 
 ## No analytics, no tracking, no ads
 
@@ -43,6 +43,11 @@ QuantumMPV makes network requests when you use a feature that needs them:
 - AI features (subtitle translation, speech-to-subtitles, renaming), which send
   the relevant subtitle text, audio or file names to the provider you configured
   with your own API key
+- choosing a headphone in the equalizer's AutoEq section, which downloads that
+  headphone's small correction preset (a text file of filter settings) from the
+  public AutoEq project through the jsDelivr CDN (`cdn.jsdelivr.net`). Nothing
+  is sent except the request for that file, and only after you pick a
+  headphone. The headphone list itself is bundled with the app.
 - installing or updating yt-dlp, which is downloaded from the yt-dlp GitHub
   releases and checked against its published SHA-256 sums
 - checking for or downloading app updates from this project's GitHub releases.

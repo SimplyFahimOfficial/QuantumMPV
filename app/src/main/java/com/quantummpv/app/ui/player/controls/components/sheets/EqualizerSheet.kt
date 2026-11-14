@@ -315,6 +315,12 @@ fun EqualizerSheet(
             },
         )
       }
+
+      HorizontalDivider(
+        modifier = Modifier.padding(vertical = 24.dp),
+        color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f),
+      )
+      AutoEqControls()
       }
     }
   }

@@ -605,6 +605,16 @@ fun PlayerSheets(
       )
     }
 
+    Sheets.LyricsEditor -> {
+      com.quantummpv.app.ui.player.controls.components.sheets.LyricsEditorSheet(
+        viewModel = viewModel,
+        onDismiss = {
+          viewModel.finishLyricsEditing()
+          onShowSheet(Sheets.Lyrics)
+        },
+      )
+    }
+
     Sheets.Scopes -> {
       ScopesSheet(
         viewModel = viewModel,
