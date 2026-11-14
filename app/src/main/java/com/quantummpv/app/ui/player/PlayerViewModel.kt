@@ -6646,9 +6646,14 @@ val isBrightnessSliderShown = MutableStateFlow(false)
   fun setAmbientStyle(style: AmbientStyle) {
     if (MpvConfigOverridePolicy.ownsAny(MpvConfigControlledFeatures.AMBIENT)) return
     if (_ambientStyle.value == style) return
+    // Put the outgoing style's pre-battery-saver values back first, so its snapshot is saved under its own style.
+    val throttled = ambientWasOnBattery
+    restoreFromBatterySaver()
     _ambientStyle.value = style
     playerPreferences.ambientStyle.set(style)
     syncAmbientParamsForStyle(style)
+    // The incoming style was throttled too; it takes its own snapshot and gets the fast profile.
+    if (throttled && _isAmbientBatterySaver.value) applyBatterySaverPolicy()
     playerUpdate.value =
       PlayerUpdates.ShowText(
         appContext.getString(R.string.ambient_style_update, appContext.getString(style.titleRes)),

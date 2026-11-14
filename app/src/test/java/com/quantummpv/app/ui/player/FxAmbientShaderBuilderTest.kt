@@ -65,4 +65,14 @@ class FxAmbientShaderBuilderTest {
       assertTrue("$style presets must differ", fast != hq)
     }
   }
+
+  @Test
+  fun sampleCountsStayInsideEachStyleBudget() {
+    // An even request is rounded down, never up: a higher tap count would exceed the thermal cap.
+    assertTrue(FxAmbientShaderBuilder.build(spec(AmbientStyle.Echo, 4)).contains("ECHO_WEIGHTS[3]"))
+    assertTrue(FxAmbientShaderBuilder.build(spec(AmbientStyle.Mirror, 8)).contains("MIRROR_WEIGHTS[7]"))
+    assertTrue(FxAmbientShaderBuilder.build(spec(AmbientStyle.Echo, 99)).contains("ECHO_WEIGHTS[15]"))
+    assertEquals(9, ambientSampleRange(AmbientStyle.Mirror).endInclusive)
+    assertEquals(3, ambientSampleRange(AmbientStyle.Mirror).start)
+  }
 }

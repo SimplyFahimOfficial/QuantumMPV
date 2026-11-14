@@ -57,6 +57,7 @@ import com.quantummpv.app.ui.icons.Icons
 import com.quantummpv.app.ui.player.AmbientStyle
 import com.quantummpv.app.ui.player.PlayerViewModel
 import com.quantummpv.app.ui.player.ambientPresetsFor
+import com.quantummpv.app.ui.player.ambientSampleRange
 import com.quantummpv.app.ui.player.components.expressive.SectionHeader
 import com.quantummpv.app.ui.player.matchesGlowPreset
 import com.quantummpv.app.ui.theme.AppMotion
@@ -78,6 +79,7 @@ fun AmbientSheet(
   val warmth by viewModel.ambientWarmth.collectAsState()
   val fadeCurve by viewModel.ambientFadeCurve.collectAsState()
   val opacity by viewModel.ambientOpacity.collectAsState()
+  val sampleRange = ambientSampleRange(ambientStyle)
   val isFast =
     remember(
       ambientStyle, blurSamples, maxRadius, glowIntensity, satBoost, vignetteStrength, warmth, fadeCurve, opacity,
@@ -220,10 +222,10 @@ fun AmbientSheet(
           SliderItem(
             label = "Blur Samples",
             valueText = "$blurSamples",
-            value = blurSamples,
+            value = blurSamples.coerceIn(sampleRange),
             onChange = { viewModel.updateAmbientParams(blurSamples = it) },
-            min = 5,
-            max = 64,
+            min = sampleRange.start,
+            max = sampleRange.endInclusive,
             icon = {
               AppSymbolIcon(
                 imageVector = Icons.RoundedFilled.BlurOn,

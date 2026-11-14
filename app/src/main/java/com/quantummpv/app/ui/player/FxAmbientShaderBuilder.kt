@@ -62,6 +62,15 @@ fun ambientPresetsFor(style: AmbientStyle): Triple<AmbientGlowPreset, AmbientGlo
       Triple(AmbientShaderPresets.glowFast, AmbientShaderPresets.glowBalanced, AmbientShaderPresets.glowHighQuality)
   }
 
+/** Tap counts each style can generate; the sheet slider uses the same bounds. */
+fun ambientSampleRange(style: AmbientStyle): ClosedRange<Int> =
+  when (style) {
+    AmbientStyle.Mirror -> 3..9
+    AmbientStyle.Echo -> 3..15
+    AmbientStyle.Cinema, AmbientStyle.Ambilight -> 4..32
+    AmbientStyle.Glow, AmbientStyle.YouTube -> 5..64
+  }
+
 /**
  * Builds mpv OUTPUT hook GLSL shaders for fx-ambient modes:
  * Ambilight, Cinema, Echo, and Mirror with bicubic B-spline filtering and adjustable parameters.
@@ -245,7 +254,7 @@ mediump vec3 bspline_tex(highp vec2 sample_uv, highp vec2 size, highp vec2 inv_s
   ): String {
     val spreadScale = (spec.spread.toDouble() / 0.12).coerceIn(0.2, 4.0)
     val reachScale = 1.25 * spreadScale
-    val tapCount = spec.blurSamples.coerceIn(4, 32)
+    val tapCount = spec.blurSamples.coerceIn(ambientSampleRange(AmbientStyle.Ambilight))
     val maxRadius = (0.12 * spreadScale).coerceIn(0.02, 0.50)
     val tapsDecl = tapTable("AMBILIGHT_TAPS", tapCount, maxRadius)
 
@@ -325,7 +334,7 @@ $vignetteLine$opacityLine
     val reachScale = 1.45 * spreadScale
     val farRadius = (0.36 * spreadScale).coerceIn(0.12, 0.65)
     val baseRadius = (0.16 * spreadScale).coerceIn(0.06, 0.40)
-    val tapCount = spec.blurSamples.coerceIn(4, 32)
+    val tapCount = spec.blurSamples.coerceIn(ambientSampleRange(AmbientStyle.Cinema))
     val tapTable = tapTable("CINEMA_TAPS", tapCount, farRadius)
 
     val vibranceVal = 1.08 * spec.satBoost.toDouble().coerceIn(0.0, 3.0)
@@ -409,7 +418,8 @@ $vignetteLine$opacityLine
     val cwBase = 0.02 * spreadScale
     val cwFar = 0.09 * spreadScale
 
-    val tapCount = spec.blurSamples.coerceIn(3, 15).let { if (it % 2 == 0) it + 1 else it }
+    // Odd counts keep a centre tap; rounding down never exceeds the requested budget.
+    val tapCount = spec.blurSamples.coerceIn(ambientSampleRange(AmbientStyle.Echo)).let { if (it % 2 == 0) it - 1 else it }
     val halfCount = tapCount / 2
     val sigma = (halfCount * 0.75).coerceAtLeast(0.5)
     val rawWeights = (-halfCount..halfCount).map { i ->
@@ -505,7 +515,7 @@ $vignetteLine$opacityLine
     val reachScale = 1.15 * spreadScale
     val bwFar = (0.06 * spreadScale).coerceIn(0.01, 0.30)
 
-    val tapCount = spec.blurSamples.coerceIn(3, 9).let { if (it % 2 == 0) it + 1 else it }
+    val tapCount = spec.blurSamples.coerceIn(ambientSampleRange(AmbientStyle.Mirror)).let { if (it % 2 == 0) it - 1 else it }
     val halfCount = tapCount / 2
     val sigma = (halfCount * 0.75).coerceAtLeast(0.5)
     val rawWeights = (-halfCount..halfCount).map { i ->
