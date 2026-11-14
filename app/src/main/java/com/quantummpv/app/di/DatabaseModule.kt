@@ -1097,6 +1097,7 @@ val DatabaseModule =
     }
 
     single { ThumbnailRepository(androidContext()) }
+    single { com.quantummpv.app.repository.WatchStatsRepository(androidContext()) }
 
     single {
       com.quantummpv.app.database.repository.VideoMetadataCacheRepository(

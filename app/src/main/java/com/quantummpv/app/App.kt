@@ -17,6 +17,7 @@ import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
 import android.os.StrictMode
+import android.os.SystemClock
 import android.util.Log
 import android.view.View
 import androidx.core.view.ViewCompat
@@ -40,11 +41,15 @@ import `is`.xyz.mpv.FastThumbnails
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.koin.android.ext.koin.androidContext
 import org.koin.core.annotation.KoinExperimentalAPI
 import org.koin.core.context.GlobalContext
@@ -63,8 +68,18 @@ class App :
   private val secureFolderReconciliationStarted = AtomicBoolean(false)
   private var startedActivityCount = 0
 
+  private data class WatchTrackingState(
+    val item: com.quantummpv.app.ui.player.PlaybackItem?,
+    val generation: Long,
+    val phase: PlaybackPhase,
+    val paused: Boolean,
+    val stalled: Boolean,
+    val resetVersion: Long,
+  )
+
   companion object {
     private const val TAG = "App"
+    private const val WATCH_STATS_INTERVAL_MS = 15_000L
     private const val POST_START_MAINTENANCE_DELAY_MS = 10_000L
     private const val THUMBNAIL_WARMUP_DELAY_MS = 1_500L
     private const val IDLE_MPV_CORE_GRACE_MS = 3L * 60L * 1000L
@@ -132,6 +147,7 @@ class App :
     startPlaybackPerformanceTracing()
 
     startIdleMpvCoreReaper()
+    startWatchStatsTracking()
 
     // Encrypted settings refuse to fall back to plaintext; tell the user their key was not saved.
     applicationScope.launch {
@@ -191,6 +207,54 @@ class App :
     // scan of the entire external-storage root from process startup: on large libraries that can
     // wake storage for minutes and duplicate work the platform already performs when media changes.
     // Explicit library refreshes and normal MediaStore notifications still invalidate app caches.
+  }
+
+  private fun startWatchStatsTracking() {
+    applicationScope.launch {
+      val repository = getKoin().get<com.quantummpv.app.repository.WatchStatsRepository>()
+      var lastSessionKey: Triple<Long, Long, String>? = null
+      combine(
+        PlaybackSession.state,
+        PlaybackSession.propBoolean["core-idle"],
+        PlaybackSession.propBoolean["paused-for-cache"],
+        repository.resetVersion,
+      ) { state, coreIdle, pausedForCache, resetVersion ->
+        WatchTrackingState(
+          item = state.currentItem,
+          generation = state.generation,
+          phase = state.phase,
+          paused = state.paused,
+          stalled = coreIdle == true || pausedForCache == true,
+          resetVersion = resetVersion,
+        )
+      }
+        .distinctUntilChanged()
+        .collectLatest { (item, generation, phase, paused, stalled, resetVersion) ->
+          if (item == null || paused || stalled || phase !in setOf(PlaybackPhase.READY, PlaybackPhase.BACKGROUND)) {
+            return@collectLatest
+          }
+          val sessionKey = Triple(resetVersion, generation, item.stableId)
+          if (lastSessionKey != sessionKey) {
+            repository.recordSession(item)
+            lastSessionKey = sessionKey
+          }
+          var recordedAt = SystemClock.elapsedRealtime()
+          try {
+            while (true) {
+              delay(WATCH_STATS_INTERVAL_MS)
+              val now = SystemClock.elapsedRealtime()
+              val elapsedSeconds = (now - recordedAt) / 1_000L
+              recordedAt = now
+              repository.recordPlayback(item, elapsedSeconds)
+            }
+          } finally {
+            val remainder = (SystemClock.elapsedRealtime() - recordedAt) / 1_000L
+            if (remainder > 0) {
+              withContext(NonCancellable) { repository.recordPlayback(item, remainder) }
+            }
+          }
+        }
+    }
   }
 
   override fun onActivityStarted(activity: Activity) {
