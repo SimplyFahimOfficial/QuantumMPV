@@ -43,6 +43,8 @@
   <string name="pref_appearance_thumbnail_generation_summary">Choose how thumbnails are generated, including embedded artwork or a specific frame position</string>
   <string name="pref_appearance_thumbnail_generation_change_title">Change thumbnail strategy?</string>
   <string name="pref_appearance_thumbnail_generation_change_summary">This will clear cached thumbnails. New thumbnails will be generated with the selected strategy as you browse.</string>
+  <string name="pref_appearance_thumbnail_source_title">Thumbnail source</string>
+  <string name="pref_appearance_thumbnail_source_summary">Where thumbnails come from. Native uses the extraction built into this app. Auto asks the Android MediaStore first and falls back to native. MediaStore only shows what Android has indexed. Changing it clears the thumbnail cache.</string>
   <string name="pref_appearance_thumbnail_quality_title">Thumbnail quality</string>
   <string name="pref_appearance_thumbnail_quality_summary">Maximum thumbnail resolution: %1$d px. Higher quality uses more storage and may generate more slowly.</string>
   <string name="pref_appearance_thumbnail_position_title">Thumbnail frame position</string>
@@ -320,6 +322,9 @@
   <string name="renderer_build_notice_title">Non-Vulkan build</string>
   <string name="renderer_build_notice_supported_device">Using OpenGL; install the standard build for Vulkan.</string>
   <string name="renderer_build_notice_unsupported_device">Using OpenGL; this device lacks Vulkan 1.3.</string>
+  <string name="pref_decoder_dolby_vision_direct_title">Dolby Vision direct output</string>
+  <string name="pref_decoder_dolby_vision_direct_summary">Send Dolby Vision video straight to the hardware decoder so the display can use its Dolby Vision mode. Subtitles and on-screen text move to a separate layer. Profile 7 files are converted to profile 8.1. Only in the FongMi build; other video is unaffected.</string>
+  <string name="pref_decoder_dolby_vision_direct_glass_note">Glass player controls are paused while this is on.</string>
   <string name="pref_decoder_yuv420p_title">Use YUV420P pixel format</string>
   <string name="pref_decoder_yuv420p_summary">May fix black screens on some video codecs, can also improve performance at the cost of quality</string>
   <string name="pref_subtitles">Subtitles</string>
@@ -2855,4 +2860,31 @@
   <string name="lyrics_editor_confirm">OK</string>
   <string name="lyrics_editor_play">Play</string>
   <string name="lyrics_editor_pause">Pause</string>
+  <!-- Persistent status bar (mpvRx c91f1371, 08c53f05) -->
+  <string name="pref_persistent_status_title">Persistent status bar</string>
+  <string name="pref_persistent_status_summary">Always-visible video HUD with time, battery and playback progress</string>
+  <string name="pref_persistent_status_enable">Enable persistent status bar</string>
+  <string name="pref_persistent_status_enable_summary">Configure HUD placement and slot contents</string>
+  <string name="pref_persistent_status_preview">Live preview</string>
+  <string name="pref_persistent_status_controls">Controls</string>
+  <string name="pref_persistent_status_position_section">Position</string>
+  <string name="pref_persistent_status_display">Display</string>
+  <string name="pref_persistent_status_position">Position</string>
+  <string name="pref_persistent_status_top">Top</string>
+  <string name="pref_persistent_status_bottom">Bottom</string>
+  <string name="pref_persistent_status_left">Left slot</string>
+  <string name="pref_persistent_status_center">Center slot</string>
+  <string name="pref_persistent_status_right">Right slot</string>
+  <string name="pref_persistent_status_none">None (hidden)</string>
+  <string name="pref_persistent_status_progress">Playback progress</string>
+  <string name="pref_persistent_status_clock">Current time</string>
+  <string name="pref_persistent_status_battery">Battery status</string>
+  <string name="pref_persistent_status_extras">Extras</string>
+  <string name="pref_persistent_status_finish_time">Prefer estimated finish time</string>
+  <string name="pref_persistent_status_finish_summary">Calculate remaining playback duration based on playback speed</string>
+  <string name="pref_persistent_status_speed">Show speed tag when not 1.0x</string>
+  <string name="pref_persistent_status_micro_battery">Show micro battery icon</string>
+  <string name="pref_persistent_status_est_prefix">Est.</string>
+  <string name="pref_persistent_status_time_unknown">—</string>
+  <string name="pref_persistent_status_progress_line">Thin playback progress line</string>
 </resources>

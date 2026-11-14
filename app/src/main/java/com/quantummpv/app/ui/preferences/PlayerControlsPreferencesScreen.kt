@@ -70,6 +70,7 @@ import com.quantummpv.app.ui.utils.navigateTo
 import com.quantummpv.app.ui.utils.popSafely
 import kotlinx.serialization.Serializable
 import me.zhanghai.compose.preference.ListPreference
+import me.zhanghai.compose.preference.Preference
 import me.zhanghai.compose.preference.ProvidePreferenceLocals
 import me.zhanghai.compose.preference.SliderPreference
 import org.koin.compose.koinInject
@@ -282,6 +283,21 @@ object PlayerControlsPreferencesScreen : Screen {
                   Modifier
                     .settingsSearchTarget(R.string.pref_layout_restore_classic)
                     .clickable(role = Role.Button) { showClassicDialog = true },
+              )
+            }
+          }
+
+          // Persistent in-video HUD, right after the layout reset actions.
+          item {
+            PreferenceSectionHeader(title = stringResource(R.string.pref_persistent_status_title))
+          }
+          item {
+            PreferenceCard {
+              Preference(
+                modifier = Modifier.settingsSearchTarget(R.string.pref_persistent_status_title),
+                title = { Text(stringResource(R.string.pref_persistent_status_title)) },
+                summary = { Text(stringResource(R.string.pref_persistent_status_summary)) },
+                onClick = { backstack.navigateTo(PersistentStatusBarPreferencesScreen) },
               )
             }
           }

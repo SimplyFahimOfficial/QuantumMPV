@@ -55,6 +55,7 @@ import com.quantummpv.app.preferences.BrowserPreferences
 import com.quantummpv.app.preferences.GesturePreferences
 import com.quantummpv.app.preferences.MultiChoiceSegmentedButton
 import com.quantummpv.app.preferences.PlayerPreferences
+import com.quantummpv.app.preferences.ThumbnailGenerator
 import com.quantummpv.app.preferences.ThumbnailMode
 import com.quantummpv.app.preferences.ThumbnailQuality
 import com.quantummpv.app.preferences.TreeFlattenDepth
@@ -120,6 +121,7 @@ object AppearancePreferencesScreen : Screen {
     var pendingThumbnailMode by remember { mutableStateOf<ThumbnailMode?>(null) }
     var isThemeSectionExpanded by rememberSaveable { mutableStateOf(true) }
     val storedThumbnailMode by browserPreferences.thumbnailMode.collectAsState()
+    val thumbnailGenerator by browserPreferences.thumbnailGenerator.collectAsState()
     val thumbnailQuality by browserPreferences.thumbnailQuality.collectAsState()
     val thumbnailFramePosition by browserPreferences.thumbnailFramePosition.collectAsState()
     val dualPaneForTablet by browserPreferences.dualPaneForTablet.collectAsState()
@@ -746,6 +748,40 @@ object AppearancePreferencesScreen : Screen {
                     color = MaterialTheme.colorScheme.outline,
                   )
                 },
+              )
+
+              PreferenceDivider()
+
+              ListPreference(
+                modifier = Modifier.settingsSearchTarget(R.string.pref_appearance_thumbnail_source_title),
+                value = thumbnailGenerator,
+                onValueChange = { newGenerator ->
+                  if (newGenerator != thumbnailGenerator) {
+                    scope.launch {
+                      // Entries are keyed by generator, so clearing is not required for correctness; it frees
+                      // the space of images the previous source made, as the quality selector does.
+                      // A failed cleanup must not lose the user's choice.
+                      runCatching {
+                        withContext(Dispatchers.IO) {
+                          thumbnailRepository.clearThumbnailCache()
+                        }
+                      }.onFailure { error ->
+                        if (error is kotlinx.coroutines.CancellationException) throw error
+                      }
+                      browserPreferences.thumbnailGenerator.set(newGenerator)
+                    }
+                  }
+                },
+                values = ThumbnailGenerator.entries,
+                valueToText = { AnnotatedString(it.displayName) },
+                title = { Text(text = stringResource(id = R.string.pref_appearance_thumbnail_source_title)) },
+                summary = {
+                  Text(
+                    text = stringResource(id = R.string.pref_appearance_thumbnail_source_summary),
+                    color = MaterialTheme.colorScheme.outline,
+                  )
+                },
+                enabled = showVideoThumbnails,
               )
 
               PreferenceDivider()
