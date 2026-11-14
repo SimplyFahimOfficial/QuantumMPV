@@ -884,6 +884,7 @@ class PlayerViewModel : ViewModel(),
   /** The track and lyrics a lyric edit belongs to; kept even if playback moves to another track. */
   data class LyricsEditTarget(
     val mediaPath: String,
+    val editKey: String,
     val title: String,
     val lyrics: com.quantummpv.app.domain.lyrics.Lyrics?,
     val hasSavedEdits: Boolean,
@@ -904,6 +905,12 @@ class PlayerViewModel : ViewModel(),
     (PlaybackSession.getPropertyString("path") ?: PlaybackSession.getPropertyString("stream-open-filename"))
       ?.takeIf { it.isNotBlank() }
 
+  /** fd:// and memory:// paths are reused or renumbered between opens, so edits follow the source URI. */
+  private fun currentLyricsEditKey(): String? =
+    currentLyricsPath()?.takeUnless { it.startsWith("fd://") || it.startsWith("memory://") }
+      ?: PlaybackSession.state.value.currentItem?.originalUri?.takeIf(String::isNotBlank)
+      ?: currentLyricsPath()
+
   fun openLyricsEditor() {
     val path = currentLyricsPath()
     val state = lyricsUiState.value
@@ -915,7 +922,7 @@ class PlayerViewModel : ViewModel(),
       return
     }
     val title = currentMediaTitle.ifBlank { path.substringAfterLast('/') }
-    lyricsEditTarget.value = LyricsEditTarget(path, title, state.originalLyrics, state.hasSavedEdits)
+    lyricsEditTarget.value = LyricsEditTarget(path, currentLyricsEditKey() ?: path, title, state.originalLyrics, state.hasSavedEdits)
     lyricsEditDraft.value = com.quantummpv.app.domain.lyrics.LyricsDraft.from(state.originalLyrics)
     lyricsEditUiState.value = LyricsEditUiState()
     sheetShown.value = Sheets.LyricsEditor
@@ -934,19 +941,21 @@ class PlayerViewModel : ViewModel(),
       return
     }
     val lyrics = draft.toLyrics()
-    persistLyricsEdit(R.string.lyrics_editor_save_failed, restoredOriginal = false) { path ->
-      lyricsRepository.saveEditedLyrics(path, lyrics)
+    persistLyricsEdit(R.string.lyrics_editor_save_failed, restoredOriginal = false) { target ->
+      lyricsRepository.saveEditedLyrics(target.mediaPath, target.editKey, lyrics)
     }
   }
 
   fun restoreOriginalLyrics() {
-    persistLyricsEdit(R.string.lyrics_editor_restore_failed, restoredOriginal = true, action = lyricsRepository::removeEditedLyrics)
+    persistLyricsEdit(R.string.lyrics_editor_restore_failed, restoredOriginal = true) { target ->
+      lyricsRepository.removeEditedLyrics(target.mediaPath, target.editKey)
+    }
   }
 
   private fun persistLyricsEdit(
     @androidx.annotation.StringRes failureMessage: Int,
     restoredOriginal: Boolean,
-    action: suspend (String) -> Unit,
+    action: suspend (LyricsEditTarget) -> Unit,
   ) {
     if (lyricsEditUiState.value.isSaving) return
     val target = lyricsEditTarget.value
@@ -964,13 +973,16 @@ class PlayerViewModel : ViewModel(),
         lyricsUiState.value = lyricsUiState.value.copy(isLoading = false, isTranslating = false)
       }
       try {
-        action(target.mediaPath)
+        action(target)
       } catch (error: java.io.IOException) {
         Log.e(TAG, "Unable to persist lyric edits.", error)
+        // Reload anyway: the failed save leaves lastLyricsLoadRequest cleared, which blocks reopening the editor.
+        if (isLyricsEditTrackCurrent(target)) loadLyricsForCurrentTrack(forceRefresh = true)
         lyricsEditUiState.value = LyricsEditUiState(errorMessage = appContext.getString(failureMessage))
         return@launch
       }
-      if (isLyricsEditTrackCurrent(target)) loadLyricsForCurrentTrack()
+      // forceRefresh replaces a load that started during the save instead of returning on the matching request.
+      if (isLyricsEditTrackCurrent(target)) loadLyricsForCurrentTrack(forceRefresh = true)
       lyricsEditUiState.value = LyricsEditUiState(completed = true, restoredOriginal = restoredOriginal)
     }
   }
@@ -1107,6 +1119,7 @@ class PlayerViewModel : ViewModel(),
         artist = artist,
         durationSeconds = duration,
         forceRefresh = forceRefresh,
+        editKey = currentLyricsEditKey() ?: path,
       )
 
       // The track may have changed again while this fetch was in-flight; only apply the

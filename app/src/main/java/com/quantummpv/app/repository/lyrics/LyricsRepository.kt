@@ -18,6 +18,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.File
 import java.util.Locale
+import java.util.concurrent.atomic.AtomicLong
 
 data class LyricsResult(
   val embeddedLyrics: Lyrics? = null,
@@ -47,6 +48,9 @@ class LyricsRepository(
   }
 
   private val editedLyricsStore = EditedLyricsStore(File(context.filesDir, "lyrics/edited-v1"))
+
+  // Bumped after every edit or restore. A load that started before it must not cache its now-stale result.
+  private val editRevision = AtomicLong()
 
   // Cache by media path -> LyricsResult
   private val cache = LruCache<String, LyricsResult>(64)
@@ -96,17 +100,20 @@ class LyricsRepository(
     artist: String?,
     durationSeconds: Int = 0,
     forceRefresh: Boolean = false,
+    // Edits are keyed by a stable source identity; mpv's path can change between opens.
+    editKey: String = mediaPath,
   ): LyricsResult = withContext(Dispatchers.IO) {
     if (!forceRefresh) {
       cache.get(mediaPath)?.let { return@withContext it }
     }
+    val revision = editRevision.get()
 
     Log.d(TAG, "Loading lyrics for: $title by $artist ($mediaPath)")
 
     // 1. The user's own edit wins; an unreadable edit is kept on disk and the original is shown,
     // so the editor can still replace or restore it.
     val edited =
-      runCatching { editedLyricsStore.read(mediaPath) }
+      runCatching { editedLyricsStore.read(editKey) }
         .onFailure { Log.w(TAG, "Saved lyric edits could not be read", it) }
         .getOrNull()
     val embedded = edited ?: EmbeddedLyricsExtractor.extractEmbeddedLyrics(context, mediaPath)
@@ -140,10 +147,10 @@ class LyricsRepository(
       activeLyrics = active,
       selectedSource = defaultSelected,
       availableSources = sources.distinct(),
-      hasSavedEdits = editedLyricsStore.contains(mediaPath),
+      hasSavedEdits = editedLyricsStore.contains(editKey),
     )
 
-    cache.put(mediaPath, result)
+    if (editRevision.get() == revision) cache.put(mediaPath, result)
     result
   }
 
@@ -302,16 +309,21 @@ class LyricsRepository(
 
   suspend fun saveEditedLyrics(
     mediaPath: String,
+    editKey: String,
     lyrics: Lyrics,
   ) = withContext(Dispatchers.IO) {
-    editedLyricsStore.write(mediaPath, lyrics)
+    editedLyricsStore.write(editKey, lyrics)
+    editRevision.incrementAndGet()
     // The next load reads the saved file; a stale cached result would hide the edit.
     cache.remove(mediaPath)
   }
 
-  suspend fun removeEditedLyrics(mediaPath: String) =
-    withContext(Dispatchers.IO) {
-      editedLyricsStore.remove(mediaPath)
-      cache.remove(mediaPath)
-    }
+  suspend fun removeEditedLyrics(
+    mediaPath: String,
+    editKey: String,
+  ) = withContext(Dispatchers.IO) {
+    editedLyricsStore.remove(editKey)
+    editRevision.incrementAndGet()
+    cache.remove(mediaPath)
+  }
 }
