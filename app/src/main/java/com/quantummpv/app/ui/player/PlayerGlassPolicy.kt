@@ -29,8 +29,11 @@ internal object PlayerGlassPolicy {
     hdrOwnedByMpvConf: Boolean,
     glassInHdr: Boolean,
     youTubeAmbientSelected: Boolean,
+    dolbyVisionDirect: Boolean,
   ): Boolean {
     if (!glassEnabled || sdkInt < MIN_SDK) return false
+    // Direct Dolby Vision hands frames from MediaCodec to the video SurfaceView; a TextureView cannot show them.
+    if (dolbyVisionDirect) return false
     // The YouTube ambient background samples the SurfaceView with PixelCopy and resizes it, so it keeps that
     // view. This is the user's setting, not whether a frame was captured: the capture depends on which surface
     // is bound, so choosing the surface from it would flip the surface, which would stop the capture, and so on.

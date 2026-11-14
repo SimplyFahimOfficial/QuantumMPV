@@ -181,6 +181,8 @@ object PlaybackSession : MPVLib.EventObserver {
   private var activeCoreConfigurationKey: String? = null
   private var activeUserScriptsKey: String? = null
   private var attachedSurfaceOwner: Any? = null
+  private var attachedOsdOwner: Any? = null
+  private var appliedDolbyVisionOutput: String? = null
   private var activeNetworkStream: NetworkStreamRegistration? = null
   private val auxiliaryNetworkStreams = linkedMapOf<String, NetworkStreamRegistration>()
   private var suspendedVideoTrack: SuspendedVideoTrack? = null
@@ -393,6 +395,72 @@ object PlaybackSession : MPVLib.EventObserver {
       MPVLib.setPropertyString("android-surface-size", "${width}x$height")
       true
     }
+
+  /**
+   * Attaches the transparent overlay that carries subtitles and OSD (FongMi build). Dolby Vision tracks then go
+   * straight to MediaCodec on the video Surface; mpv keeps every other track on the GPU.
+   */
+  fun bindOsdSurface(
+    surface: Surface,
+    width: Int,
+    height: Int,
+    owner: Any,
+  ): Boolean =
+    withCore(default = false) {
+      if (!DolbyVisionDirect.isBuildSupported || !surface.isValid || width <= 0 || height <= 0) {
+        return@withCore false
+      }
+      if (attachedOsdOwner != null) detachOsdSurfaceLocked()
+      runCatching {
+        DolbyVisionDirect.attachOsdSurface(surface)
+        MPVLib.setPropertyString("android-osd-surface-size", "${width}x$height")
+        attachedOsdOwner = owner
+        setDolbyVisionOutputLocked("direct")
+      }.onFailure { error ->
+        Log.e(TAG, "Could not attach the subtitle overlay Surface", error)
+        detachOsdSurfaceLocked()
+      }.isSuccess
+    }
+
+  fun resizeOsdSurface(
+    width: Int,
+    height: Int,
+    owner: Any,
+  ): Boolean =
+    withCore(default = false) {
+      if (attachedOsdOwner !== owner || width <= 0 || height <= 0) return@withCore false
+      MPVLib.setPropertyString("android-osd-surface-size", "${width}x$height")
+      true
+    }
+
+  fun isOsdSurfaceAttachedTo(owner: Any): Boolean = nativeLock.withLock { attachedOsdOwner === owner }
+
+  fun unbindOsdSurface(owner: Any): Boolean =
+    withCore(default = false) {
+      if (attachedOsdOwner !== owner) return@withCore false
+      detachOsdSurfaceLocked()
+      true
+    }
+
+  private fun detachOsdSurfaceLocked() {
+    // Move a direct Dolby Vision track back to the GPU output before its overlay disappears.
+    runCatching { setDolbyVisionOutputLocked("configured") }
+    runCatching { DolbyVisionDirect.detachOsdSurface() }
+      .onFailure { error -> Log.w(TAG, "Could not detach the subtitle overlay Surface", error) }
+    attachedOsdOwner = null
+  }
+
+  private fun setDolbyVisionOutputLocked(output: String) {
+    if (appliedDolbyVisionOutput == output) return
+    if (!MpvConfigOverridePolicy.isOwnedByMpvConf("android-dolby-vision-output")) {
+      MPVLib.setPropertyString("android-dolby-vision-output", output)
+    }
+    // Phones decode Dolby Vision profiles 5 and 8, so profile 7 remuxes are converted to 8.1.
+    if (!MpvConfigOverridePolicy.isOwnedByMpvConf("demuxer-dovi-profile7")) {
+      MPVLib.setPropertyString("demuxer-dovi-profile7", if (output == "direct") "p81" else "preserve")
+    }
+    appliedDolbyVisionOutput = output
+  }
 
   fun unbindSurface(owner: Any): Boolean =
     withCore(default = false) {
@@ -633,7 +701,10 @@ object PlaybackSession : MPVLib.EventObserver {
     runCatching { MPVLib.setPropertyBoolean("pause", true) }
     runCatching { MPVLib.setPropertyString("vo", "null") }
     runCatching { MPVLib.detachSurface() }
+    if (attachedOsdOwner != null) runCatching { DolbyVisionDirect.detachOsdSurface() }
     attachedSurfaceOwner = null
+    attachedOsdOwner = null
+    appliedDolbyVisionOutput = null
     runCatching { MPVLib.removeObserver(this) }
     runCatching { MPVLib.destroy() }
       .onFailure { error -> Log.e(TAG, "Failed to destroy libmpv", error) }

@@ -108,6 +108,10 @@ class BrowserPreferences(
 
   // Visibility preferences for video card chips
   val showVideoThumbnails = preferenceStore.getBoolean("show_video_thumbnails", true)
+
+  // Where local thumbnails come from. Native keeps today's behaviour; the MediaStore modes are opt-in
+  // (mpvRx 4e4c8ed0, 437114fc), unlike upstream, which makes Auto the default.
+  val thumbnailGenerator = preferenceStore.getEnum("thumbnail_generator", ThumbnailGenerator.Native)
   val thumbnailMode = preferenceStore.getEnum("thumbnail_mode", ThumbnailMode.Smart)
   val thumbnailQuality = preferenceStore.getEnum("thumbnail_quality", ThumbnailQuality.High)
   val thumbnailFramePosition = preferenceStore.getFloat("thumbnail_frame_position", 33f)
@@ -301,6 +305,21 @@ enum class MediaLayoutMode {
 enum class MediaLibraryType {
   Video,
   Audio,
+}
+
+/**
+ * Source of local thumbnails. [cacheSuffix] is appended to the thumbnail cache key so one generator never reuses
+ * another's images; [Native] has none, so thumbnails cached before this setting existed stay valid.
+ */
+enum class ThumbnailGenerator(
+  val displayName: String,
+  val triesMediaStore: Boolean,
+  val triesNative: Boolean,
+  val cacheSuffix: String,
+) {
+  Native("Native (default)", triesMediaStore = false, triesNative = true, cacheSuffix = ""),
+  Auto("Auto (MediaStore, then native)", triesMediaStore = true, triesNative = true, cacheSuffix = "|gen-auto"),
+  MediaStore("MediaStore only", triesMediaStore = true, triesNative = false, cacheSuffix = "|gen-mediastore"),
 }
 
 enum class ThumbnailMode {

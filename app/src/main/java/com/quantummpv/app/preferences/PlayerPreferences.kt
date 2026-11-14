@@ -47,6 +47,16 @@ class AmbientFxPrefs(
   val opacity: Preference<Float>,
 )
 
+/** Slot content for the optional always-visible in-video status HUD. */
+enum class PersistentStatusSlot {
+  None,
+  PlaybackProgress,
+  CurrentTime,
+  BatteryStatus,
+}
+
+enum class PersistentStatusPosition { Top, Bottom }
+
 enum class PlayerClockFormat(
   val displayName: String,
 ) {
@@ -110,6 +120,19 @@ class PlayerPreferences(
   val showSystemStatusBar = preferenceStore.getBoolean("show_system_status_bar")
   val showSystemNavigationBar = preferenceStore.getBoolean("show_system_navigation_bar")
   val safeAreaWindow = preferenceStore.getBoolean("safe_area_window", false)
+
+  // Drawn over the video, independent of the Android system status bar.
+  val persistentStatusEnabled = preferenceStore.getBoolean("persistent_status_enabled", false)
+  val persistentStatusPosition = preferenceStore.getEnum("persistent_status_position", PersistentStatusPosition.Top)
+  val persistentStatusLeftSlot = preferenceStore.getEnum("persistent_status_left_slot", PersistentStatusSlot.CurrentTime)
+  val persistentStatusCenterSlot =
+    preferenceStore.getEnum("persistent_status_center_slot", PersistentStatusSlot.BatteryStatus)
+  val persistentStatusRightSlot =
+    preferenceStore.getEnum("persistent_status_right_slot", PersistentStatusSlot.PlaybackProgress)
+  val persistentStatusPreferFinishTime = preferenceStore.getBoolean("persistent_status_prefer_finish_time", true)
+  val persistentStatusShowSpeed = preferenceStore.getBoolean("persistent_status_show_speed", true)
+  val persistentStatusMicroBattery = preferenceStore.getBoolean("persistent_status_micro_battery", true)
+  val persistentStatusProgressLine = preferenceStore.getBoolean("persistent_status_progress_line", false)
   val reduceMotion = preferenceStore.getBoolean("reduce_motion", true)
   val playerTimeToDisappear = preferenceStore.getInt("player_time_to_disappear", 4000)
   val clockFormat = preferenceStore.getEnum("player_clock_format", PlayerClockFormat.SYSTEM)

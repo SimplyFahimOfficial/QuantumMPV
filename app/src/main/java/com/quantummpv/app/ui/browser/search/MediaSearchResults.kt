@@ -150,6 +150,7 @@ private fun rememberVideoCardUiConfig(): VideoCardUiConfig {
   val showDurationField by browserPreferences.showDurationField.collectAsState()
   val centerGridTitles by browserPreferences.centerGridTitles.collectAsState()
   val thumbnailQuality by browserPreferences.thumbnailQuality.collectAsState()
+  val thumbnailGenerator by browserPreferences.thumbnailGenerator.collectAsState()
   return remember(
     unlimitedNameLines,
     showVideoThumbnails,
@@ -165,6 +166,7 @@ private fun rememberVideoCardUiConfig(): VideoCardUiConfig {
     showDurationField,
     centerGridTitles,
     thumbnailQuality,
+    thumbnailGenerator,
   ) {
     VideoCardUiConfig(
       unlimitedNameLines = unlimitedNameLines,
@@ -181,6 +183,7 @@ private fun rememberVideoCardUiConfig(): VideoCardUiConfig {
       showDurationField = showDurationField,
       centerGridTitles = centerGridTitles,
       thumbnailQuality = thumbnailQuality,
+      thumbnailGenerator = thumbnailGenerator,
     )
   }
 }

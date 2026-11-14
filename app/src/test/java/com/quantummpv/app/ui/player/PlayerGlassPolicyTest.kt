@@ -13,7 +13,8 @@ class PlayerGlassPolicyTest {
     confOwnsHdr: Boolean = false,
     inHdr: Boolean = false,
     youTubeAmbient: Boolean = false,
-  ) = PlayerGlassPolicy.usesTextureSurface(glass, sdk, hdr, confOwnsHdr, inHdr, youTubeAmbient)
+    dolbyVisionDirect: Boolean = false,
+  ) = PlayerGlassPolicy.usesTextureSurface(glass, sdk, hdr, confOwnsHdr, inHdr, youTubeAmbient, dolbyVisionDirect)
 
   @Test
   fun offByDefaultSoPlaybackKeepsTheNativeSurface() {
@@ -52,6 +53,14 @@ class PlayerGlassPolicyTest {
   }
 
   @Test
+  fun directDolbyVisionNeedsTheRealSurfaceSoItAlwaysBeatsGlass() {
+    assertFalse(texture(dolbyVisionDirect = true))
+    assertFalse(texture(dolbyVisionDirect = true, hdr = true, inHdr = true))
+    // Turning the option off gives glass back.
+    assertTrue(texture(dolbyVisionDirect = false))
+  }
+
+  @Test
   fun theAnswerOnlyDependsOnSettingsSoSwitchingSurfacesCannotChangeIt() {
     // The ambient capture needs a bound SurfaceView, so it appears and disappears as the renderer switches.
     // If the renderer were chosen from that, it would flip back and forth. The policy has no such input:
@@ -83,7 +92,8 @@ class PlayerGlassPolicyTest {
         .single { it.name == "usesTextureSurface" }
         .parameterTypes
         .map { it.simpleName }
-    assertEquals(listOf("boolean", "int", "boolean", "boolean", "boolean", "boolean"), shape)
+    // dolbyVisionDirect is a stored setting, so it is allowed; it was added with the Dolby Vision option.
+    assertEquals(listOf("boolean", "int", "boolean", "boolean", "boolean", "boolean", "boolean"), shape)
   }
 
   @Test

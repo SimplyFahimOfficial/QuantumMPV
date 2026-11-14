@@ -52,6 +52,7 @@ import com.quantummpv.app.BuildConfig
 import com.quantummpv.app.R
 import com.quantummpv.app.domain.anime4k.Anime4KManager
 import com.quantummpv.app.preferences.AdvancedPreferences
+import com.quantummpv.app.preferences.AppearancePreferences
 import com.quantummpv.app.preferences.DecoderPreferences
 import com.quantummpv.app.preferences.MpvConfigControlledFeatures
 import com.quantummpv.app.preferences.MpvConfigOverride
@@ -60,6 +61,7 @@ import com.quantummpv.app.presentation.Screen
 import com.quantummpv.app.ui.icons.Icon
 import com.quantummpv.app.ui.icons.Icons
 import com.quantummpv.app.ui.player.Debanding
+import com.quantummpv.app.ui.player.DolbyVisionDirect
 import com.quantummpv.app.ui.player.MPVProfile
 import com.quantummpv.app.ui.preferences.components.SwitchPreference
 import com.quantummpv.app.ui.utils.LocalBackStack
@@ -89,6 +91,7 @@ object DecoderPreferencesScreen : Screen {
       setOf("vf", "deband", "deband-iterations", "deband-threshold", "deband-range", "deband-grain")
         .any(configOwnedOptions::contains)
     val yuv420ConfigOwned = "vf" in configOwnedOptions
+    val dolbyVisionConfigOwned = MpvConfigControlledFeatures.DOLBY_VISION_DIRECT.any(configOwnedOptions::contains)
     val backstack = LocalBackStack.current
     val context = LocalContext.current
     val isDeviceVulkanSupported = remember { VulkanCapabilities.isDeviceSupported(context) }
@@ -320,6 +323,36 @@ object DecoderPreferencesScreen : Screen {
                   )
                 },
               )
+
+              if (DolbyVisionDirect.isBuildSupported) {
+                PreferenceDivider()
+
+                val dolbyVisionDirect by preferences.dolbyVisionDirect.collectAsState()
+                val appearancePreferences = koinInject<AppearancePreferences>()
+                val playerGlass by appearancePreferences.liquidGlassPlayerEnabled.collectAsState()
+                SwitchPreference(
+                  modifier = Modifier.settingsSearchTarget(R.string.pref_decoder_dolby_vision_direct_title),
+                  value = dolbyVisionDirect,
+                  enabled = !dolbyVisionConfigOwned,
+                  onValueChange = { preferences.dolbyVisionDirect.set(it) },
+                  title = { Text(stringResource(R.string.pref_decoder_dolby_vision_direct_title)) },
+                  summary = {
+                    Column {
+                      Text(
+                        stringResource(R.string.pref_decoder_dolby_vision_direct_summary),
+                        color = MaterialTheme.colorScheme.outline,
+                      )
+                      if (dolbyVisionDirect && playerGlass) {
+                        Text(
+                          stringResource(R.string.pref_decoder_dolby_vision_direct_glass_note),
+                          color = MaterialTheme.colorScheme.error,
+                          style = MaterialTheme.typography.bodySmall,
+                        )
+                      }
+                    }
+                  },
+                )
+              }
 
               PreferenceDivider()
 
