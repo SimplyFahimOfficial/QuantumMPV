@@ -147,9 +147,31 @@ class AppearancePreferences(
   val profileName = preferenceStore.getString("profile_name", "")
   val profileImagePath = preferenceStore.getString("profile_image_path", "")
 
-  /** Optional dock overflow shortcuts; Settings and Help & Support are always shown and never stored here. */
+  /** Optional dock overflow shortcuts. Settings and Help & Support have their own switches below. */
   val moreMenuShortcuts =
     preferenceStore.getStringSet("more_menu_shortcuts", MoreMenuShortcut.DEFAULT.mapTo(HashSet()) { it.name })
+  val showMoreMenuSettings = preferenceStore.getBoolean("show_more_menu_settings", true)
+  val showMoreMenuSupport = preferenceStore.getBoolean("show_more_menu_support", true)
+
+  /** The three-dot button in the navigation bar. Hidden by the user, or when the menu has no rows left. */
+  val showMoreMenuButton = preferenceStore.getBoolean("show_more_menu_button", true)
+
+  /** True when the menu would show at least one row. */
+  fun moreMenuHasItems(): Boolean =
+    MoreMenuShortcut.hasItems(showMoreMenuSettings.get(), showMoreMenuSupport.get(), moreMenuShortcuts.get())
+
+  /** Back to the default rows: Settings, Help & Support and the default shortcuts. */
+  fun resetMoreMenu() {
+    showMoreMenuSettings.delete()
+    showMoreMenuSupport.delete()
+    moreMenuShortcuts.delete()
+  }
+
+  /** Turning the button on with an empty menu would show nothing, so the default rows come back with it. */
+  fun setMoreMenuButtonVisible(visible: Boolean) {
+    if (visible && !moreMenuHasItems()) resetMoreMenu()
+    showMoreMenuButton.set(visible)
+  }
   val showNetworkTab = preferenceStore.getBoolean("show_network_tab", false)
   val showJellyfinTab = preferenceStore.getBoolean("show_jellyfin_tab", false)
   val showQuickPlayFab = preferenceStore.getBoolean("show_quick_play_fab", true)
@@ -211,7 +233,7 @@ class AppearancePreferences(
       .toList()
 }
 
-/** Optional rows of the dock's More menu, shown below the fixed Settings and Help & Support rows in this order. */
+/** Optional rows of the dock's More menu, shown below the Settings and Help & Support rows in this order. */
 enum class MoreMenuShortcut {
   APPEARANCE,
   PLAYER,
@@ -229,6 +251,12 @@ enum class MoreMenuShortcut {
 
     /** Stored names to rows in a stable order; names from older or newer builds are ignored. */
     fun resolve(stored: Set<String>): List<MoreMenuShortcut> = entries.filter { it.name in stored }
+
+    fun hasItems(
+      settings: Boolean,
+      support: Boolean,
+      stored: Set<String>,
+    ): Boolean = settings || support || resolve(stored).isNotEmpty()
   }
 }
 

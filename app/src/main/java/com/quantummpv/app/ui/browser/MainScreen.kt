@@ -235,6 +235,12 @@ object MainScreen : Screen {
     val showProfileTab by appearancePreferences.showProfileTab.collectAsState()
     val moreMenuShortcutNames by appearancePreferences.moreMenuShortcuts.collectAsState()
     val moreMenuShortcuts = remember(moreMenuShortcutNames) { MoreMenuShortcut.resolve(moreMenuShortcutNames) }
+    val showMoreMenuSettings by appearancePreferences.showMoreMenuSettings.collectAsState()
+    val showMoreMenuSupport by appearancePreferences.showMoreMenuSupport.collectAsState()
+    val showMoreMenuButtonPref by appearancePreferences.showMoreMenuButton.collectAsState()
+    // A button that opens an empty menu is useless, so it also hides when every row has been removed.
+    val showMenuButton =
+      showMoreMenuButtonPref && MoreMenuShortcut.hasItems(showMoreMenuSettings, showMoreMenuSupport, moreMenuShortcutNames)
     val showNetworkTab by appearancePreferences.showNetworkTab.collectAsState()
     val showJellyfinTab by appearancePreferences.showJellyfinTab.collectAsState()
     // Experimental Liquid Glass: record the page content for the dock to refract. The dock is glass only
@@ -393,6 +399,7 @@ object MainScreen : Screen {
         onTabSelected = onTabSelected,
         pagerState = pagerState,
         glass = glassDock,
+        showMenuButton = showMenuButton,
         modifier = modifier,
       )
     }
@@ -478,7 +485,7 @@ object MainScreen : Screen {
                       scaleY = scale
                     }
                   }.captureLiquidGlass(liquidGlassCapture),
-              key = { page -> visibleTabs[page].name },
+              key = { page -> visibleTabs.getOrNull(page)?.name ?: page },
               beyondViewportPageCount = 1,
               userScrollEnabled = !isPermissionDenied,
             ) { page ->
@@ -518,6 +525,7 @@ object MainScreen : Screen {
             containerWidth = maxWidth,
             tabs = visibleTabs,
             maximumDockWidth = if (reserveLandscapeMiniPlayer) sideBySideDockLimit else maxWidth,
+            showMenuButton = showMenuButton,
           )
         val navWidth = dockMeasure.navWidth
         val dockWidth = dockMeasure.dockWidth
@@ -555,14 +563,14 @@ object MainScreen : Screen {
         val showContextualSearch =
           mainSearchController.isAvailable(selectedTab) && !mainSearchController.isSearchActive(selectedTab)
 
-        LaunchedEffect(selectedTab, showDock) {
+        LaunchedEffect(selectedTab, showDock, showMenuButton) {
           menuExpanded = false
         }
         BackHandler(enabled = menuExpanded && showDock) { menuExpanded = false }
 
         // Dismissal/scrim is below the dock and its in-window menu, so menu rows remain tappable.
         AnimatedVisibility(
-          visible = menuExpanded && showDock,
+          visible = menuExpanded && showDock && showMenuButton,
           enter = menuScrimEnter(),
           exit = menuScrimExit(),
           modifier = Modifier.matchParentSize(),
@@ -586,8 +594,8 @@ object MainScreen : Screen {
         }
         ProvideLiquidGlassBackdrop(liquidGlassCapture) {
           com.quantummpv.app.ui.browser.components.FloatingGlassMenuPanel(
-            visible = menuExpanded && showDock,
-            primaryItems = fixedMoreMenuItems(openFromMenu),
+            visible = menuExpanded && showDock && showMenuButton,
+            primaryItems = fixedMoreMenuItems(openFromMenu, showMoreMenuSettings, showMoreMenuSupport),
             shortcutItems = moreMenuShortcuts.map { moreMenuShortcutItem(it, openFromMenu) },
             glass = glassDock,
             anchorCenterInRoot = { menuButtonCenter },
@@ -645,6 +653,7 @@ object MainScreen : Screen {
                     pagerState = pagerState,
                     glass = glassDock,
                     showLabels = showNavLabels,
+                    showMenuButton = showMenuButton,
                     menuExpanded = menuExpanded,
                     onMenuExpandedChange = { menuExpanded = it },
                     onMenuButtonPositioned = { menuButtonCenter = it },
@@ -694,6 +703,7 @@ private fun ExpressivePillNavigationBar(
   selectedTab: MainScreen.MainTab,
   onTabSelected: (MainScreen.MainTab) -> Unit,
   showLabels: Boolean = true,
+  showMenuButton: Boolean = true,
   menuExpanded: Boolean = false,
   onMenuExpandedChange: (Boolean) -> Unit = { },
   onMenuButtonPositioned: (androidx.compose.ui.geometry.Offset) -> Unit = { },
@@ -875,7 +885,8 @@ private fun ExpressivePillNavigationBar(
     BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
       val density = LocalDensity.current
       val tabViewportWidth =
-        (maxWidth - com.quantummpv.app.ui.browser.components.FloatingMenuButtonSize).coerceAtLeast(0.dp)
+        (maxWidth - if (showMenuButton) com.quantummpv.app.ui.browser.components.FloatingMenuButtonSize else 0.dp)
+          .coerceAtLeast(0.dp)
       // Keyed on the selection (not settledPage) so the strip starts moving with the tap instead of
       // after the pager settles.
       LaunchedEffect(
@@ -1017,11 +1028,13 @@ private fun ExpressivePillNavigationBar(
           }
         }
 
-        com.quantummpv.app.ui.browser.components.FloatingMenuButton(
-          expanded = menuExpanded,
-          onExpandedChange = onMenuExpandedChange,
-          onCenterPositioned = onMenuButtonPositioned,
-        )
+        if (showMenuButton) {
+          com.quantummpv.app.ui.browser.components.FloatingMenuButton(
+            expanded = menuExpanded,
+            onExpandedChange = onMenuExpandedChange,
+            onCenterPositioned = onMenuButtonPositioned,
+          )
+        }
       }
     }
   }
@@ -1162,23 +1175,35 @@ private fun mainTabLabel(tab: MainScreen.MainTab): String =
     MainScreen.MainTab.JELLYFIN -> stringResource(R.string.ui_jellyfin)
   }
 
-/** Settings and Help & Support: always first in the More menu and not configurable. */
+/** Settings and Help & Support: first in the More menu, each removable in Appearance. */
 @Composable
-private fun fixedMoreMenuItems(open: (Screen) -> Unit): List<com.quantummpv.app.ui.browser.components.FloatingMenuItem> =
-  listOf(
-    com.quantummpv.app.ui.browser.components.FloatingMenuItem(
-      key = "settings",
-      icon = Icons.RoundedFilled.Settings,
-      label = stringResource(R.string.ui_settings),
-      onClick = { open(com.quantummpv.app.ui.preferences.PreferencesScreen) },
-    ),
-    com.quantummpv.app.ui.browser.components.FloatingMenuItem(
-      key = "support",
-      icon = Icons.RoundedFilled.HelpOutline,
-      label = stringResource(R.string.help_support_title),
-      onClick = { open(com.quantummpv.app.ui.preferences.HelpSupportScreen) },
-    ),
-  )
+private fun fixedMoreMenuItems(
+  open: (Screen) -> Unit,
+  showSettings: Boolean,
+  showSupport: Boolean,
+): List<com.quantummpv.app.ui.browser.components.FloatingMenuItem> =
+  buildList {
+    if (showSettings) {
+      add(
+        com.quantummpv.app.ui.browser.components.FloatingMenuItem(
+          key = "settings",
+          icon = Icons.RoundedFilled.Settings,
+          label = stringResource(R.string.ui_settings),
+          onClick = { open(com.quantummpv.app.ui.preferences.PreferencesScreen) },
+        ),
+      )
+    }
+    if (showSupport) {
+      add(
+        com.quantummpv.app.ui.browser.components.FloatingMenuItem(
+          key = "support",
+          icon = Icons.RoundedFilled.HelpOutline,
+          label = stringResource(R.string.help_support_title),
+          onClick = { open(com.quantummpv.app.ui.preferences.HelpSupportScreen) },
+        ),
+      )
+    }
+  }
 
 @Composable
 internal fun moreMenuShortcutLabel(shortcut: MoreMenuShortcut): String =
@@ -1264,6 +1289,7 @@ internal fun measureNavigationDock(
   containerWidth: androidx.compose.ui.unit.Dp,
   tabs: List<MainScreen.MainTab>,
   maximumDockWidth: androidx.compose.ui.unit.Dp = containerWidth,
+  showMenuButton: Boolean = true,
 ): NavigationDockMeasure {
   val layoutWidth = minOf(containerWidth, maximumDockWidth).coerceAtLeast(0.dp)
   val horizontalMargin =
@@ -1273,8 +1299,8 @@ internal fun measureNavigationDock(
     )
   val availableDockWidth = (layoutWidth - horizontalMargin * 2).coerceAtLeast(0.dp)
   val maximumNavWidth = (availableDockWidth - FloatingSearchButtonSize - DockItemGap).coerceAtLeast(0.dp)
-  val expandedNavWidth = expandedNavigationWidth(tabs)
-  val compactNavWidth = compactNavigationWidth(tabs)
+  val expandedNavWidth = expandedNavigationWidth(tabs, showMenuButton)
+  val compactNavWidth = compactNavigationWidth(tabs, showMenuButton)
   val showLabels = expandedNavWidth <= maximumNavWidth
   val navWidth = if (showLabels) expandedNavWidth else minOf(compactNavWidth, maximumNavWidth)
   return NavigationDockMeasure(
@@ -1335,18 +1361,24 @@ private fun activeTabWidth(tab: MainScreen.MainTab) =
   }
 
 /** Stable width budget using the widest active label, so selecting a tab never resizes the dock. */
-private fun expandedNavigationWidth(tabs: List<MainScreen.MainTab>) =
-  (tabs.maxOfOrNull { activeTabWidth(it) } ?: 0.dp) +
-    NavigationItemSize * (tabs.size - 1).coerceAtLeast(0) +
-    NavigationItemSpacing * (tabs.size - 1).coerceAtLeast(0) +
-    NavigationContentPadding * 2 +
-    com.quantummpv.app.ui.browser.components.FloatingMenuButtonSize
+private fun expandedNavigationWidth(
+  tabs: List<MainScreen.MainTab>,
+  showMenuButton: Boolean,
+) = (tabs.maxOfOrNull { activeTabWidth(it) } ?: 0.dp) +
+  NavigationItemSize * (tabs.size - 1).coerceAtLeast(0) +
+  NavigationItemSpacing * (tabs.size - 1).coerceAtLeast(0) +
+  NavigationContentPadding * 2 +
+  menuButtonWidth(showMenuButton)
 
-private fun compactNavigationWidth(tabs: List<MainScreen.MainTab>) =
-  NavigationItemSize * tabs.size +
-    NavigationItemSpacing * (tabs.size - 1).coerceAtLeast(0) +
-    NavigationContentPadding * 2 +
-    com.quantummpv.app.ui.browser.components.FloatingMenuButtonSize
+private fun compactNavigationWidth(
+  tabs: List<MainScreen.MainTab>,
+  showMenuButton: Boolean,
+) = NavigationItemSize * tabs.size +
+  NavigationItemSpacing * (tabs.size - 1).coerceAtLeast(0) +
+  NavigationContentPadding * 2 +
+  menuButtonWidth(showMenuButton)
+
+private fun menuButtonWidth(show: Boolean) = if (show) com.quantummpv.app.ui.browser.components.FloatingMenuButtonSize else 0.dp
 
 @Composable
 private fun menuScrimEnter(): EnterTransition =

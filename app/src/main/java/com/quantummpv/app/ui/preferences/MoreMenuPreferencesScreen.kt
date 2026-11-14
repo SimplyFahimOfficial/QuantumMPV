@@ -20,6 +20,9 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import com.quantummpv.app.R
@@ -27,6 +30,7 @@ import com.quantummpv.app.preferences.AppearancePreferences
 import com.quantummpv.app.preferences.MoreMenuShortcut
 import com.quantummpv.app.preferences.preference.collectAsState
 import com.quantummpv.app.presentation.Screen
+import com.quantummpv.app.presentation.components.ConfirmDialog
 import com.quantummpv.app.ui.browser.moreMenuShortcutIcon
 import com.quantummpv.app.ui.browser.moreMenuShortcutLabel
 import com.quantummpv.app.ui.icons.AppIcon
@@ -50,6 +54,37 @@ object MoreMenuPreferencesScreen : Screen {
     val backStack = LocalBackStack.current
     val preferences = koinInject<AppearancePreferences>()
     val enabledNames by preferences.moreMenuShortcuts.collectAsState()
+    val showSettings by preferences.showMoreMenuSettings.collectAsState()
+    val showSupport by preferences.showMoreMenuSupport.collectAsState()
+    val showButton by preferences.showMoreMenuButton.collectAsState()
+    // Set when the user removes the last row: nothing changes until they decide about the button.
+    var pendingLastRemoval by remember { mutableStateOf<(() -> Unit)?>(null) }
+
+    // Re-reads the stored values so two quick toggles never overwrite each other with stale state.
+    fun toggle(
+      enabled: Boolean,
+      willBeEmpty: () -> Boolean,
+      apply: (Boolean) -> Unit,
+    ) {
+      if (!enabled && showButton && willBeEmpty()) {
+        pendingLastRemoval = { apply(false) }
+      } else {
+        apply(enabled)
+      }
+    }
+
+    pendingLastRemoval?.let { removeLastRow ->
+      ConfirmDialog(
+        title = stringResource(R.string.pref_more_menu_empty_title),
+        subtitle = stringResource(R.string.pref_more_menu_empty_message),
+        onConfirm = {
+          pendingLastRemoval = null
+          removeLastRow()
+          preferences.showMoreMenuButton.set(false)
+        },
+        onCancel = { pendingLastRemoval = null },
+      )
+    }
 
     Scaffold(
       topBar = {
@@ -69,10 +104,47 @@ object MoreMenuPreferencesScreen : Screen {
         LazyColumn(modifier = Modifier.fillMaxSize().padding(padding)) {
           item {
             PreferenceCard {
-              // Settings and Help & Support are fixed rows: shown, but their switches cannot be turned off.
-              LockedRow(Icons.RoundedFilled.Settings, stringResource(R.string.ui_settings))
+              SwitchPreference(
+                value = showButton,
+                onValueChange = preferences::setMoreMenuButtonVisible,
+                title = { Text(stringResource(R.string.pref_more_menu_button_title)) },
+                summary = {
+                  Text(stringResource(R.string.pref_more_menu_button_summary), color = MaterialTheme.colorScheme.outline)
+                },
+                icon = { ShortcutIcon(Icons.RoundedFilled.MoreVert) },
+              )
+            }
+          }
+
+          item {
+            PreferenceCard {
+              SwitchPreference(
+                value = showSettings,
+                onValueChange = { enabled ->
+                  toggle(
+                    enabled,
+                    willBeEmpty = {
+                      !MoreMenuShortcut.hasItems(false, preferences.showMoreMenuSupport.get(), preferences.moreMenuShortcuts.get())
+                    },
+                  ) { preferences.showMoreMenuSettings.set(it) }
+                },
+                title = { Text(stringResource(R.string.ui_settings)) },
+                icon = { ShortcutIcon(Icons.RoundedFilled.Settings) },
+              )
               PreferenceDivider()
-              LockedRow(Icons.RoundedFilled.HelpOutline, stringResource(R.string.help_support_title))
+              SwitchPreference(
+                value = showSupport,
+                onValueChange = { enabled ->
+                  toggle(
+                    enabled,
+                    willBeEmpty = {
+                      !MoreMenuShortcut.hasItems(preferences.showMoreMenuSettings.get(), false, preferences.moreMenuShortcuts.get())
+                    },
+                  ) { preferences.showMoreMenuSupport.set(it) }
+                },
+                title = { Text(stringResource(R.string.help_support_title)) },
+                icon = { ShortcutIcon(Icons.RoundedFilled.HelpOutline) },
+              )
             }
           }
 
@@ -85,9 +157,19 @@ object MoreMenuPreferencesScreen : Screen {
                 SwitchPreference(
                   value = shortcut.name in enabledNames,
                   onValueChange = { enabled ->
-                    // Re-read so two quick toggles never overwrite each other with a stale set.
-                    val current = preferences.moreMenuShortcuts.get()
-                    preferences.moreMenuShortcuts.set(if (enabled) current + shortcut.name else current - shortcut.name)
+                    toggle(
+                      enabled,
+                      willBeEmpty = {
+                        !MoreMenuShortcut.hasItems(
+                          preferences.showMoreMenuSettings.get(),
+                          preferences.showMoreMenuSupport.get(),
+                          preferences.moreMenuShortcuts.get() - shortcut.name,
+                        )
+                      },
+                    ) { on ->
+                      val current = preferences.moreMenuShortcuts.get()
+                      preferences.moreMenuShortcuts.set(if (on) current + shortcut.name else current - shortcut.name)
+                    }
                   },
                   title = { Text(moreMenuShortcutLabel(shortcut)) },
                   icon = { ShortcutIcon(moreMenuShortcutIcon(shortcut)) },
@@ -104,7 +186,7 @@ object MoreMenuPreferencesScreen : Screen {
                   Text(stringResource(R.string.pref_more_menu_reset_summary), color = MaterialTheme.colorScheme.outline)
                 },
                 icon = { ShortcutIcon(Icons.RoundedFilled.Refresh) },
-                onClick = { preferences.moreMenuShortcuts.delete() },
+                onClick = { preferences.resetMoreMenu() },
               )
             }
           }
@@ -112,21 +194,6 @@ object MoreMenuPreferencesScreen : Screen {
       }
     }
   }
-}
-
-@Composable
-private fun LockedRow(
-  icon: AppIcon,
-  label: String,
-) {
-  SwitchPreference(
-    value = true,
-    onValueChange = { },
-    enabled = false,
-    title = { Text(label) },
-    summary = { Text(stringResource(R.string.pref_more_menu_fixed_summary), color = MaterialTheme.colorScheme.outline) },
-    icon = { ShortcutIcon(icon) },
-  )
 }
 
 @Composable
