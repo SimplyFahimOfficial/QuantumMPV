@@ -16,6 +16,7 @@ import com.quantummpv.app.utils.media.LyricsUtils
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import java.io.File
 import java.util.Locale
 
 data class LyricsResult(
@@ -24,6 +25,8 @@ data class LyricsResult(
   val activeLyrics: Lyrics? = null,
   val selectedSource: LyricsSourceType = LyricsSourceType.EMBEDDED,
   val availableSources: List<LyricsSourceType> = emptyList(),
+  /** Whether the user has saved their own edit of this track's lyrics. */
+  val hasSavedEdits: Boolean = false,
 )
 
 class LyricsRepository(
@@ -42,6 +45,13 @@ class LyricsRepository(
     private val UNKNOWN_ARTISTS = setOf("", "unknown", "unknown artist", "<unknown>", "various artists", "various")
     private const val MAX_ONLINE_LOOKUP_ATTEMPTS = 8
   }
+
+  private val editedLyricsStore = EditedLyricsStore(File(context.filesDir, "lyrics/edited-v1"))
+
+  // Per track: bumped after every edit or restore of that track. A load that started before the bump
+  // must not cache its now-stale result. Guarded by editLock, which also covers the cache write.
+  private val editRevisions = HashMap<String, Long>()
+  private val editLock = Any()
 
   // Cache by media path -> LyricsResult
   private val cache = LruCache<String, LyricsResult>(64)
@@ -91,15 +101,23 @@ class LyricsRepository(
     artist: String?,
     durationSeconds: Int = 0,
     forceRefresh: Boolean = false,
+    // Edits are keyed by a stable source identity; mpv's path can change between opens.
+    editKey: String = mediaPath,
   ): LyricsResult = withContext(Dispatchers.IO) {
     if (!forceRefresh) {
-      cache.get(mediaPath)?.let { return@withContext it }
+      cache.get(editKey)?.let { return@withContext it }
     }
+    val revision = synchronized(editLock) { editRevisions[editKey] ?: 0L }
 
     Log.d(TAG, "Loading lyrics for: $title by $artist ($mediaPath)")
 
-    // 1. Check embedded lyrics first
-    val embedded = EmbeddedLyricsExtractor.extractEmbeddedLyrics(context, mediaPath)
+    // 1. The user's own edit wins; an unreadable edit is kept on disk and the original is shown,
+    // so the editor can still replace or restore it.
+    val edited =
+      runCatching { editedLyricsStore.read(editKey) }
+        .onFailure { Log.w(TAG, "Saved lyric edits could not be read", it) }
+        .getOrNull()
+    val embedded = edited ?: EmbeddedLyricsExtractor.extractEmbeddedLyrics(context, mediaPath)
 
     // 2. Fetch online lyrics from LRCLIB
     val online = fetchOnlineLyrics(title, artist, durationSeconds)
@@ -130,9 +148,12 @@ class LyricsRepository(
       activeLyrics = active,
       selectedSource = defaultSelected,
       availableSources = sources.distinct(),
+      hasSavedEdits = editedLyricsStore.contains(editKey),
     )
 
-    cache.put(mediaPath, result)
+    synchronized(editLock) {
+      if ((editRevisions[editKey] ?: 0L) == revision) cache.put(editKey, result)
+    }
     result
   }
 
@@ -275,8 +296,8 @@ class LyricsRepository(
     return if (parsed.isValid()) parsed else null
   }
 
-  fun switchSource(mediaPath: String, sourceType: LyricsSourceType): LyricsResult? {
-    val existing = cache.get(mediaPath) ?: return null
+  fun switchSource(editKey: String, sourceType: LyricsSourceType): LyricsResult? {
+    val existing = cache.get(editKey) ?: return null
     val newActive = when (sourceType) {
       LyricsSourceType.EMBEDDED, LyricsSourceType.LOCAL -> existing.embeddedLyrics ?: existing.onlineLyrics
       LyricsSourceType.ONLINE -> existing.onlineLyrics ?: existing.embeddedLyrics
@@ -285,7 +306,28 @@ class LyricsRepository(
       selectedSource = sourceType,
       activeLyrics = newActive,
     )
-    cache.put(mediaPath, updated)
+    cache.put(editKey, updated)
     return updated
   }
+
+  suspend fun saveEditedLyrics(
+    editKey: String,
+    lyrics: Lyrics,
+  ) = withContext(Dispatchers.IO) {
+    editedLyricsStore.write(editKey, lyrics)
+    // The next load reads the saved file; a stale cached result would hide the edit.
+    synchronized(editLock) {
+      editRevisions[editKey] = (editRevisions[editKey] ?: 0L) + 1
+      cache.remove(editKey)
+    }
+  }
+
+  suspend fun removeEditedLyrics(editKey: String) =
+    withContext(Dispatchers.IO) {
+      editedLyricsStore.remove(editKey)
+      synchronized(editLock) {
+        editRevisions[editKey] = (editRevisions[editKey] ?: 0L) + 1
+        cache.remove(editKey)
+      }
+    }
 }
