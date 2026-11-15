@@ -14,6 +14,8 @@ import android.util.Log
 import com.quantummpv.app.database.dao.SecureMediaDao
 import com.quantummpv.app.database.entities.SecureMediaEntity
 import com.quantummpv.app.domain.media.model.Video
+import com.quantummpv.app.repository.WatchStatsRepository
+import com.quantummpv.app.ui.player.PlaybackIdentity
 import com.quantummpv.app.utils.history.RecentlyPlayedOps
 import com.quantummpv.app.utils.media.MediaLibraryEvents
 import com.quantummpv.app.utils.media.PlaybackStateOps
@@ -42,6 +44,7 @@ import java.util.concurrent.atomic.AtomicBoolean
  */
 class SecureFolderRepository(
   private val dao: SecureMediaDao,
+  private val watchStats: WatchStatsRepository,
 ) {
   companion object {
     private const val TAG = "SecureFolderRepository"
@@ -163,6 +166,11 @@ class SecureFolderRepository(
           removeFromMediaStore(context, video)
           RecentlyPlayedOps.onVideoDeleted(video.path)
           PlaybackStateOps.onVideoDeleted(video.path, video.uri.toString())
+          // Hidden videos must not stay in the Profile statistics.
+          val uri = video.uri.toString()
+          watchStats.removeMedia(
+            setOf(video.path, uri, PlaybackIdentity.forLocalPath(video.path), PlaybackIdentity.forUri(uri)),
+          )
 
           succeeded += video.id
         } catch (e: Exception) {

@@ -279,6 +279,9 @@ object ProfileScreen : Screen {
             }
           }
         }
+        item(key = "watch_statistics") {
+          ProfileWatchStatistics()
+        }
       }
     }
 
