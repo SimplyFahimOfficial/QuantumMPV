@@ -35,8 +35,12 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.boundsInWindow
+import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
@@ -51,6 +55,7 @@ import com.quantummpv.app.preferences.preference.collectAsState
 import com.quantummpv.app.ui.icons.Icon
 import com.quantummpv.app.ui.icons.Icons
 import com.quantummpv.app.ui.theme.DarkMode
+import com.quantummpv.app.ui.theme.LocalThemeReveal
 import org.koin.compose.koinInject
 
 /**
@@ -167,6 +172,10 @@ private fun NormalTopBar(
   val preferences = koinInject<AppearancePreferences>()
   val darkMode by preferences.darkMode.collectAsState()
   val darkTheme = isSystemInDarkTheme()
+  val themeReveal = LocalThemeReveal.current
+
+  // Track title bounds for animation position
+  val titleBounds = remember { mutableStateOf(Rect.Zero) }
 
   // Helper function to toggle dark mode
   fun toggleDarkMode() {
@@ -211,9 +220,19 @@ private fun NormalTopBar(
         }
       val tapModifier =
         titleModifier
-          .pointerInput(onTitleLongPress, onTitleDoubleTap) {
+          .onGloballyPositioned { coordinates ->
+            titleBounds.value = coordinates.boundsInWindow()
+          }.pointerInput(onTitleLongPress, onTitleDoubleTap) {
             detectTapGestures(
-              onTap = { toggleDarkMode() },
+              onTap = { localOffset ->
+                // The circle grows from the tap, in window coordinates.
+                val windowOffset =
+                  Offset(
+                    titleBounds.value.left + localOffset.x,
+                    titleBounds.value.top + localOffset.y,
+                  )
+                themeReveal.start(windowOffset) { toggleDarkMode() }
+              },
               onDoubleTap =
                 if (onTitleDoubleTap != null) {
                   { onTitleDoubleTap() }

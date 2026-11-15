@@ -9,11 +9,18 @@
 
 package com.quantummpv.app.ui.theme
 
+import android.app.Activity
 import android.content.Context
+import android.content.ContextWrapper
+import android.graphics.Bitmap
 import android.os.Build
+import android.os.Handler
+import android.os.Looper
+import android.view.PixelCopy
+import android.view.Window
 import androidx.annotation.StringRes
-import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.animate
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
@@ -31,21 +38,34 @@ import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.graphics.ClipOp
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.graphics.drawscope.clipPath
 import androidx.compose.ui.graphics.lerp
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.unit.IntSize
 import com.quantummpv.app.R
 import com.quantummpv.app.preferences.AppearancePreferences
 import com.quantummpv.app.preferences.preference.collectAsState
 import com.quantummpv.app.ui.theme.DesignTokens.rememberGlassConfig
 import org.koin.compose.koinInject
+import kotlin.math.hypot
+import kotlin.math.roundToInt
 
 /** Dark counterpart of the selected app palette, even while the app itself is using light mode. */
 internal val LocalDarkAppColorScheme = staticCompositionLocalOf<ColorScheme?> { null }
@@ -53,77 +73,113 @@ internal val LocalDarkAppColorScheme = staticCompositionLocalOf<ColorScheme?> { 
 /** Selected palette, allowing reusable surfaces to add restrained theme-specific treatment. */
 val LocalAppTheme = staticCompositionLocalOf { AppTheme.Default }
 
-private const val THEME_FADE_DURATION_MS = 260
-
-/** Linear blend of every color role the app reads; roles not listed keep [a]'s value. */
-internal fun lerpColorScheme(
-  a: ColorScheme,
-  b: ColorScheme,
-  t: Float,
-): ColorScheme =
-  a.copy(
-    primary = lerp(a.primary, b.primary, t),
-    onPrimary = lerp(a.onPrimary, b.onPrimary, t),
-    primaryContainer = lerp(a.primaryContainer, b.primaryContainer, t),
-    onPrimaryContainer = lerp(a.onPrimaryContainer, b.onPrimaryContainer, t),
-    inversePrimary = lerp(a.inversePrimary, b.inversePrimary, t),
-    secondary = lerp(a.secondary, b.secondary, t),
-    onSecondary = lerp(a.onSecondary, b.onSecondary, t),
-    secondaryContainer = lerp(a.secondaryContainer, b.secondaryContainer, t),
-    onSecondaryContainer = lerp(a.onSecondaryContainer, b.onSecondaryContainer, t),
-    tertiary = lerp(a.tertiary, b.tertiary, t),
-    onTertiary = lerp(a.onTertiary, b.onTertiary, t),
-    tertiaryContainer = lerp(a.tertiaryContainer, b.tertiaryContainer, t),
-    onTertiaryContainer = lerp(a.onTertiaryContainer, b.onTertiaryContainer, t),
-    background = lerp(a.background, b.background, t),
-    onBackground = lerp(a.onBackground, b.onBackground, t),
-    surface = lerp(a.surface, b.surface, t),
-    onSurface = lerp(a.onSurface, b.onSurface, t),
-    surfaceVariant = lerp(a.surfaceVariant, b.surfaceVariant, t),
-    onSurfaceVariant = lerp(a.onSurfaceVariant, b.onSurfaceVariant, t),
-    surfaceTint = lerp(a.surfaceTint, b.surfaceTint, t),
-    inverseSurface = lerp(a.inverseSurface, b.inverseSurface, t),
-    inverseOnSurface = lerp(a.inverseOnSurface, b.inverseOnSurface, t),
-    error = lerp(a.error, b.error, t),
-    onError = lerp(a.onError, b.onError, t),
-    errorContainer = lerp(a.errorContainer, b.errorContainer, t),
-    onErrorContainer = lerp(a.onErrorContainer, b.onErrorContainer, t),
-    outline = lerp(a.outline, b.outline, t),
-    outlineVariant = lerp(a.outlineVariant, b.outlineVariant, t),
-    scrim = lerp(a.scrim, b.scrim, t),
-    surfaceBright = lerp(a.surfaceBright, b.surfaceBright, t),
-    surfaceDim = lerp(a.surfaceDim, b.surfaceDim, t),
-    surfaceContainer = lerp(a.surfaceContainer, b.surfaceContainer, t),
-    surfaceContainerHigh = lerp(a.surfaceContainerHigh, b.surfaceContainerHigh, t),
-    surfaceContainerHighest = lerp(a.surfaceContainerHighest, b.surfaceContainerHighest, t),
-    surfaceContainerLow = lerp(a.surfaceContainerLow, b.surfaceContainerLow, t),
-    surfaceContainerLowest = lerp(a.surfaceContainerLowest, b.surfaceContainerLowest, t),
-  )
+private const val THEME_REVEAL_DURATION_MS = 520
 
 /**
- * Cross-fades to [target] whenever it changes. A change mid-fade starts from the colors on
- * screen, so a quick second tap never jumps. [target] must be a remembered instance.
+ * A circular theme change: the old screen is copied from the window, the new theme is applied under
+ * it, and a circle growing from the tap uncovers the new theme. Without a window copy (reduced
+ * motion, copy failure) the change is applied at once.
  */
-@Composable
-private fun rememberAnimatedColorScheme(target: ColorScheme, reduceMotion: Boolean): ColorScheme {
-  val progress = remember { Animatable(1f) }
-  var from by remember { mutableStateOf(target) }
-  var to by remember { mutableStateOf(target) }
+@Stable
+class ThemeReveal {
+  internal var window: Window? = null
+  internal var reduceMotion = false
+  private var capturing = false
+  internal var snapshot by mutableStateOf<Bitmap?>(null)
+  internal var origin by mutableStateOf(Offset.Zero)
+  var progress by mutableFloatStateOf(0f)
+    internal set
+  val isAnimating get() = snapshot != null
 
-  LaunchedEffect(target) {
-    if (target === to) return@LaunchedEffect
-    from = lerpColorScheme(from, to, progress.value)
-    to = target
-    progress.snapTo(0f)
-    if (reduceMotion) {
-      progress.snapTo(1f)
-    } else {
-      progress.animateTo(1f, tween(THEME_FADE_DURATION_MS, easing = FastOutSlowInEasing))
+  /** Runs [change] (which applies the new theme) once the old screen is captured; origin is in window pixels. */
+  fun start(
+    origin: Offset,
+    change: () -> Unit,
+  ) {
+    if (isAnimating || capturing) return
+    val target = window
+    if (reduceMotion || target == null) return change()
+    val decor = target.decorView
+    val bitmap =
+      runCatching { Bitmap.createBitmap(decor.width, decor.height, Bitmap.Config.ARGB_8888) }.getOrNull()
+        ?: return change()
+    // PixelCopy reads the composited window, so blur, glass and video surfaces are in the copy.
+    capturing = true
+    runCatching {
+      PixelCopy.request(target, bitmap, { result ->
+        capturing = false
+        if (result == PixelCopy.SUCCESS) {
+          progress = 0f
+          this.origin = origin
+          snapshot = bitmap
+        } else {
+          bitmap.recycle()
+        }
+        change()
+      }, Handler(Looper.getMainLooper()))
+    }.onFailure {
+      capturing = false
+      bitmap.recycle()
+      change()
     }
   }
-  // Reduced motion switched on mid-fade: finish at once. snapTo also cancels the running animation.
-  LaunchedEffect(reduceMotion) { if (reduceMotion) progress.snapTo(1f) }
-  return if (progress.value >= 1f) to else lerpColorScheme(from, to, progress.value)
+
+  internal fun finish() {
+    val old = snapshot
+    snapshot = null
+    // Let Compose stop drawing the bitmap before its pixels are released.
+    window?.decorView?.postDelayed({ old?.recycle() }, 96)
+  }
+}
+
+/** Default is inert, so previews and secondary activities simply apply the change. */
+val LocalThemeReveal = staticCompositionLocalOf { ThemeReveal() }
+
+@Composable
+fun rememberThemeReveal(): ThemeReveal = remember { ThemeReveal() }
+
+private tailrec fun Context.findWindow(): Window? =
+  when (this) {
+    is Activity -> window
+    is ContextWrapper -> baseContext.findWindow()
+    else -> null
+  }
+
+@Composable
+private fun ThemeRevealOverlay(reveal: ThemeReveal) {
+  val bitmap = reveal.snapshot
+  LaunchedEffect(bitmap) {
+    if (bitmap == null) return@LaunchedEffect
+    animate(0f, 1f, animationSpec = tween(THEME_REVEAL_DURATION_MS, easing = FastOutSlowInEasing)) { value, _ ->
+      reveal.progress = value
+    }
+    reveal.finish()
+  }
+  if (bitmap == null) return
+  val image = remember(bitmap) { bitmap.asImageBitmap() }
+  Box(
+    Modifier
+      .fillMaxSize()
+      .drawBehind {
+        val center = reveal.origin.takeUnless { it == Offset.Zero } ?: Offset(size.width / 2f, size.height / 2f)
+        val maxRadius =
+          maxOf(
+            hypot(center.x, center.y),
+            hypot(size.width - center.x, center.y),
+            hypot(center.x, size.height - center.y),
+            hypot(size.width - center.x, size.height - center.y),
+          )
+        val hole = Path().apply { addOval(Rect(center, maxRadius * reveal.progress)) }
+        clipPath(hole, ClipOp.Difference) {
+          drawImage(image, dstSize = IntSize(size.width.roundToInt(), size.height.roundToInt()))
+        }
+      }.pointerInput(Unit) {
+        // The old frame is only a picture; swallow touches until the reveal ends.
+        awaitPointerEventScope {
+          while (true) awaitPointerEvent().changes.forEach { it.consume() }
+        }
+      },
+  )
 }
 
 // ============================================================================
@@ -132,11 +188,13 @@ private fun rememberAnimatedColorScheme(target: ColorScheme, reduceMotion: Boole
 
 /**
  * Applies the selected palette, typography, and shapes to [content].
- * Provides spacing, motion policy, and glass configuration to descendants.
+ * Provides spacing, motion policy, glass configuration, and [reveal] to descendants.
  */
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
-fun MpvrxTheme(content: @Composable () -> Unit,
+fun MpvrxTheme(
+  reveal: ThemeReveal = rememberThemeReveal(),
+  content: @Composable () -> Unit,
 ) {
   val preferences = koinInject<AppearancePreferences>()
   val darkMode by preferences.darkMode.collectAsState()
@@ -172,12 +230,13 @@ fun MpvrxTheme(content: @Composable () -> Unit,
     }
 
   val glassConfig = rememberGlassConfig()
-  // Computed here, not read from LocalMotionPolicy: that local is provided below, so the fade would always see the default policy.
   val motionPolicy = rememberMotionPolicy()
-  val colorScheme = rememberAnimatedColorScheme(targetColorScheme, motionPolicy.shouldReduceAnimations)
+  reveal.reduceMotion = motionPolicy.shouldReduceAnimations
+  reveal.window = context.findWindow()
 
   CompositionLocalProvider(
     LocalSpacing provides Spacing(),
+    LocalThemeReveal provides reveal,
     LocalMotionPolicy provides motionPolicy,
     LocalReduceMotion provides motionPolicy.shouldReduceAnimations,
     LocalEmphasizedTypography provides AppEmphasizedTypography,
@@ -187,7 +246,7 @@ fun MpvrxTheme(content: @Composable () -> Unit,
   ) {
     Box(modifier = Modifier.fillMaxSize()) {
       MaterialExpressiveTheme(
-        colorScheme = colorScheme,
+        colorScheme = targetColorScheme,
         typography = if (useSystemFont || localeNeedsSystemFont) SystemTypography else AppTypography,
         shapes = AppShapes,
         motionScheme = MotionScheme.expressive(),
@@ -195,6 +254,7 @@ fun MpvrxTheme(content: @Composable () -> Unit,
         // system haptic setting, and one tuned vibration table.
         content = { com.quantummpv.app.ui.utils.ProvideAppHaptics(content) },
       )
+      ThemeRevealOverlay(reveal)
     }
   }
 }
