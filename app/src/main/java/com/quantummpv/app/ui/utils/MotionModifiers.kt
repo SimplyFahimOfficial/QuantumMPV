@@ -106,6 +106,16 @@ fun rememberEntranceStagger(
 
 private const val STAGGER_SETTLE_MILLIS = 450L
 
+/**
+ * Start delay of row [index]. Rows past [maxItems] share the last delay, so a row that is already composed
+ * (a tall screen, or a folder behind the navigation bar) never shows before the rows above it.
+ */
+internal fun staggerDelayMillis(
+  index: Int,
+  stepMillis: Int,
+  maxItems: Int,
+): Long = stepMillis.toLong() * index.coerceIn(0, maxItems)
+
 /** Fades and slides row [index] up as part of [stagger]; a no-op once the stagger window closed. */
 @Suppress("ModifierFactoryExtensionFunction")
 @Composable
@@ -114,13 +124,13 @@ fun Modifier.staggeredEntrance(
   stagger: EntranceStagger,
 ): Modifier {
   // Captured at first composition so a row never switches mode halfway through its animation.
-  val animate = remember { stagger.isActive && index < stagger.maxItems }
+  val animate = remember { stagger.isActive }
   if (!animate) return this
   val progress = remember { Animatable(0f) }
   val spec = if (stagger.fast) AppMotion.fastSpatial<Float>() else AppMotion.defaultSpatial()
   val offsetPx = with(LocalDensity.current) { Dimens.StaggerOffset.toPx() }
   LaunchedEffect(Unit) {
-    delay(stagger.stepMillis.toLong() * index)
+    delay(staggerDelayMillis(index, stagger.stepMillis, stagger.maxItems))
     progress.animateTo(1f, spec)
   }
   return graphicsLayer {
