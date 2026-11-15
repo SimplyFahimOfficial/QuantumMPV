@@ -42,6 +42,8 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.boundsInWindow
+import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
@@ -418,11 +420,20 @@ object AppearancePreferencesScreen : Screen {
 
                   PreferenceDivider()
 
+                  // The switch sits at the row's trailing edge, so the circle starts there.
+                  var amoledRevealOrigin by remember { mutableStateOf(androidx.compose.ui.geometry.Offset.Zero) }
+                  val amoledSwitchInset = with(androidx.compose.ui.platform.LocalDensity.current) { 40.dp.toPx() }
                   SwitchPreference(
-                    modifier = Modifier.settingsSearchTarget(R.string.pref_appearance_amoled_mode_title),
+                    modifier =
+                      Modifier
+                        .settingsSearchTarget(R.string.pref_appearance_amoled_mode_title)
+                        .onGloballyPositioned {
+                          val bounds = it.boundsInWindow()
+                          amoledRevealOrigin = androidx.compose.ui.geometry.Offset(bounds.right - amoledSwitchInset, bounds.center.y)
+                        },
                     value = amoledMode,
                     onValueChange = { newValue ->
-                      themeReveal.start(androidx.compose.ui.geometry.Offset.Zero) { preferences.amoledMode.set(newValue) }
+                      themeReveal.start(amoledRevealOrigin) { preferences.amoledMode.set(newValue) }
                     },
                     title = {
                       Text(
