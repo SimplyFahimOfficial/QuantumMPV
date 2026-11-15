@@ -1157,6 +1157,7 @@ val DatabaseModule =
     single {
       com.quantummpv.app.database.repository.SecureFolderRepository(
         dao = get<MpvRxDatabase>().secureMediaDao(),
+        watchStats = get(),
       )
     }
 

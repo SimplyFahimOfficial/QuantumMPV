@@ -8,6 +8,7 @@ import com.quantummpv.app.ui.player.PlaybackItem
 import com.quantummpv.app.ui.player.declaredMediaKind
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.sync.Mutex
@@ -17,7 +18,9 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import java.io.File
+import java.io.FileOutputStream
 import java.time.Instant
+import java.time.LocalDate
 import java.time.ZoneId
 
 @Serializable
@@ -60,16 +63,17 @@ class WatchStatsRepository(context: Context) {
     val existing = current.media[key]
     current.copy(
       sessions = current.sessions + 1,
-      media = current.media + (key to existingStats(item, existing).copy(
+      media = (current.media + (key to existingStats(item, existing).copy(
         sessions = (existing?.sessions ?: 0) + 1,
         lastWatchedAt = System.currentTimeMillis(),
-      )),
+      ))).trimMedia(),
     )
   }
 
-  suspend fun recordPlayback(item: PlaybackItem, seconds: Long) {
+  /** [resetVersion] is checked under the lock, so playback from before a [clear] is dropped. */
+  suspend fun recordPlayback(item: PlaybackItem, seconds: Long, resetVersion: Long) {
     if (seconds <= 0) return
-    update { current ->
+    update(resetVersion) { current ->
       val isAudio = item.declaredMediaKind() == DeclaredPlaybackMediaKind.AUDIO
       val key = item.stableId.ifBlank { item.originalUri }
       val existing = current.media[key]
@@ -87,30 +91,44 @@ class WatchStatsRepository(context: Context) {
     }
   }
 
-  suspend fun snapshot(): WatchStatsSnapshot = mutex.withLock { withContext(Dispatchers.IO) { readCached() } }
+  suspend fun snapshot(): WatchStatsSnapshot =
+    mutex.withLock { withContext(Dispatchers.IO) { readCached().let { it.copy(days = it.days.trimDays()) } } }
 
+  // NonCancellable: leaving Profile mid-reset must not leave the cache holding the deleted stats.
   suspend fun clear() = mutex.withLock {
-    withContext(Dispatchers.IO) { file.delete() }
-    cached = WatchStatsSnapshot()
-    _resetVersion.value++
-    _revision.value++
+    withContext(NonCancellable + Dispatchers.IO) {
+      file.delete()
+      cached = WatchStatsSnapshot()
+      _resetVersion.value++
+      _revision.value++
+    }
   }
 
-  private suspend fun update(transform: (WatchStatsSnapshot) -> WatchStatsSnapshot) = mutex.withLock {
+  /** Drops entries for media that left the library; [keys] may be stable ids or source URIs/paths. */
+  suspend fun removeMedia(keys: Set<String>) = update { current ->
+    current.copy(media = current.media.filterNot { (key, stats) -> key in keys || stats.sourceUri in keys })
+  }
+
+  private suspend fun update(
+    expectedResetVersion: Long? = null,
+    transform: (WatchStatsSnapshot) -> WatchStatsSnapshot,
+  ) = mutex.withLock {
+    if (expectedResetVersion != null && expectedResetVersion != _resetVersion.value) return@withLock
     withContext(Dispatchers.IO) {
       val updated = transform(readCached())
       // Kept even if the write fails, so the next update persists it instead of losing it.
       cached = updated
-      val output = file.startWrite()
+      var output: FileOutputStream? = null
       try {
+        output = file.startWrite()
         output.write(json.encodeToString(updated).toByteArray(Charsets.UTF_8))
         file.finishWrite(output)
         _revision.value++
       } catch (cancelled: CancellationException) {
-        file.failWrite(output)
+        output?.let(file::failWrite)
         throw cancelled
       } catch (error: Exception) {
-        file.failWrite(output)
+        output?.let(file::failWrite)
         Log.e(TAG, "Unable to save watch statistics", error)
       }
     }
@@ -140,11 +158,17 @@ class WatchStatsRepository(context: Context) {
     )
 
   private fun Long?.orZero(): Long = this ?: 0
-  private fun Map<String, Long>.trimDays(): Map<String, Long> = entries.sortedByDescending { it.key }.take(90).associate { it.toPair() }
+
+  // ISO dates compare as strings; the 90-day window is by calendar date, not by entry count.
+  private fun Map<String, Long>.trimDays(): Map<String, Long> {
+    val cutoff = LocalDate.now().minusDays(RETAINED_DAYS - 1).toString()
+    return filterKeys { it >= cutoff }
+  }
   private fun Map<String, WatchMediaStats>.trimMedia(): Map<String, WatchMediaStats> =
     entries.sortedByDescending { it.value.lastWatchedAt }.take(250).associate { it.toPair() }
 
   private companion object {
     const val TAG = "WatchStatsRepository"
+    const val RETAINED_DAYS = 90L
   }
 }

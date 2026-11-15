@@ -23,8 +23,8 @@ class WatchStatsRepositoryTest {
     File(context.filesDir, "watch_stats.json").delete()
     val repository = WatchStatsRepository(context)
     repository.recordSession(video("a"))
-    repository.recordPlayback(video("a"), 40)
-    repository.recordPlayback(audio("b"), 25)
+    repository.recordPlayback(video("a"), 40, repository.resetVersion.value)
+    repository.recordPlayback(audio("b"), 25, repository.resetVersion.value)
 
     val stats = repository.snapshot()
     assertEquals(65L, stats.totalSeconds)
@@ -40,11 +40,11 @@ class WatchStatsRepositoryTest {
   fun ignoresNonPositiveDurationsAndClearResets() = runBlocking {
     File(context.filesDir, "watch_stats.json").delete()
     val repository = WatchStatsRepository(context)
-    repository.recordPlayback(video("a"), 0)
-    repository.recordPlayback(video("a"), -5)
+    repository.recordPlayback(video("a"), 0, repository.resetVersion.value)
+    repository.recordPlayback(video("a"), -5, repository.resetVersion.value)
     assertEquals(0L, repository.snapshot().totalSeconds)
 
-    repository.recordPlayback(video("a"), 10)
+    repository.recordPlayback(video("a"), 10, repository.resetVersion.value)
     val before = repository.resetVersion.value
     repository.clear()
 
@@ -55,7 +55,24 @@ class WatchStatsRepositoryTest {
   @Test
   fun statsSurviveANewRepositoryOverTheSameFile() = runBlocking {
     File(context.filesDir, "watch_stats.json").delete()
-    WatchStatsRepository(context).recordPlayback(video("a"), 33)
+    WatchStatsRepository(context).let { it.recordPlayback(video("a"), 33, it.resetVersion.value) }
     assertEquals(33L, WatchStatsRepository(context).snapshot().totalSeconds)
+  }
+
+  @Test
+  fun dropsPlaybackFromBeforeAResetAndExpiredDaysAndRemovedMedia() = runBlocking {
+    File(context.filesDir, "watch_stats.json").writeText(
+      """{"days":{"2000-01-01":99},"media":{"a":{"title":"a","sourceUri":"file:///v/a.mp4"},"b":{"title":"b"}}}""",
+    )
+    val repository = WatchStatsRepository(context)
+    assertTrue(repository.snapshot().days.isEmpty())
+
+    repository.removeMedia(setOf("file:///v/a.mp4"))
+    assertEquals(setOf("b"), repository.snapshot().media.keys)
+
+    val stale = repository.resetVersion.value
+    repository.clear()
+    repository.recordPlayback(video("a"), 30, stale)
+    assertEquals(0L, repository.snapshot().totalSeconds)
   }
 }

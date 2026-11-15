@@ -53,6 +53,8 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -464,10 +466,16 @@ private fun WeeklyActivityBentoCard(days: Map<String, Long>) {
             label = "weeklyWatchBar$index",
           )
 
+          val dayDescription =
+            stringResource(
+              R.string.watch_stats_day_description,
+              date.dayOfWeek.getDisplayName(TextStyle.FULL, currentLocale()),
+              formatHumanDuration(value),
+            )
           Column(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(8.dp),
-            modifier = Modifier.weight(1f),
+            modifier = Modifier.weight(1f).clearAndSetSemantics { contentDescription = dayDescription },
           ) {
             // Track & Fill bar
             Box(
@@ -754,6 +762,7 @@ private fun WatchMediaArtwork(media: WatchMediaStats) {
       widthPx,
       heightPx,
     ) {
+      value = null // produceState keeps the previous value when its keys change
       if (!media.artworkUri.isNullOrBlank()) return@produceState
       val video =
         withContext(Dispatchers.IO) {

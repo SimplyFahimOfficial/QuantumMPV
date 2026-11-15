@@ -245,12 +245,13 @@ class App :
               val now = SystemClock.elapsedRealtime()
               val elapsedSeconds = (now - recordedAt) / 1_000L
               recordedAt = now
-              repository.recordPlayback(item, elapsedSeconds)
+              // NonCancellable: the timestamp has advanced, so the matching write must not be skipped.
+              withContext(NonCancellable) { repository.recordPlayback(item, elapsedSeconds, resetVersion) }
             }
           } finally {
             val remainder = (SystemClock.elapsedRealtime() - recordedAt) / 1_000L
             if (remainder > 0) {
-              withContext(NonCancellable) { repository.recordPlayback(item, remainder) }
+              withContext(NonCancellable) { repository.recordPlayback(item, remainder, resetVersion) }
             }
           }
         }
