@@ -46,6 +46,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -78,6 +79,7 @@ import com.quantummpv.app.ui.player.TrackNode
 import com.quantummpv.app.ui.player.toObject
 import com.quantummpv.app.ui.theme.DarkMode
 import com.quantummpv.app.ui.theme.MpvrxTheme
+import com.quantummpv.app.ui.theme.rememberThemeReveal
 import com.quantummpv.app.ui.update.UpdateSheet
 import com.quantummpv.app.ui.update.UpdateViewModel
 import com.quantummpv.app.ui.utils.LocalBackStack
@@ -90,6 +92,7 @@ import com.quantummpv.app.utils.media.fileExtension
 import com.quantummpv.app.utils.permission.PermissionUtils
 import com.quantummpv.app.utils.storage.FileTypeUtils
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.serialization.json.Json
 import org.koin.android.ext.android.getKoin
 import org.koin.android.ext.android.inject
@@ -176,7 +179,15 @@ class MainActivity : AppCompatActivity() {
         remember(dark, isSystemInDarkTheme) {
           dark == DarkMode.Dark || (dark == DarkMode.System && isSystemInDarkTheme)
         }
-      LaunchedEffect(isDarkMode) { applyEdgeToEdge(isDarkMode) }
+      val themeReveal = rememberThemeReveal()
+
+      LaunchedEffect(isDarkMode) {
+        if (themeReveal.isAnimating) {
+          snapshotFlow { themeReveal.isAnimating to themeReveal.progress }
+            .first { (isAnimating, progress) -> !isAnimating || progress >= SYSTEM_BAR_THEME_SWITCH_PROGRESS }
+        }
+        applyEdgeToEdge(isDarkMode)
+      }
 
       // Auto-connect to saved network connections.
       // Gated behind both the user setting and a per-process flag so we only
@@ -235,7 +246,7 @@ class MainActivity : AppCompatActivity() {
           }
         }
       } else {
-        MpvrxTheme {
+        MpvrxTheme(reveal = themeReveal) {
           Surface(modifier = Modifier.fillMaxSize()) {
             Navigator()
           }
@@ -465,6 +476,10 @@ class MainActivity : AppCompatActivity() {
       window.isNavigationBarContrastEnforced = true
     }
     appliedEdgeToEdgeDarkMode = isDarkMode
+  }
+
+  private companion object {
+    const val SYSTEM_BAR_THEME_SWITCH_PROGRESS = 0.55f
   }
 
   /**
