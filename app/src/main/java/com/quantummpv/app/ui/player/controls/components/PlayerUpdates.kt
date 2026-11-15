@@ -36,7 +36,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -103,7 +102,7 @@ fun PlayerUpdate(
 ) {
   val controlsOffset = rememberPlayerUpdateOffset()
 
-  Surface(
+  PlayerGlassSurface(
     shape = RoundedCornerShape(100.dp),
     color = MaterialTheme.colorScheme.surfaceContainer.copy(alpha = 0.55f),
     contentColor = MaterialTheme.colorScheme.onSurface,
@@ -226,7 +225,7 @@ fun ResumeAvailablePlayerUpdate(
         color = MaterialTheme.colorScheme.onSurface,
         style = MaterialTheme.typography.bodyMedium,
       )
-      Surface(
+      PlayerGlassSurface(
         shape = RoundedCornerShape(100.dp),
         color = MaterialTheme.colorScheme.primary.copy(alpha = 0.22f),
         border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.5f)),
@@ -266,7 +265,7 @@ fun ResumedFromPlayerUpdate(
         color = MaterialTheme.colorScheme.onSurface,
         style = MaterialTheme.typography.bodyMedium,
       )
-      Surface(
+      PlayerGlassSurface(
         shape = RoundedCornerShape(100.dp),
         color = MaterialTheme.colorScheme.primary.copy(alpha = 0.22f),
         border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.5f)),

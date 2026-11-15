@@ -22,7 +22,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -46,6 +45,7 @@ import com.quantummpv.app.ui.player.VideoAspect
 import com.quantummpv.app.ui.player.controls.components.ControlsButton
 import com.quantummpv.app.ui.player.controls.components.ControlsGroup
 import com.quantummpv.app.ui.player.controls.components.KeepControlsShownWhileScrolling
+import com.quantummpv.app.ui.player.controls.components.PlayerGlassSurface
 import com.quantummpv.app.ui.player.controls.components.fadingHorizontalScroll
 import com.quantummpv.app.ui.player.controls.components.playerButtonBorderColor
 import com.quantummpv.app.ui.player.controls.components.playerButtonContainerColor
@@ -99,7 +99,7 @@ fun TopPlayerControlsPortrait(
                   .MutableInteractionSource()
               }
 
-            Surface(
+            PlayerGlassSurface(
               shape = CircleShape,
               color =
                 if (hideBackground) {
