@@ -22,7 +22,7 @@ import com.quantummpv.app.ui.player.controls.LocalPlayerGlassBackdrop
 /**
  * A drop-in for the HUD's [Surface]. With the experimental player glass on, the fill and border are
  * replaced by live glass over the video, tinted with the [color] the caller chose; otherwise this is a
- * plain [Surface]. A transparent [color] (buttons drawn without a background) never gets glass.
+ * plain [Surface]. A transparent [color] or `glass = false` (hide button background) never gets glass.
  *
  * The glass is drawn as the first layer inside the surface, so it takes the final size and shape the
  * caller's modifiers produce, and a click ripple or focus highlight on [modifier] still sits on top.
@@ -36,10 +36,11 @@ internal fun PlayerGlassSurface(
   tonalElevation: Dp = 0.dp,
   shadowElevation: Dp = 0.dp,
   border: BorderStroke? = null,
+  glass: Boolean = true,
   content: @Composable () -> Unit,
 ) {
   val backdrop = LocalPlayerGlassBackdrop.current
-  if (backdrop == null || color.alpha <= 0f) {
+  if (backdrop == null || !glass || color.alpha <= 0f) {
     Surface(modifier, shape, color, contentColor, tonalElevation, shadowElevation, border, content)
     return
   }

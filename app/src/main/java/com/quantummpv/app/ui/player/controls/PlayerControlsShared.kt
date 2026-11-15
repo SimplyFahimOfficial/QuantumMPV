@@ -423,6 +423,7 @@ fun renderPlayerButton(
                     MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f),
                   )
                 },
+              glass = !hideBackground,
               modifier = Modifier.height(buttonSize),
             ) {
               Row(
@@ -971,6 +972,7 @@ fun renderPlayerButton(
                     MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f),
                   )
                 },
+              glass = !hideBackground,
               modifier = Modifier.height(buttonSize),
             ) {
               Row(
