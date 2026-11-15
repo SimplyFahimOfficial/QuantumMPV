@@ -1097,6 +1097,7 @@ val DatabaseModule =
     }
 
     single { ThumbnailRepository(androidContext()) }
+    single { com.quantummpv.app.repository.WatchStatsRepository(androidContext()) }
 
     single {
       com.quantummpv.app.database.repository.VideoMetadataCacheRepository(
@@ -1156,6 +1157,7 @@ val DatabaseModule =
     single {
       com.quantummpv.app.database.repository.SecureFolderRepository(
         dao = get<MpvRxDatabase>().secureMediaDao(),
+        watchStats = get(),
       )
     }
 

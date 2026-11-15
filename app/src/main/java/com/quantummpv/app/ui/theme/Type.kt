@@ -183,6 +183,9 @@ val AppTypography =
     )
   }
 
+/** The fork has no separate expressive display face, so display text uses the regular face for its script. */
+fun expressiveDisplayFontForText(text: String): FontFamily = fontFamilyForText(text)
+
 fun fontFamilyForText(text: String): FontFamily =
   if (text.requiresSystemFontFallback()) FontFamily.SansSerif else GoogleSansRounded
 

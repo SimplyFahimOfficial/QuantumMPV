@@ -17,6 +17,7 @@ The app stores the following locally, and only on your device:
 
 - your settings and playback preferences
 - playback history and resume positions
+- watching statistics: play time per day and per title, kept in a file in the app's private storage; the Profile tab can reset it
 - playlists, folder shortcuts, and cached media metadata (titles, durations,
   thumbnails, chapter and track information)
 
