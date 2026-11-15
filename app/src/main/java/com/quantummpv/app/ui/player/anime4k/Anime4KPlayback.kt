@@ -104,6 +104,8 @@ private data class VideoGeometrySnapshot(
 )
 
 internal fun clearAnime4KShaders() {
+  // Runs on every video-size change; with none of ours in the list, rewriting it only rebuilds mpv's render pipeline.
+  if (currentShaderList().none(::isBuiltInAnime4KShaderPath)) return
   withPreservedVideoGeometry {
     setShaderList(currentShaderList().filterNot(::isBuiltInAnime4KShaderPath))
   }

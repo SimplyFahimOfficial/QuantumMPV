@@ -5,9 +5,12 @@
 package com.quantummpv.app.ui.browser.music
 
 import android.app.Application
+import android.content.Context
+import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.net.Uri
 import android.text.format.DateUtils
+import android.util.LruCache
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -87,7 +90,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.Layout
@@ -1422,6 +1424,38 @@ fun MusicLibraryContent(
   }
 }
 
+private const val ALBUM_ART_MAX_EDGE = 1024
+private const val ALBUM_ART_CACHE_BYTES = 24 * 1024 * 1024
+
+// Rows scrolled back into view reuse the decoded cover instead of decoding it again.
+private val albumArtCache =
+  object : LruCache<String, Bitmap>(ALBUM_ART_CACHE_BYTES) {
+    override fun sizeOf(
+      key: String,
+      value: Bitmap,
+    ) = value.byteCount
+  }
+
+/** Decodes at most about [ALBUM_ART_MAX_EDGE] px per side; embedded covers can be several thousand px. */
+internal fun decodeAlbumArt(
+  context: Context,
+  uri: Uri,
+): Bitmap? =
+  try {
+    val resolver = context.contentResolver
+    val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
+    resolver.openInputStream(uri)?.use { BitmapFactory.decodeStream(it, null, bounds) }
+    var sample = 1
+    while (bounds.outWidth / (sample * 2) >= ALBUM_ART_MAX_EDGE && bounds.outHeight / (sample * 2) >= ALBUM_ART_MAX_EDGE) {
+      sample *= 2
+    }
+    resolver.openInputStream(uri)?.use {
+      BitmapFactory.decodeStream(it, null, BitmapFactory.Options().apply { inSampleSize = sample })
+    }
+  } catch (e: Exception) {
+    null
+  }
+
 @Composable
 fun LocalAlbumArtImage(
   uri: Uri?,
@@ -1429,22 +1463,13 @@ fun LocalAlbumArtImage(
   modifier: Modifier = Modifier
 ) {
   val context = LocalContext.current
-  var bitmap by remember(uri) { mutableStateOf<ImageBitmap?>(null) }
+  var bitmap by remember(uri) { mutableStateOf(uri?.let { albumArtCache.get(it.toString()) }?.asImageBitmap()) }
 
   LaunchedEffect(uri) {
-    if (uri != null) {
-      bitmap = withContext(Dispatchers.IO) {
-        try {
-          context.contentResolver.openInputStream(uri)?.use { stream ->
-            BitmapFactory.decodeStream(stream)?.asImageBitmap()
-          }
-        } catch (e: Exception) {
-          null
-        }
-      }
-    } else {
-      bitmap = null
-    }
+    if (uri == null || bitmap != null) return@LaunchedEffect
+    val decoded = withContext(Dispatchers.IO) { decodeAlbumArt(context, uri) }
+    if (decoded != null) albumArtCache.put(uri.toString(), decoded)
+    bitmap = decoded?.asImageBitmap()
   }
 
   val loaded = bitmap

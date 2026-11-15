@@ -164,6 +164,8 @@ private val MinimumSideBySideMiniPlayerWindowWidth =
     SideBySideMiniPlayerEndPadding +
     NavigationBarState.landscapeMiniPlayerMinimumWidth
 
+private const val NEIGHBOUR_TAB_PREFETCH_DELAY_MS = 1_500L
+
 @Serializable
 object MainScreen : Screen {
   internal enum class MainTab {
@@ -298,6 +300,12 @@ object MainScreen : Screen {
         initialPage = initialPageIndex,
         pageCount = { visibleTabs.size },
       )
+    // Neighbouring tabs compose after the first screen has settled; Music starts a library scan when composed.
+    var prefetchNeighbourTabs by remember { mutableStateOf(false) }
+    LaunchedEffect(Unit) {
+      kotlinx.coroutines.delay(NEIGHBOUR_TAB_PREFETCH_DELAY_MS)
+      prefetchNeighbourTabs = true
+    }
     var tabNavigationJob by remember { mutableStateOf<Job?>(null) }
     // Dock taps fade through (out 90 ms, in 210 ms with 0.92 -> 1 scale); swipes keep the pager.
     val tabFadeOut = remember { androidx.compose.animation.core.Animatable(1f) }
@@ -486,7 +494,7 @@ object MainScreen : Screen {
                     }
                   }.captureLiquidGlass(liquidGlassCapture),
               key = { page -> visibleTabs.getOrNull(page)?.name ?: page },
-              beyondViewportPageCount = 1,
+              beyondViewportPageCount = if (prefetchNeighbourTabs) 1 else 0,
               userScrollEnabled = !isPermissionDenied,
             ) { page ->
               val tab = visibleTabs.getOrNull(page) ?: return@NavigationPager
