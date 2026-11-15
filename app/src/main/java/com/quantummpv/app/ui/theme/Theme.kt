@@ -105,8 +105,7 @@ internal fun lerpColorScheme(
  * screen, so a quick second tap never jumps. [target] must be a remembered instance.
  */
 @Composable
-private fun rememberAnimatedColorScheme(target: ColorScheme): ColorScheme {
-  val reduceMotion = LocalMotionPolicy.current.shouldReduceAnimations
+private fun rememberAnimatedColorScheme(target: ColorScheme, reduceMotion: Boolean): ColorScheme {
   val progress = remember { Animatable(1f) }
   var from by remember { mutableStateOf(target) }
   var to by remember { mutableStateOf(target) }
@@ -169,10 +168,11 @@ fun MpvrxTheme(content: @Composable () -> Unit,
         resolveAppColorScheme(context, appTheme, useDarkTheme = false, amoledMode = amoledMode)
       }
     }
-  val colorScheme = rememberAnimatedColorScheme(targetColorScheme)
 
   val glassConfig = rememberGlassConfig()
+  // Computed here, not read from LocalMotionPolicy: that local is provided below, so the fade would always see the default policy.
   val motionPolicy = rememberMotionPolicy()
+  val colorScheme = rememberAnimatedColorScheme(targetColorScheme, motionPolicy.shouldReduceAnimations)
 
   CompositionLocalProvider(
     LocalSpacing provides Spacing(),
