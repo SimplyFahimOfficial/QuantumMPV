@@ -26,7 +26,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -51,7 +50,7 @@ fun CurrentChapter(
   onClick: () -> Unit = {},
   onLongClick: () -> Unit = {},
 ) {
-  Surface(
+  PlayerGlassSurface(
     modifier =
       modifier
         .height(45.dp)
