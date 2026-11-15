@@ -72,7 +72,6 @@ import com.quantummpv.app.ui.preferences.components.ThemePicker
 import com.quantummpv.app.ui.theme.CustomThemeDefinition
 import com.quantummpv.app.ui.theme.DarkMode
 import com.quantummpv.app.ui.theme.DesignTokens.MotionStyle
-import com.quantummpv.app.ui.theme.LocalThemeTransitionState
 import com.quantummpv.app.ui.utils.LocalBackStack
 import com.quantummpv.app.ui.utils.LocalShowSettingsBackArrow
 import com.quantummpv.app.ui.utils.currentMpvConfigOverrideOptions
@@ -81,7 +80,6 @@ import com.quantummpv.app.ui.utils.popSafely
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.toImmutableList
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.Serializable
@@ -111,7 +109,6 @@ object AppearancePreferencesScreen : Screen {
     val backstack = LocalBackStack.current
     val scope = rememberCoroutineScope()
     val systemDarkTheme = isSystemInDarkTheme()
-    val themeTransition = LocalThemeTransitionState.current
 
     val darkMode by preferences.darkMode.collectAsState()
     val appTheme by preferences.appTheme.collectAsState()
@@ -300,15 +297,7 @@ object AppearancePreferencesScreen : Screen {
                             )
                           }.toImmutableList(),
                       selectedIndices = persistentListOf(DarkMode.entries.indexOf(darkMode)),
-                      onClick = { index, position ->
-                        if (themeTransition?.isAnimating != true) {
-                          themeTransition?.startTransition(position)
-                          scope.launch {
-                            delay(50)
-                            preferences.darkMode.set(DarkMode.entries[index])
-                          }
-                        }
-                      },
+                      onClick = { index, _ -> preferences.darkMode.set(DarkMode.entries[index]) },
                     )
                   }
 
@@ -321,28 +310,15 @@ object AppearancePreferencesScreen : Screen {
                     customThemes = customThemes,
                     selectedCustomThemeName = selectedCustomThemeName,
                     isDarkMode = isDarkMode,
-                    onThemeSelected = { theme, position ->
-                      if (
-                        (theme != appTheme || selectedCustomThemeName.isNotBlank()) &&
-                        themeTransition?.isAnimating != true
-                      ) {
-                        themeTransition?.startTransition(position)
-                        scope.launch {
-                          delay(50)
-                          preferences.appTheme.set(theme)
-                          preferences.selectedCustomThemeName.set("")
-                        }
+                    onThemeSelected = { theme, _ ->
+                      if (theme != appTheme || selectedCustomThemeName.isNotBlank()) {
+                        preferences.appTheme.set(theme)
+                        preferences.selectedCustomThemeName.set("")
                       }
                     },
                     onAddCustomTheme = { backstack.navigateTo(CustomThemeEditorScreen()) },
-                    onCustomThemeSelected = { theme, position ->
-                      if (theme.name != selectedCustomThemeName && themeTransition?.isAnimating != true) {
-                        themeTransition?.startTransition(position)
-                        scope.launch {
-                          delay(50)
-                          preferences.selectedCustomThemeName.set(theme.name)
-                        }
-                      }
+                    onCustomThemeSelected = { theme, _ ->
+                      if (theme.name != selectedCustomThemeName) preferences.selectedCustomThemeName.set(theme.name)
                     },
                     onEditCustomTheme = { name -> backstack.navigateTo(CustomThemeEditorScreen(name)) },
                     onDeleteCustomTheme = { name ->
@@ -437,17 +413,7 @@ object AppearancePreferencesScreen : Screen {
                   SwitchPreference(
                     modifier = Modifier.settingsSearchTarget(R.string.pref_appearance_amoled_mode_title),
                     value = amoledMode,
-                    onValueChange = { newValue ->
-                      if (themeTransition?.isAnimating != true) {
-                        themeTransition?.startTransition(
-                          androidx.compose.ui.geometry.Offset.Zero,
-                        )
-                        scope.launch {
-                          delay(50)
-                          preferences.amoledMode.set(newValue)
-                        }
-                      }
-                    },
+                    onValueChange = { preferences.amoledMode.set(it) },
                     title = {
                       Text(
                         text = stringResource(id = R.string.pref_appearance_amoled_mode_title),

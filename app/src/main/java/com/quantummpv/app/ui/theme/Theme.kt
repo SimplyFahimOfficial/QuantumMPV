@@ -10,14 +10,11 @@
 package com.quantummpv.app.ui.theme
 
 import android.content.Context
-import android.graphics.Bitmap
 import android.os.Build
-import android.view.View
 import androidx.annotation.StringRes
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.tween
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
@@ -33,112 +30,22 @@ import androidx.compose.material3.dynamicDarkColorScheme
 import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.staticCompositionLocalOf
-import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.drawWithCache
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.BlendMode
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.CompositingStrategy
-import androidx.compose.ui.graphics.asImageBitmap
-import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.platform.LocalView
-import androidx.compose.ui.unit.dp
-import androidx.core.view.drawToBitmap
 import com.quantummpv.app.R
 import com.quantummpv.app.preferences.AppearancePreferences
 import com.quantummpv.app.preferences.preference.collectAsState
 import com.quantummpv.app.ui.theme.DesignTokens.rememberGlassConfig
 import org.koin.compose.koinInject
-import kotlin.math.hypot
-
-// ============================================================================
-// Theme Transition Animation State & Components
-// ============================================================================
-
-/**
- * State for managing theme transition animations.
- * This class holds the animation state and provides methods to trigger transitions.
- */
-class ThemeTransitionState {
-  var isAnimating by mutableStateOf(false)
-    private set
-  var clickPosition by mutableStateOf(Offset.Zero)
-    private set
-  var screenshotBitmap by mutableStateOf<Bitmap?>(null)
-    private set
-  var animationProgress = Animatable(0f)
-    private set
-
-  private var captureView: View? = null
-
-  fun setView(view: View?) {
-    captureView = view
-  }
-
-  /**
-   * Start a theme transition animation from the given position.
-   * Captures the current screen and begins the reveal animation.
-   * Will NOT start a new animation if one is already in progress.
-   */
-  fun startTransition(position: Offset) {
-    // Don't allow new animation while one is in progress
-    if (isAnimating) return
-
-    captureView?.let { view ->
-      try {
-        // Capture before setting isAnimating to ensure we get the current state
-        val bitmap = view.drawToBitmap()
-        animationProgress = Animatable(0f)
-        screenshotBitmap = bitmap
-        clickPosition = position
-        isAnimating = true
-      } catch (e: Exception) {
-        // If capture fails, just skip the animation
-        screenshotBitmap = null
-        isAnimating = false
-      }
-    }
-  }
-
-  fun finishTransition() {
-    val oldBitmap = screenshotBitmap
-    screenshotBitmap = null
-    clickPosition = Offset.Zero
-    isAnimating = false
-    // Let Compose detach the ImageBitmap before releasing its Android backing bitmap.
-    captureView?.postDelayed(
-      { oldBitmap?.takeUnless { it.isRecycled }?.recycle() },
-      BITMAP_RECYCLE_DELAY_MS,
-    )
-  }
-
-  suspend fun resetProgress() {
-    animationProgress.snapTo(0f)
-  }
-
-  private companion object {
-    const val BITMAP_RECYCLE_DELAY_MS = 96L
-  }
-}
-
-/**
- * CompositionLocal to provide ThemeTransitionState down the composition tree
- */
-val LocalThemeTransitionState = staticCompositionLocalOf<ThemeTransitionState?> { null }
 
 /** Dark counterpart of the selected app palette, even while the app itself is using light mode. */
 internal val LocalDarkAppColorScheme = staticCompositionLocalOf<ColorScheme?> { null }
@@ -146,125 +53,77 @@ internal val LocalDarkAppColorScheme = staticCompositionLocalOf<ColorScheme?> { 
 /** Selected palette, allowing reusable surfaces to add restrained theme-specific treatment. */
 val LocalAppTheme = staticCompositionLocalOf { AppTheme.Default }
 
-@Composable
-fun rememberThemeTransitionState(): ThemeTransitionState = remember { ThemeTransitionState() }
+private const val THEME_FADE_DURATION_MS = 260
+
+/** Linear blend of every color role the app reads; roles not listed keep [a]'s value. */
+internal fun lerpColorScheme(
+  a: ColorScheme,
+  b: ColorScheme,
+  t: Float,
+): ColorScheme =
+  a.copy(
+    primary = lerp(a.primary, b.primary, t),
+    onPrimary = lerp(a.onPrimary, b.onPrimary, t),
+    primaryContainer = lerp(a.primaryContainer, b.primaryContainer, t),
+    onPrimaryContainer = lerp(a.onPrimaryContainer, b.onPrimaryContainer, t),
+    inversePrimary = lerp(a.inversePrimary, b.inversePrimary, t),
+    secondary = lerp(a.secondary, b.secondary, t),
+    onSecondary = lerp(a.onSecondary, b.onSecondary, t),
+    secondaryContainer = lerp(a.secondaryContainer, b.secondaryContainer, t),
+    onSecondaryContainer = lerp(a.onSecondaryContainer, b.onSecondaryContainer, t),
+    tertiary = lerp(a.tertiary, b.tertiary, t),
+    onTertiary = lerp(a.onTertiary, b.onTertiary, t),
+    tertiaryContainer = lerp(a.tertiaryContainer, b.tertiaryContainer, t),
+    onTertiaryContainer = lerp(a.onTertiaryContainer, b.onTertiaryContainer, t),
+    background = lerp(a.background, b.background, t),
+    onBackground = lerp(a.onBackground, b.onBackground, t),
+    surface = lerp(a.surface, b.surface, t),
+    onSurface = lerp(a.onSurface, b.onSurface, t),
+    surfaceVariant = lerp(a.surfaceVariant, b.surfaceVariant, t),
+    onSurfaceVariant = lerp(a.onSurfaceVariant, b.onSurfaceVariant, t),
+    surfaceTint = lerp(a.surfaceTint, b.surfaceTint, t),
+    inverseSurface = lerp(a.inverseSurface, b.inverseSurface, t),
+    inverseOnSurface = lerp(a.inverseOnSurface, b.inverseOnSurface, t),
+    error = lerp(a.error, b.error, t),
+    onError = lerp(a.onError, b.onError, t),
+    errorContainer = lerp(a.errorContainer, b.errorContainer, t),
+    onErrorContainer = lerp(a.onErrorContainer, b.onErrorContainer, t),
+    outline = lerp(a.outline, b.outline, t),
+    outlineVariant = lerp(a.outlineVariant, b.outlineVariant, t),
+    scrim = lerp(a.scrim, b.scrim, t),
+    surfaceBright = lerp(a.surfaceBright, b.surfaceBright, t),
+    surfaceDim = lerp(a.surfaceDim, b.surfaceDim, t),
+    surfaceContainer = lerp(a.surfaceContainer, b.surfaceContainer, t),
+    surfaceContainerHigh = lerp(a.surfaceContainerHigh, b.surfaceContainerHigh, t),
+    surfaceContainerHighest = lerp(a.surfaceContainerHighest, b.surfaceContainerHighest, t),
+    surfaceContainerLow = lerp(a.surfaceContainerLow, b.surfaceContainerLow, t),
+    surfaceContainerLowest = lerp(a.surfaceContainerLowest, b.surfaceContainerLowest, t),
+  )
 
 /**
- * Reveals the new theme below a frozen frame of the old theme. The old frame is
- * removed by a feathered radial alpha mask, which gives the transition the soft
- * blur edge used by Telegram-style theme switches without blurring text or video.
+ * Cross-fades to [target] whenever it changes. A change mid-fade starts from the colors on
+ * screen, so a quick second tap never jumps. [target] must be a remembered instance.
  */
 @Composable
-private fun ThemeTransitionOverlay(
-  state: ThemeTransitionState,
-  content: @Composable () -> Unit,
-) {
-  val view = LocalView.current
-  val reduceMotion = LocalMotionPolicy.current.shouldReduceAnimations
-  val featherPx = with(LocalDensity.current) { THEME_REVEAL_FEATHER.toPx() }
-  val bitmap = state.screenshotBitmap
-  val progress = state.animationProgress.value
+private fun rememberAnimatedColorScheme(target: ColorScheme, reduceMotion: Boolean): ColorScheme {
+  val progress = remember { Animatable(1f) }
+  var from by remember { mutableStateOf(target) }
+  var to by remember { mutableStateOf(target) }
 
-  DisposableEffect(view, state) {
-    state.setView(view)
-    onDispose { state.setView(null) }
-  }
-
-  LaunchedEffect(state.isAnimating, bitmap, reduceMotion) {
-    if (!state.isAnimating || bitmap == null) return@LaunchedEffect
-
-    state.resetProgress()
-    // Give the newly selected Material color scheme one frame to settle below the snapshot.
-    withFrameNanos { }
+  LaunchedEffect(target) {
+    if (target === to) return@LaunchedEffect
+    from = lerpColorScheme(from, to, progress.value)
+    to = target
+    progress.snapTo(0f)
     if (reduceMotion) {
-      state.animationProgress.snapTo(1f)
+      progress.snapTo(1f)
     } else {
-      // Keep the frozen frame opaque while the new theme finishes its root recomposition.
-      kotlinx.coroutines.delay(THEME_CONTENT_SETTLE_DELAY_MS.toLong())
-      state.animationProgress.animateTo(
-        targetValue = 1f,
-        animationSpec =
-          tween(
-            durationMillis = THEME_REVEAL_DURATION_MS,
-            easing = FastOutSlowInEasing,
-          ),
-      )
-    }
-    state.finishTransition()
-  }
-
-  Box(modifier = Modifier.fillMaxSize()) {
-    content()
-
-    if (bitmap != null && state.isAnimating) {
-      val frozenFrame = remember(bitmap) { bitmap.asImageBitmap() }
-      Image(
-        bitmap = frozenFrame,
-        contentDescription = null,
-        contentScale = ContentScale.FillBounds,
-        modifier =
-          Modifier
-            .fillMaxSize()
-            .graphicsLayer { compositingStrategy = CompositingStrategy.Offscreen }
-            .drawWithCache {
-              val center =
-                state.clickPosition.takeUnless { it == Offset.Zero }
-                  ?: Offset(size.width / 2f, size.height / 2f)
-              val maxRadius =
-                maxOf(
-                  hypot(center.x, center.y),
-                  hypot(size.width - center.x, center.y),
-                  hypot(center.x, size.height - center.y),
-                  hypot(size.width - center.x, size.height - center.y),
-                )
-              val revealRadius = (maxRadius + featherPx) * progress
-              val maskRadius = (revealRadius + featherPx).coerceAtLeast(1f)
-              val clearStop = ((revealRadius - featherPx) / maskRadius).coerceIn(0f, 1f)
-              val softStop = (revealRadius / maskRadius).coerceIn(clearStop, 1f)
-              val mask =
-                Brush.radialGradient(
-                  colorStops =
-                    arrayOf(
-                      0f to Color.Transparent,
-                      clearStop to Color.Transparent,
-                      softStop to Color.Black.copy(alpha = 0.28f),
-                      1f to Color.Black,
-                    ),
-                  center = center,
-                  radius = maskRadius,
-                )
-
-              onDrawWithContent {
-                drawContent()
-                if (progress > 0f) {
-                  drawRect(brush = mask, blendMode = BlendMode.DstIn)
-                }
-              }
-            }.pointerInput(Unit) {
-              awaitPointerEventScope {
-                while (true) {
-                  awaitPointerEvent().changes.forEach { it.consume() }
-                }
-              }
-            },
-      )
+      progress.animateTo(1f, tween(THEME_FADE_DURATION_MS, easing = FastOutSlowInEasing))
     }
   }
-}
-
-private const val THEME_CONTENT_SETTLE_DELAY_MS = 100
-private const val THEME_REVEAL_DURATION_MS = 650
-private val THEME_REVEAL_FEATHER = 30.dp
-
-@Composable
-private fun ThemeTransitionContent(content: @Composable () -> Unit) {
-  val state = LocalThemeTransitionState.current
-
-  if (state != null) {
-    ThemeTransitionOverlay(state = state, content = content)
-  } else {
-    content()
-  }
+  // Reduced motion switched on mid-fade: finish at once. snapTo also cancels the running animation.
+  LaunchedEffect(reduceMotion) { if (reduceMotion) progress.snapTo(1f) }
+  return if (progress.value >= 1f) to else lerpColorScheme(from, to, progress.value)
 }
 
 // ============================================================================
@@ -273,13 +132,11 @@ private fun ThemeTransitionContent(content: @Composable () -> Unit) {
 
 /**
  * Applies the selected palette, typography, and shapes to [content].
- * Provides spacing, motion policy, glass configuration, and [transitionState] to descendants.
+ * Provides spacing, motion policy, and glass configuration to descendants.
  */
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
-fun MpvrxTheme(
-  transitionState: ThemeTransitionState = rememberThemeTransitionState(),
-  content: @Composable () -> Unit,
+fun MpvrxTheme(content: @Composable () -> Unit,
 ) {
   val preferences = koinInject<AppearancePreferences>()
   val darkMode by preferences.darkMode.collectAsState()
@@ -302,31 +159,25 @@ fun MpvrxTheme(
     }
 
   val darkColorScheme =
-    resolveAppColorScheme(
-      context = context,
-      appTheme = appTheme,
-      useDarkTheme = true,
-      amoledMode = amoledMode,
-    )
-  val colorScheme =
-    if (useDarkTheme) {
-      darkColorScheme
-    } else {
-      resolveAppColorScheme(
-        context = context,
-        appTheme = appTheme,
-        useDarkTheme = false,
-        amoledMode = amoledMode,
-      )
+    remember(context, configuration, appTheme, amoledMode) {
+      resolveAppColorScheme(context, appTheme, useDarkTheme = true, amoledMode = amoledMode)
+    }
+  val targetColorScheme =
+    remember(context, configuration, appTheme, amoledMode, useDarkTheme, darkColorScheme) {
+      if (useDarkTheme) {
+        darkColorScheme
+      } else {
+        resolveAppColorScheme(context, appTheme, useDarkTheme = false, amoledMode = amoledMode)
+      }
     }
 
-  // Provide theme transition state first, OUTSIDE MaterialExpressiveTheme
   val glassConfig = rememberGlassConfig()
+  // Computed here, not read from LocalMotionPolicy: that local is provided below, so the fade would always see the default policy.
   val motionPolicy = rememberMotionPolicy()
+  val colorScheme = rememberAnimatedColorScheme(targetColorScheme, motionPolicy.shouldReduceAnimations)
 
   CompositionLocalProvider(
     LocalSpacing provides Spacing(),
-    LocalThemeTransitionState provides transitionState,
     LocalMotionPolicy provides motionPolicy,
     LocalReduceMotion provides motionPolicy.shouldReduceAnimations,
     LocalEmphasizedTypography provides AppEmphasizedTypography,
@@ -335,17 +186,15 @@ fun MpvrxTheme(
     DesignTokens.LocalGlassConfig provides glassConfig,
   ) {
     Box(modifier = Modifier.fillMaxSize()) {
-      ThemeTransitionContent {
-        MaterialExpressiveTheme(
-          colorScheme = colorScheme,
-          typography = if (useSystemFont || localeNeedsSystemFont) SystemTypography else AppTypography,
-          shapes = AppShapes,
-          motionScheme = MotionScheme.expressive(),
-          // Routes every LocalHapticFeedback call through the app's Haptic feedback setting, the
-          // system haptic setting, and one tuned vibration table.
-          content = { com.quantummpv.app.ui.utils.ProvideAppHaptics(content) },
-        )
-      }
+      MaterialExpressiveTheme(
+        colorScheme = colorScheme,
+        typography = if (useSystemFont || localeNeedsSystemFont) SystemTypography else AppTypography,
+        shapes = AppShapes,
+        motionScheme = MotionScheme.expressive(),
+        // Routes every LocalHapticFeedback call through the app's Haptic feedback setting, the
+        // system haptic setting, and one tuned vibration table.
+        content = { com.quantummpv.app.ui.utils.ProvideAppHaptics(content) },
+      )
     }
   }
 }

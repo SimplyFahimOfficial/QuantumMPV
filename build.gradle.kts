@@ -5,6 +5,9 @@ buildscript {
     resolutionStrategy.eachDependency {
       when {
         requested.group == "org.bouncycastle" -> useVersion("1.85")
+        // GHSA-xxph-c9ww-hj94 affects Guava up to 33.7.1; keep each flavor (jre or android) on 33.7.2.
+        requested.group == "com.google.guava" && requested.name == "guava" ->
+          useVersion(if (requested.version.orEmpty().endsWith("-android")) "33.7.2-android" else "33.7.2-jre")
         requested.group == "org.apache.commons" && requested.name == "commons-lang3" -> useVersion("3.18.0")
         requested.group == "org.bitbucket.b_c" && requested.name == "jose4j" -> useVersion("0.9.6")
         requested.group == "org.jdom" && requested.name == "jdom2" -> useVersion("2.0.6.1")
@@ -31,6 +34,9 @@ allprojects {
       when {
         requested.group == "io.netty" -> useVersion("4.1.137.Final")
         requested.group == "org.bouncycastle" -> useVersion("1.85")
+        // GHSA-xxph-c9ww-hj94 affects Guava up to 33.7.1; keep each flavor (jre or android) on 33.7.2.
+        requested.group == "com.google.guava" && requested.name == "guava" ->
+          useVersion(if (requested.version.orEmpty().endsWith("-android")) "33.7.2-android" else "33.7.2-jre")
         requested.group == "org.apache.commons" && requested.name == "commons-lang3" -> useVersion("3.18.0")
         requested.group == "org.apache.httpcomponents" && requested.name == "httpclient" -> useVersion("4.5.14")
         requested.group == "org.bitbucket.b_c" && requested.name == "jose4j" -> useVersion("0.9.6")

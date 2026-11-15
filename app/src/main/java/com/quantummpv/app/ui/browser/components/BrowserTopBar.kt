@@ -31,17 +31,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.layout.boundsInWindow
-import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
@@ -56,9 +51,6 @@ import com.quantummpv.app.preferences.preference.collectAsState
 import com.quantummpv.app.ui.icons.Icon
 import com.quantummpv.app.ui.icons.Icons
 import com.quantummpv.app.ui.theme.DarkMode
-import com.quantummpv.app.ui.theme.LocalThemeTransitionState
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
 import org.koin.compose.koinInject
 
 /**
@@ -175,11 +167,6 @@ private fun NormalTopBar(
   val preferences = koinInject<AppearancePreferences>()
   val darkMode by preferences.darkMode.collectAsState()
   val darkTheme = isSystemInDarkTheme()
-  val themeTransition = LocalThemeTransitionState.current
-  val coroutineScope = rememberCoroutineScope()
-
-  // Track title bounds for animation position
-  val titleBounds = remember { mutableStateOf(Rect.Zero) }
 
   // Helper function to toggle dark mode
   fun toggleDarkMode() {
@@ -224,27 +211,9 @@ private fun NormalTopBar(
         }
       val tapModifier =
         titleModifier
-          .onGloballyPositioned { coordinates ->
-            titleBounds.value = coordinates.boundsInWindow()
-          }.pointerInput(onTitleLongPress, onTitleDoubleTap) {
+          .pointerInput(onTitleLongPress, onTitleDoubleTap) {
             detectTapGestures(
-              onTap = { localOffset ->
-                // Don't allow theme change if animation is in progress
-                if (themeTransition?.isAnimating == true) return@detectTapGestures
-
-                // Calculate window position for circular reveal
-                val windowOffset =
-                  Offset(
-                    titleBounds.value.left + localOffset.x,
-                    titleBounds.value.top + localOffset.y,
-                  )
-                themeTransition?.startTransition(windowOffset)
-                // Delay theme change to allow overlay to display first
-                coroutineScope.launch {
-                  delay(50)
-                  toggleDarkMode()
-                }
-              },
+              onTap = { toggleDarkMode() },
               onDoubleTap =
                 if (onTitleDoubleTap != null) {
                   { onTitleDoubleTap() }
