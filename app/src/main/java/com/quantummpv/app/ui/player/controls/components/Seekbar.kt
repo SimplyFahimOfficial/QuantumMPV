@@ -89,6 +89,7 @@ import com.quantummpv.app.preferences.SeekbarStyle
 import com.quantummpv.app.ui.player.SkipSegment
 import com.quantummpv.app.ui.player.clip.ClipEditorUiState
 import com.quantummpv.app.ui.player.controls.LocalPlayerButtonsClickEvent
+import com.quantummpv.app.ui.player.controls.LocalPlayerGlassBackdrop
 import com.quantummpv.app.ui.player.visualizer.AudioFeatures
 import com.quantummpv.app.ui.player.visualizer.VisualizerPalette
 import com.quantummpv.app.ui.player.visualizer.WaveVisualizerOverlay
@@ -348,12 +349,17 @@ internal fun SeekbarWithTimers(
   }
   val remainingSeconds by remember { derivedStateOf { currentRemaining().wholeSeconds() } }
 
+  val glass = LocalPlayerGlassBackdrop.current != null
+  // With glass the whole time bar sits in one capsule, so the outer modifier moves to it.
+  val body: @Composable (Modifier) -> Unit = { bodyModifier ->
   if (isPortrait) {
     Column(
       modifier =
-        modifier
+        bodyModifier
           .fillMaxWidth()
-          .then(if (applyHorizontalPadding) Modifier.padding(horizontal = MaterialTheme.spacing.large) else Modifier),
+          .then(
+            if (applyHorizontalPadding && !glass) Modifier.padding(horizontal = MaterialTheme.spacing.large) else Modifier,
+          ),
       verticalArrangement = Arrangement.spacedBy(4.dp),
     ) {
       SeekbarContent(
@@ -411,7 +417,7 @@ internal fun SeekbarWithTimers(
     }
   } else {
     Row(
-      modifier = modifier.height(if (showWavyVisualizer) 64.dp else 48.dp),
+      modifier = bodyModifier.height(if (showWavyVisualizer) 64.dp else 48.dp),
       verticalAlignment = Alignment.CenterVertically,
       horizontalArrangement = Arrangement.spacedBy(2.dp),
     ) {
@@ -464,6 +470,18 @@ internal fun SeekbarWithTimers(
         modifier = Modifier.width(60.dp),
       )
     }
+  }
+  }
+  if (glass) {
+    PlayerGlassSurface(
+      modifier = modifier.then(if (applyHorizontalPadding) Modifier.padding(horizontal = MaterialTheme.spacing.large) else Modifier),
+      shape = RoundedCornerShape(28.dp),
+      color = playerButtonContainerColor(),
+    ) {
+      body(Modifier.padding(horizontal = 14.dp, vertical = 2.dp))
+    }
+  } else {
+    body(modifier)
   }
 }
 

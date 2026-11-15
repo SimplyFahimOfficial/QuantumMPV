@@ -80,6 +80,7 @@ import com.quantummpv.app.ui.player.clip.ClipOverlayView
 import com.quantummpv.app.ui.player.controls.components.AbLoopIcon
 import com.quantummpv.app.ui.player.controls.components.ControlsButton
 import com.quantummpv.app.ui.player.controls.components.CurrentChapter
+import com.quantummpv.app.ui.player.controls.components.PlayerGlassSurface
 import com.quantummpv.app.ui.theme.AppMotion
 import com.quantummpv.app.ui.theme.spacing
 import com.quantummpv.app.ui.utils.isAnyMpvOptionOwnedByConfig
@@ -135,7 +136,7 @@ fun renderPlayerButton(
 
         val titleInteractionSource = remember { MutableInteractionSource() }
 
-        Surface(
+        PlayerGlassSurface(
           shape = CircleShape,
           color =
             if (hideBackground) {
@@ -217,7 +218,7 @@ fun renderPlayerButton(
         val configOwned = isMpvOptionOwnedByConfig("speed")
         val disabledColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
         if (isSpeedNonOne && !compact) {
-          Surface(
+          PlayerGlassSurface(
             shape = CircleShape,
             color =
               if (hideBackground) {
@@ -305,7 +306,7 @@ fun renderPlayerButton(
             modifier = Modifier.size(buttonSize),
           )
         } else {
-          Surface(
+          PlayerGlassSurface(
             shape = CircleShape,
             color =
               if (hideBackground) {
@@ -410,7 +411,7 @@ fun renderPlayerButton(
           label = "FrameNavExpandCollapse",
         ) { expanded ->
           if (expanded) {
-            Surface(
+            PlayerGlassSurface(
               shape = MaterialTheme.shapes.extraLarge,
               color = MaterialTheme.colorScheme.surfaceContainer.copy(alpha = 0.55f),
               border =
@@ -422,6 +423,7 @@ fun renderPlayerButton(
                     MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f),
                   )
                 },
+              glass = !hideBackground,
               modifier = Modifier.height(buttonSize),
             ) {
               Row(
@@ -556,7 +558,7 @@ fun renderPlayerButton(
         val geometryControlsAvailable = !zoomConfigOwned || !panXConfigOwned || !panYConfigOwned
         if (kotlin.math.abs(currentZoom) >= 0.005f && !compact) {
           @OptIn(ExperimentalFoundationApi::class)
-          Surface(
+          PlayerGlassSurface(
             shape = CircleShape,
             color =
               if (hideBackground) {
@@ -893,7 +895,7 @@ fun renderPlayerButton(
           } else {
             if (isVerticalFlipped) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
           }
-        Surface(
+        PlayerGlassSurface(
           shape = CircleShape,
           color =
             if (hideBackground) {
@@ -958,7 +960,7 @@ fun renderPlayerButton(
           label = "ABLoopExpandCollapse",
         ) { expanded ->
           if (expanded) {
-            Surface(
+            PlayerGlassSurface(
               shape = MaterialTheme.shapes.extraLarge,
               color = MaterialTheme.colorScheme.surfaceContainer.copy(alpha = 0.55f),
               border =
@@ -970,6 +972,7 @@ fun renderPlayerButton(
                     MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f),
                   )
                 },
+              glass = !hideBackground,
               modifier = Modifier.height(buttonSize),
             ) {
               Row(
@@ -1059,7 +1062,7 @@ fun renderPlayerButton(
             }
           } else {
             // Collapsed: Show the custom A-B loop icon
-            Surface(
+            PlayerGlassSurface(
               shape = CircleShape,
               color =
                 if (hideBackground) {
@@ -1139,7 +1142,7 @@ fun renderPlayerButton(
         val isAmbientEnabled by viewModel.isAmbientEnabled.collectAsState()
         val configOwned = isAnyMpvOptionOwnedByConfig(MpvConfigControlledFeatures.AMBIENT)
         @OptIn(ExperimentalFoundationApi::class)
-        Surface(
+        PlayerGlassSurface(
           shape = CircleShape,
           color =
             if (hideBackground) {
@@ -1228,7 +1231,7 @@ fun renderPlayerButton(
             modifier = Modifier.size(buttonSize),
           )
         } else {
-          Surface(
+          PlayerGlassSurface(
             shape = CircleShape,
             color =
               if (hideBackground) {
