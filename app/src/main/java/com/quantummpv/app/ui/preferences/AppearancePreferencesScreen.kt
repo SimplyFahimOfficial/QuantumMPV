@@ -72,6 +72,7 @@ import com.quantummpv.app.ui.preferences.components.ThemePicker
 import com.quantummpv.app.ui.theme.CustomThemeDefinition
 import com.quantummpv.app.ui.theme.DarkMode
 import com.quantummpv.app.ui.theme.DesignTokens.MotionStyle
+import com.quantummpv.app.ui.theme.LocalThemeReveal
 import com.quantummpv.app.ui.utils.LocalBackStack
 import com.quantummpv.app.ui.utils.LocalShowSettingsBackArrow
 import com.quantummpv.app.ui.utils.currentMpvConfigOverrideOptions
@@ -109,6 +110,7 @@ object AppearancePreferencesScreen : Screen {
     val backstack = LocalBackStack.current
     val scope = rememberCoroutineScope()
     val systemDarkTheme = isSystemInDarkTheme()
+    val themeReveal = LocalThemeReveal.current
 
     val darkMode by preferences.darkMode.collectAsState()
     val appTheme by preferences.appTheme.collectAsState()
@@ -297,7 +299,9 @@ object AppearancePreferencesScreen : Screen {
                             )
                           }.toImmutableList(),
                       selectedIndices = persistentListOf(DarkMode.entries.indexOf(darkMode)),
-                      onClick = { index, _ -> preferences.darkMode.set(DarkMode.entries[index]) },
+                      onClick = { index, position ->
+                        themeReveal.start(position) { preferences.darkMode.set(DarkMode.entries[index]) }
+                      },
                     )
                   }
 
@@ -310,15 +314,19 @@ object AppearancePreferencesScreen : Screen {
                     customThemes = customThemes,
                     selectedCustomThemeName = selectedCustomThemeName,
                     isDarkMode = isDarkMode,
-                    onThemeSelected = { theme, _ ->
+                    onThemeSelected = { theme, position ->
                       if (theme != appTheme || selectedCustomThemeName.isNotBlank()) {
-                        preferences.appTheme.set(theme)
-                        preferences.selectedCustomThemeName.set("")
+                        themeReveal.start(position) {
+                          preferences.appTheme.set(theme)
+                          preferences.selectedCustomThemeName.set("")
+                        }
                       }
                     },
                     onAddCustomTheme = { backstack.navigateTo(CustomThemeEditorScreen()) },
-                    onCustomThemeSelected = { theme, _ ->
-                      if (theme.name != selectedCustomThemeName) preferences.selectedCustomThemeName.set(theme.name)
+                    onCustomThemeSelected = { theme, position ->
+                      if (theme.name != selectedCustomThemeName) {
+                        themeReveal.start(position) { preferences.selectedCustomThemeName.set(theme.name) }
+                      }
                     },
                     onEditCustomTheme = { name -> backstack.navigateTo(CustomThemeEditorScreen(name)) },
                     onDeleteCustomTheme = { name ->
@@ -413,7 +421,9 @@ object AppearancePreferencesScreen : Screen {
                   SwitchPreference(
                     modifier = Modifier.settingsSearchTarget(R.string.pref_appearance_amoled_mode_title),
                     value = amoledMode,
-                    onValueChange = { preferences.amoledMode.set(it) },
+                    onValueChange = { newValue ->
+                      themeReveal.start(androidx.compose.ui.geometry.Offset.Zero) { preferences.amoledMode.set(newValue) }
+                    },
                     title = {
                       Text(
                         text = stringResource(id = R.string.pref_appearance_amoled_mode_title),
