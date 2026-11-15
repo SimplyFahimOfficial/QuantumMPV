@@ -121,6 +121,8 @@ private fun rememberAnimatedColorScheme(target: ColorScheme, reduceMotion: Boole
       progress.animateTo(1f, tween(THEME_FADE_DURATION_MS, easing = FastOutSlowInEasing))
     }
   }
+  // Reduced motion switched on mid-fade: finish at once. snapTo also cancels the running animation.
+  LaunchedEffect(reduceMotion) { if (reduceMotion) progress.snapTo(1f) }
   return if (progress.value >= 1f) to else lerpColorScheme(from, to, progress.value)
 }
 
