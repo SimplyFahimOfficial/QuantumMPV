@@ -22,6 +22,10 @@ class PlayerObserver(
   KoinComponent {
   private val playerPreferences: PlayerPreferences by inject()
 
+  private companion object {
+    val ACTIVITY_DOUBLE_PROPERTIES = setOf("video-params/aspect", "container-fps", "sub-scale")
+  }
+
   private fun shouldIgnoreCallback(): Boolean =
     activity.player.isExiting || !activity.isActivePlaybackOwner()
 
@@ -69,18 +73,15 @@ class PlayerObserver(
     }
   }
 
-  override fun eventProperty(property: String) {
-    if (shouldIgnoreCallback()) return
-    activity.runOnUiThread {
-      if (!shouldIgnoreCallback()) activity.onObserverEvent(property)
-    }
-  }
+  // PlayerActivity.onObserverEvent(String) has no handlers; skip the main-thread hop.
+  override fun eventProperty(property: String) = Unit
 
   override fun eventProperty(
     property: String,
     value: Long,
   ) {
-    if (shouldIgnoreCallback()) return
+    // The activity only reacts to the video size; everything else mpv reports would just wake the UI thread.
+    if (!isVideoGeometryProperty(property) || shouldIgnoreCallback()) return
     if (shouldBypassUiThread(property)) {
       activity.runIfActivePlaybackOwner { activity.onObserverEvent(property, value) }
       requestStretchVideoOrientationUpdate(property)
@@ -108,7 +109,7 @@ class PlayerObserver(
     property: String,
     value: String,
   ) {
-    if (shouldIgnoreCallback()) return
+    if ((property != "sub-text" && property.substringBeforeLast("/") != "user-data/mpvrx") || shouldIgnoreCallback()) return
     activity.runOnUiThread {
       if (!shouldIgnoreCallback()) activity.onObserverEvent(property, value)
     }
@@ -118,7 +119,8 @@ class PlayerObserver(
     property: String,
     value: Double,
   ) {
-    if (shouldIgnoreCallback()) return
+    // time-pos, playtime-remaining and the demuxer cache fire about once per frame and have no handler here.
+    if (property !in ACTIVITY_DOUBLE_PROPERTIES || shouldIgnoreCallback()) return
     if (shouldBypassUiThread(property)) {
       activity.runIfActivePlaybackOwner { activity.onObserverEvent(property, value) }
       requestStretchVideoOrientationUpdate(property)
