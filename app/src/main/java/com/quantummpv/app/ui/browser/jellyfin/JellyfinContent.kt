@@ -128,6 +128,7 @@ fun JellyfinContent(
   val uiState by viewModel.uiState.collectAsState()
   val context = LocalContext.current
   val backstack = LocalBackStack.current
+  val requestDownloadNotifications = com.quantummpv.app.ui.downloads.rememberDownloadNotificationRequest()
   val browserPreferences = koinInject<BrowserPreferences>()
   val mediaServerPreferences = koinInject<MediaServerPreferences>()
   val appearancePreferences = koinInject<AppearancePreferences>()
@@ -1009,7 +1010,10 @@ fun JellyfinContent(
                                 item.id in activeDownloadItemIds -> EpisodeDownloadState.ACTIVE
                                 else -> EpisodeDownloadState.NOT_DOWNLOADED
                               },
-                            onDownload = { viewModel.downloadItem(item) },
+                            onDownload = {
+                              requestDownloadNotifications()
+                              viewModel.downloadItem(item)
+                            },
                           )
                         } else {
                           JellyfinListItemCard(
@@ -1373,9 +1377,18 @@ fun JellyfinContent(
           viewModel.closeDetail()
         }
       },
-      onDownload = { itemToDownload -> viewModel.downloadItem(itemToDownload) },
-      onDownloadSeason = { viewModel.downloadSelectedSeason() },
-      onDownloadSeries = { viewModel.downloadWholeSeries() },
+      onDownload = { itemToDownload ->
+        requestDownloadNotifications()
+        viewModel.downloadItem(itemToDownload)
+      },
+      onDownloadSeason = {
+        requestDownloadNotifications()
+        viewModel.downloadSelectedSeason()
+      },
+      onDownloadSeries = {
+        requestDownloadNotifications()
+        viewModel.downloadWholeSeries()
+      },
       downloadedItemIds = downloadedItemIds,
       activeDownloadItemIds = activeDownloadItemIds,
     )

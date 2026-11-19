@@ -108,9 +108,11 @@ private fun QuickDownloadScreen(url: String, onFinished: () -> Unit) {
         }
       }
       Spacer(Modifier.weight(1f))
+      val requestNotifications = rememberDownloadNotificationRequest()
       Button(
         modifier = Modifier.fillMaxWidth(),
         onClick = {
+          requestNotifications()
           val title = url.substringAfterLast('/').substringBefore('?').ifBlank { "shared-download" }
           engine.enqueue(url, title, locations.linksDir(), selected.selector)
           android.widget.Toast.makeText(context, "Download added to queue", android.widget.Toast.LENGTH_SHORT).show()

@@ -144,6 +144,7 @@ object NetworkStreamingScreen : Screen {
     val bookmarkPreferences = koinInject<NetworkBookmarkPreferences>()
     val wyzieSearchRepository = koinInject<WyzieSearchRepository>()
     val linkDownloadCoordinator = koinInject<com.quantummpv.app.domain.download.LinkDownloadCoordinator>()
+    val requestDownloadNotifications = com.quantummpv.app.ui.downloads.rememberDownloadNotificationRequest()
     val torrentPickerViewModel: TorrentSelectionViewModel =
       viewModel(
         key = "network_torrent_picker",
@@ -517,6 +518,7 @@ object NetworkStreamingScreen : Screen {
                     showTorrentPicker = true
                     torrentPickerViewModel.open(TorrentSelectionInput(source = playableSource, title = entry.fileName))
                   } else {
+                    requestDownloadNotifications()
                     when (linkDownloadCoordinator.enqueue(playableSource, entry.fileName)) {
                       com.quantummpv.app.domain.download.LinkDownloadCoordinator.Route.UNSUPPORTED ->
                         android.widget.Toast

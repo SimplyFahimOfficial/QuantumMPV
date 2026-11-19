@@ -235,6 +235,7 @@ fun PlayLinkSheet(
         }
         Spacer(modifier = Modifier.width(8.dp))
         val linkDownloadCoordinator = koinInject<com.quantummpv.app.domain.download.LinkDownloadCoordinator>()
+        val requestNotifications = com.quantummpv.app.ui.downloads.rememberDownloadNotificationRequest()
         OutlinedButton(
           onClick = {
             val url = normalizedInput
@@ -244,6 +245,7 @@ fun PlayLinkSheet(
                 // Torrents download through the torrent flow.
                 onPlayLink(playableSource)
               } else {
+                requestNotifications()
                 when (linkDownloadCoordinator.enqueue(playableSource, MediaInfoParser.parseStreamTitle(playableSource))) {
                   com.quantummpv.app.domain.download.LinkDownloadCoordinator.Route.UNSUPPORTED ->
                     android.widget.Toast
