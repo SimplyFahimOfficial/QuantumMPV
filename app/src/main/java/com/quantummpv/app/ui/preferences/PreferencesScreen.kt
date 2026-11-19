@@ -196,7 +196,7 @@ object PreferencesScreen : Screen {
     val promos = rememberSettingsPromos()
     val colorScheme = MaterialTheme.colorScheme
     val emphasizedTypography = LocalEmphasizedTypography.current
-    val initialFocusRequester = rememberTvInitialFocusRequester()
+    val initialFocusRequester = rememberTvInitialFocusRequester(enabled = promos.visible != null)
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
     val stagger =
       com.quantummpv.app.ui.utils.rememberEntranceStagger(

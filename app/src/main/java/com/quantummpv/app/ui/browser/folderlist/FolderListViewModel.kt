@@ -434,7 +434,6 @@ class FolderListViewModel(
             _loadFailed.value = _allVideoFolders.value.isEmpty()
             _hasCompletedInitialLoad.value = true
           } finally {
-            published?.complete(Unit)
             if (generation == scanGeneration) {
               _isLoading.value = false
               _isEnriching.value = false
@@ -442,6 +441,7 @@ class FolderListViewModel(
             }
           }
         }
+      completeWhenDone(currentScanJob, published)
       return
     }
 
@@ -543,7 +543,6 @@ class FolderListViewModel(
           _loadFailed.value = _allVideoFolders.value.isEmpty()
           _hasCompletedInitialLoad.value = true
         } finally {
-          published?.complete(Unit)
           if (generation == scanGeneration) {
             _isLoading.value = false
             _isEnriching.value = false
@@ -551,6 +550,15 @@ class FolderListViewModel(
           }
         }
       }
+    completeWhenDone(currentScanJob, published)
+  }
+
+  /** Completion handlers also run when a job is cancelled before its body starts, where `finally` never does. */
+  private fun completeWhenDone(
+    job: Job?,
+    published: CompletableDeferred<Unit>?,
+  ) {
+    if (published != null) job?.invokeOnCompletion { published.complete(Unit) }
   }
 
   private fun folderKey(folder: VideoFolder): String =

@@ -236,17 +236,14 @@ class FileSystemBrowserViewModel(
     _isLoading.value = true
 
     val published = CompletableDeferred<Unit>()
-    viewModelScope.launch(Dispatchers.IO) {
-      try {
+    viewModelScope
+      .launch(Dispatchers.IO) {
         MediaFileRepository.clearCache()
         FolderViewScanner.clearCache()
         TreeViewScanner.clearCache()
         triggerMediaScan()
         loadCurrentDirectoryInternal(forceFileSystemCheck = true, published = published)
-      } finally {
-        published.complete(Unit)
-      }
-    }
+      }.invokeOnCompletion { published.complete(Unit) } // also runs if cancelled before the body starts
     return published
   }
 

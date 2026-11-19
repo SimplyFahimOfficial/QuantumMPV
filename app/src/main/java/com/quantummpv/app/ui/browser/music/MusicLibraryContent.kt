@@ -895,7 +895,7 @@ fun MusicLibraryContent(
             // wrapper, and two nested wrappers would translate the same content twice.
             PullRefreshBox(
               isRefreshing = remember { mutableStateOf(false) },
-              onRefresh = { musicViewModel.refreshLibrary(context) },
+              onRefresh = { musicViewModel.refreshLibraryFromPull(context) },
               enabled = activeTab != MusicTab.FOLDERS,
               modifier = Modifier.fillMaxSize(),
             ) {
