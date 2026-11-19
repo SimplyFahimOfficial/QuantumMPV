@@ -34,8 +34,8 @@ The pipeline has three stages:
 | CI/CD Build | `build.yml` | manual | Builds unsigned release APKs of the selected flavors and uploads them for 14 days | Not a gate |
 | Preview Build | `preview.yml` | push to master (app paths), manual | Signed preview APKs published to GitHub Pages and `latest.json` for the preview update channel | Not a gate |
 | Prepare Release | `prepare-release.yml` | manual | Verifies master is prepared for a version, verifies its checks, creates the tag through the API and dispatches the release workflow | Release entry point |
-| Make release | `release.yml` | `v1.X.Y` tag push, manual | Stable release pipeline (see below) | Release |
-| Make Pre Release | `pre-release.yml` | `v1.X.Y-preview.N` tag push, manual | Tagged preview release | Release |
+| Make release | `release.yml` | `v1.X.Y` or `v2.X.Y` tag push, manual | Stable release pipeline (see below) | Release |
+| Make Pre Release | `pre-release.yml` | `vX.Y.Z-preview.N` tag push, manual | Tagged preview release | Release |
 | Check upstream release | `upstream-sync-check.yml` | daily, manual | Opens a review PR (or issue on conflict) for new mpvRx upstream releases | Not a gate |
 
 GitHub-managed features complement these workflows: Dependabot version and
@@ -58,7 +58,7 @@ resolve ──► instrumented (API 30, 34) ──┐
 
 | Job | Permissions | Does |
 | --- | --- | --- |
-| `resolve` | `contents: read`, `checks: read` | Validates `v1.MINOR.PATCH`, resolves the tag to a commit, requires that commit to be on `master`, requires `versionName` and the first `CHANGELOG.md` heading to match, and waits for the required checks on that commit (`tools/verify_commit_checks.py`) |
+| `resolve` | `contents: read`, `checks: read` | Validates `v1.MINOR.PATCH` or `v2.MINOR.PATCH`, resolves the tag to a commit, requires that commit to be on `master`, requires `versionName` and the first `CHANGELOG.md` heading to match, and waits for the required checks on that commit (`tools/verify_commit_checks.py`) |
 | `instrumented` | `contents: read` | Calls `instrumented-tests.yml` on the tagged commit |
 | `build` | `contents: read` | Builds the three release flavors without a Gradle cache, checks application ID, `versionName`, the expected `versionCode` per ABI and that no APK is debuggable, verifies native contents, uploads unsigned APKs (1-day retention) |
 | `sign` | none, `production` environment | Fails first if `vars.RELEASE_SIGNING_CERT_SHA256` is unset or malformed, then downloads the unsigned APKs, signs them with `apksigner`, verifies signatures, checks that all APKs share one certificate and that it matches `vars.RELEASE_SIGNING_CERT_SHA256`, uploads signed APKs (1-day retention). No Gradle or repository code runs here. |

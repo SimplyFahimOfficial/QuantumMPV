@@ -112,3 +112,6 @@ jobs:
 
       - name: Test the release check gate
         run: python3 tools/test_verify_commit_checks.py
+
+      - name: Test release version preparation
+        run: python3 tools/test_prepare_release.py

@@ -17,6 +17,8 @@ build = read("app/build.gradle.kts")
 manifest = read("app/src/main/AndroidManifest.xml")
 updater = read("app/src/main/java/com/quantummpv/app/domain/update/UpdateManager.kt")
 release = read(".github/workflows/release.yml")
+prepare_workflow = read(".github/workflows/prepare-release.yml")
+preview = read(".github/workflows/pre-release.yml")
 prepare = read("tools/prepare_release.py")
 jellyfin_client = read("app/src/main/java/com/quantummpv/app/data/jellyfin/JellyfinClient.kt")
 jellyfin_settings = read("app/src/main/java/com/quantummpv/app/ui/preferences/MediaServersPreferencesScreen.kt")
@@ -28,10 +30,13 @@ checks = {
     "QuantumMPV updater assets": 'asset.name.startsWith("QuantumMPV-"' in updater,
     "QuantumMPV stable endpoint": 'repos/SimplyFahimOfficial/QuantumMPV/releases/latest' in updater,
     "no upstream asset prefix in updater": 'startsWith("mpvRx-"' not in updater,
-    # release.yml must only accept v1.MINOR.PATCH stable tags.
-    "v1 release guard": (
-        ('tag_name" != v1.*' in release or 'tag_name" =~ ^v1\\.[0-9]+\\.[0-9]+$' in release)
-        and 'QUANTUMMPV_MAJOR_VERSION = 1' in prepare
+    # Stable release validation and version preparation must agree on v1/v2.
+    "v1 and v2 release guards": (
+        '^v[12]\\.[0-9]+\\.[0-9]+$' in release
+        and "'v2.*.*'" in release
+        and 'VERSION" =~ ^[12]\\.[0-9]+\\.[0-9]+$' in prepare_workflow
+        and "SUPPORTED_MAJOR_VERSIONS = {1, 2}" in prepare
+        and "'v2.*.*-preview.*'" in preview
     ),
     "Jellyfin HTTP preference": 'allowJellyfinHttp' in jellyfin_settings and 'media_server_allow_jellyfin_http' in read("app/src/main/java/com/quantummpv/app/preferences/MediaServerPreferences.kt"),
     "Jellyfin HTTP warning": 'pref_jellyfin_http_warning_message' in jellyfin_settings and 'Plaintext Jellyfin connections are disabled' in jellyfin_client,

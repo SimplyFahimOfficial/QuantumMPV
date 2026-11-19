@@ -2,9 +2,10 @@
 
 ## Versioning policy
 
-- QuantumMPV uses its own semantic versions on the **1.x** line (`1.MINOR.PATCH`).
-  Do not reuse upstream mpvRx version numbers.
-- Stable tags: `v1.MINOR.PATCH`. Preview tags: `v1.MINOR.PATCH-preview.N`.
+- QuantumMPV uses its own semantic versions on the **1.x** and **2.x** lines
+  (`MAJOR.MINOR.PATCH`). Do not reuse upstream mpvRx version numbers.
+- Stable tags: `v1.MINOR.PATCH` and `v2.MINOR.PATCH`. Preview tags:
+  `vX.Y.Z-preview.N`.
 - `versionName` and `releaseVersionCode` in `app/build.gradle.kts` are set by
   `tools/prepare_release.py`. `releaseVersionCode = major*10000 + minor*100 + patch`.
 - Android `versionCode` bands guarantee upgrades. A stable release uses
@@ -31,12 +32,18 @@ and `preview` (preview builds and tagged previews). Then delete the
 repository-level copies. Environment secrets are only released to jobs that
 reference the environment and pass its protection rules.
 
-Environment protection (Settings → Environments):
+Required environment protection (Settings → Environments):
 
 | Environment | Deployment branches and tags | Reviewers |
 | --- | --- | --- |
-| `production` | Selected tags: `v1.*.*` only | Required reviewer: the maintainer |
+| `production` | Allow only tags: `v1.*.*` and `v2.*.*` | Require maintainer review |
 | `preview` | Selected branches and tags: branch `master`, tags `v*-preview.*` | None (every master push builds a preview) |
+
+GitHub environment deployment rules are repository settings, not versioned
+workflow configuration. A maintainer must configure and verify the `production`
+tag allow-list and required reviewer before any stable release. In particular,
+add `v2.*.*` while retaining `v1.*.*` before the first v2 release. These controls
+protect production signing and cannot be enabled by this workflow or pull request.
 
 Stable and tagged preview releases (`release.yml`, `pre-release.yml`) run on a
 tag ref, including runs started by Prepare Release and manual runs, which must
@@ -59,7 +66,9 @@ committed: `tools/check_android_security.py` fails if a `.jks`, `.keystore`,
 2. Merge it after all required checks pass. Wait for the master run of
    `Android CI`, `Static analysis`, `Secret scan`, `Security analysis` and `CodeQL`
    on the merge commit to finish.
-3. Start **Actions → Prepare Release → Run workflow** with `version = X.Y.Z` and
+3. Verify that the `production` environment has the required tag allow-list and
+   reviewer configured (for v2, this includes `v2.*.*`).
+4. Start **Actions → Prepare Release → Run workflow** with `version = X.Y.Z` and
    `prerelease = false`. It:
    - checks that master is prepared for `X.Y.Z`;
    - checks the required checks on the master commit;
@@ -71,13 +80,13 @@ committed: `tools/check_android_security.py` fails if a `.jks`, `.keystore`,
 
    Alternatively, tag the merge commit yourself and push the tag:
    `git tag -a vX.Y.Z -m "Release vX.Y.Z" <sha> && git push origin vX.Y.Z`.
-4. **Make release** runs `resolve → instrumented + build → sign → publish`
+5. **Make release** runs `resolve → instrumented + build → sign → publish`
    (see [CI_CD.md](CI_CD.md)). If the `production` environment has required
    reviewers, approve the `sign` job when prompted.
 
 The release fails safely, and nothing is published, if any of these is true:
 
-- the tag is not `v1.X.Y`;
+- the tag is not `v1.X.Y` or `v2.X.Y`;
 - the tag is not on master;
 - the version or changelog does not match the tag;
 - a required check is missing or failed;
