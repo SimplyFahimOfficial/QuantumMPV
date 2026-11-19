@@ -134,22 +134,21 @@ object PreferencesScreen : Screen {
       @Suppress("UNCHECKED_CAST")
       val detailBackstack = rememberNavBackStack(AppearancePreferencesScreen) as NavBackStack<Screen>
       val selectedScreen = detailBackstack.first()
-      val selectDetail = { screen: Screen ->
-        if (screen != selectedScreen) {
-          // Replace the category atomically without ever exposing an empty stack.
-          Snapshot.withMutableSnapshot {
-            detailBackstack[0] = screen
-            while (detailBackstack.size > 1) detailBackstack.removeAt(detailBackstack.lastIndex)
-          }
+      val replaceDetail = { screen: Screen ->
+        // Replace the category atomically without ever exposing an empty stack.
+        Snapshot.withMutableSnapshot {
+          detailBackstack[0] = screen
+          while (detailBackstack.size > 1) detailBackstack.removeAt(detailBackstack.lastIndex)
         }
       }
+      val selectDetail = { screen: Screen -> if (screen != selectedScreen) replaceDetail(screen) }
       Row(modifier = Modifier.fillMaxSize()) {
         Box(modifier = Modifier.weight(0.4f).tvFocusGroup()) {
           SettingsPane(
             sections = sections,
             selectedScreen = selectedScreen,
             onScreenSelected = selectDetail,
-            onPromoClick = selectDetail,
+            onPromoClick = replaceDetail,
           )
         }
         VerticalDivider(
