@@ -15,10 +15,12 @@ jobs:
       contents: read
 
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      with:
+        persist-credentials: false
 
     - name: Setup Node.js
-      uses: actions/setup-node@v4
+      uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
       with:
         node-version: '20'
         cache: 'npm'
@@ -30,7 +32,7 @@ jobs:
     # TestDriver GitHub App is authorized for your org). Falls back to a TD_API_KEY
     # secret if you set one. Exports TD_API_KEY for the test step below.
     - name: Authenticate to TestDriver
-      uses: testdriverai/action@stable
+      uses: testdriverai/action@331b3ab4bb6b36970890af9f3e105e1ff1cbd2f9 # stable
       with:
         api-key: ${{ secrets.TD_API_KEY }}
 
@@ -39,7 +41,7 @@ jobs:
 
     - name: Upload test results
       if: always()
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
       with:
         name: test-results
         path: test-results/
