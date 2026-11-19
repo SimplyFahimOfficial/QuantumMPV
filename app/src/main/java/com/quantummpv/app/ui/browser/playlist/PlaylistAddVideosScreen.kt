@@ -25,6 +25,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
@@ -32,6 +33,7 @@ import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -110,8 +112,14 @@ data class PlaylistAddVideosScreen(
       SortUtils.sortFolders(videoFolders, folderSortType, folderSortOrder)
     }
 
-    var selectedFolder by remember { mutableStateOf<VideoFolder?>(null) }
-    val folder = selectedFolder
+    // Only the bucket id is saved, so the step survives recreation; the folder itself is looked up
+    // again in the current list.
+    var selectedBucketId by rememberSaveable { mutableStateOf<String?>(null) }
+    val folder = resolveSavedFolder(sortedFolders, selectedBucketId)
+    val foldersLoaded by folderListViewModel.hasCompletedInitialLoad.collectAsState()
+    LaunchedEffect(selectedBucketId, folder, foldersLoaded) {
+      if (shouldDropSavedFolder(selectedBucketId, folder, foldersLoaded)) selectedBucketId = null
+    }
 
     var sortDialogOpen by remember { mutableStateOf(false) }
 
@@ -169,7 +177,7 @@ data class PlaylistAddVideosScreen(
     BackHandler {
       when {
         selectionManager?.isInSelectionMode == true -> selectionManager.clear()
-        folder != null -> selectedFolder = null
+        folder != null -> selectedBucketId = null
         else -> backstack.popSafely()
       }
     }
@@ -193,7 +201,7 @@ data class PlaylistAddVideosScreen(
             selectedCount = selectionManager?.selectedCount ?: 0,
             totalCount = sortedVideos.size,
             onCancelSelection = { selectionManager?.clear() },
-            onBackClick = { selectedFolder = null },
+            onBackClick = { selectedBucketId = null },
             onSortClick = { sortDialogOpen = true },
             onSelectAll = { selectionManager?.selectAll() },
             onInvertSelection = { selectionManager?.invertSelection() },
@@ -232,7 +240,7 @@ data class PlaylistAddVideosScreen(
             ) { videoFolder ->
               FolderCard(
                 folder = videoFolder,
-                onClick = { selectedFolder = videoFolder },
+                onClick = { selectedBucketId = videoFolder.bucketId },
                 modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp),
               )
             }
@@ -291,3 +299,15 @@ data class PlaylistAddVideosScreen(
     }
   }
 }
+
+internal fun resolveSavedFolder(
+  folders: List<VideoFolder>,
+  savedBucketId: String?,
+): VideoFolder? = savedBucketId?.let { id -> folders.firstOrNull { it.bucketId == id } }
+
+/** A saved folder that is still missing once the folder list has loaded is gone for good. */
+internal fun shouldDropSavedFolder(
+  savedBucketId: String?,
+  resolved: VideoFolder?,
+  foldersLoaded: Boolean,
+): Boolean = savedBucketId != null && resolved == null && foldersLoaded
