@@ -11,7 +11,6 @@ package com.quantummpv.app.ui.cast
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -50,10 +49,16 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.quantummpv.app.R
 import com.quantummpv.app.ui.icons.AppIcon
 import com.quantummpv.app.ui.icons.Icon
 import com.quantummpv.app.ui.icons.Icons
@@ -106,7 +111,7 @@ fun CastRemoteControllerScreen(
         IconButton(onClick = onBackClick, modifier = Modifier.align(Alignment.CenterVertically)) {
           Icon(
             Icons.RoundedFilled.KeyboardArrowDown,
-            contentDescription = "Close",
+            contentDescription = stringResource(R.string.generic_close),
             tint = Color.White,
             modifier = Modifier.size(32.dp),
           )
@@ -122,7 +127,7 @@ fun CastRemoteControllerScreen(
         IconButton(onClick = onStopCasting) {
           Icon(
             Icons.RoundedFilled.Cast,
-            contentDescription = "Stop Casting",
+            contentDescription = stringResource(R.string.cast_stop_casting),
             tint = MaterialTheme.colorScheme.primary,
             modifier = Modifier.size(28.dp),
           )
@@ -202,6 +207,8 @@ private fun CastSeekBar(
       seekDragPosition = -1f
     },
     valueRange = 0f..duration,
+    // Without a known duration there is no range to seek within.
+    enabled = castState.duration > 0,
     colors =
       SliderDefaults.colors(
         thumbColor = MaterialTheme.colorScheme.primary,
@@ -238,11 +245,11 @@ private fun CastPlaybackControls(
     verticalAlignment = Alignment.CenterVertically,
   ) {
     IconButton(onClick = {
-      controller.seekTo((castState.currentPosition - 10_000).coerceAtLeast(0))
+      controller.seekTo(castSeekTarget(castState.currentPosition, -10_000, castState.duration))
     }, modifier = Modifier.size(56.dp)) {
       Icon(
         Icons.RoundedFilled.FastRewind,
-        contentDescription = "Rewind 10s",
+        contentDescription = stringResource(R.string.pip_action_rewind),
         tint = Color.White,
         modifier = Modifier.size(32.dp),
       )
@@ -250,17 +257,22 @@ private fun CastPlaybackControls(
 
     Spacer(modifier = Modifier.width(32.dp))
 
+    val playPauseLabel = stringResource(if (castState.isPlaying) R.string.pip_action_pause else R.string.ui_play)
+    val bufferingLabel = stringResource(R.string.ui_buffering)
     Box(
       modifier =
         Modifier
           .size(72.dp)
+          .tvFocusHighlight(CircleShape)
           .clip(CircleShape)
           .background(MaterialTheme.colorScheme.primary)
-          .clickable(
-            interactionSource = remember { MutableInteractionSource() },
-            indication = null,
-            onClick = { if (castState.isPlaying) controller.pause() else controller.play() },
-          ),
+          // The label stays on the control while buffering swaps the icon for a spinner.
+          .clickable(role = Role.Button, onClickLabel = playPauseLabel) {
+            if (castState.isPlaying) controller.pause() else controller.play()
+          }.semantics {
+            contentDescription = playPauseLabel
+            if (castState.isBuffering) stateDescription = bufferingLabel
+          },
       contentAlignment = Alignment.Center,
     ) {
       if (castState.isBuffering) {
@@ -268,7 +280,7 @@ private fun CastPlaybackControls(
       } else {
         Icon(
           imageVector = if (castState.isPlaying) Icons.RoundedFilled.Pause else Icons.RoundedFilled.PlayArrow,
-          contentDescription = if (castState.isPlaying) "Pause" else "Play",
+          contentDescription = null,
           tint = Color.White,
           modifier = Modifier.size(36.dp),
         )
@@ -278,11 +290,11 @@ private fun CastPlaybackControls(
     Spacer(modifier = Modifier.width(32.dp))
 
     IconButton(onClick = {
-      controller.seekTo((castState.currentPosition + 30_000).coerceAtMost(castState.duration))
+      controller.seekTo(castSeekTarget(castState.currentPosition, 30_000, castState.duration))
     }, modifier = Modifier.size(56.dp)) {
       Icon(
         Icons.RoundedFilled.FastForward,
-        contentDescription = "Forward 30s",
+        contentDescription = stringResource(R.string.cast_forward_30),
         tint = Color.White,
         modifier = Modifier.size(32.dp),
       )
@@ -304,8 +316,8 @@ private fun CastOptionsRow(
     horizontalArrangement = Arrangement.spacedBy(4.dp),
     verticalAlignment = Alignment.CenterVertically,
   ) {
-    CastOptionButton(icon = Icons.RoundedFilled.Speed, label = "Speed", onClick = onShowSpeed)
-    CastOptionButton(icon = Icons.RoundedFilled.Settings, label = "Quality", onClick = onShowBitrate)
+    CastOptionButton(icon = Icons.RoundedFilled.Speed, label = stringResource(R.string.player_sheets_speed_slider_label), onClick = onShowSpeed)
+    CastOptionButton(icon = Icons.RoundedFilled.Settings, label = stringResource(R.string.cast_quality), onClick = onShowBitrate)
   }
 }
 
@@ -353,7 +365,7 @@ private fun CastVolumeSlider(
         } else {
           Icons.RoundedFilled.VolumeUp
         },
-      contentDescription = "Volume",
+      contentDescription = stringResource(R.string.player_volume_label),
       tint = Color.White.copy(alpha = 0.6f),
       modifier = Modifier.size(24.dp),
     )
@@ -394,7 +406,7 @@ private fun CastSpeedDialog(
 
   AlertDialog(
     onDismissRequest = onDismiss,
-    title = { Text("Playback Speed") },
+    title = { Text(stringResource(R.string.ui_playback_speed)) },
     text = {
       Column {
         speeds.forEach { speed ->
@@ -420,7 +432,7 @@ private fun CastSpeedDialog(
         }
       }
     },
-    confirmButton = { TextButton(onClick = onDismiss) { Text("Cancel") } },
+    confirmButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.generic_cancel)) } },
   )
 }
 
@@ -432,7 +444,7 @@ private fun CastBitrateDialog(
 ) {
   val bitrateOptions =
     listOf(
-      CastBitrateOption("Auto", 0),
+      CastBitrateOption(stringResource(R.string.pref_audio_channels_auto), 0),
       CastBitrateOption("4K (50 Mbps)", 50_000_000),
       CastBitrateOption("4K (25 Mbps)", 25_000_000),
       CastBitrateOption("1080p (16 Mbps)", 16_000_000),
@@ -442,7 +454,7 @@ private fun CastBitrateDialog(
 
   AlertDialog(
     onDismissRequest = onDismiss,
-    title = { Text("Quality / Bitrate") },
+    title = { Text(stringResource(R.string.cast_quality_bitrate)) },
     text = {
       Column {
         bitrateOptions.forEach { option ->
@@ -466,7 +478,7 @@ private fun CastBitrateDialog(
         }
       }
     },
-    confirmButton = { TextButton(onClick = onDismiss) { Text("Cancel") } },
+    confirmButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.generic_cancel)) } },
   )
 }
 
@@ -480,4 +492,17 @@ private fun formatCastTime(timeMs: Long): String {
   } else {
     String.format(Locale.ROOT, "%02d:%02d", minutes, seconds)
   }
+}
+
+/**
+ * Where a relative seek lands. The upper bound applies only when the duration is known, since a
+ * live or still-loading stream reports 0 and must not pull every forward seek back to the start.
+ */
+internal fun castSeekTarget(
+  position: Long,
+  deltaMs: Long,
+  duration: Long,
+): Long {
+  val target = (position + deltaMs).coerceAtLeast(0L)
+  return if (duration > 0) target.coerceAtMost(duration) else target
 }

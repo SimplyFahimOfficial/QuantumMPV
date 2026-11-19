@@ -2009,6 +2009,10 @@
   <string name="oss_androidx_preference_description">UI and storage for app preference screens.</string>
   <string name="oss_androidx_profile_installer_description">Prefetches classes and methods for faster app startup.</string>
   <string name="oss_google_material_description">Material Design components and theming library.</string>
+  <string name="cast_stop_casting">Stop casting</string>
+  <string name="cast_forward_30">Forward 30 seconds</string>
+  <string name="cast_quality">Quality</string>
+  <string name="cast_quality_bitrate">Quality / Bitrate</string>
   <string name="oss_google_cast_description">Chromecast framework for media casting.</string>
   <string name="oss_material_symbols_description">Material Symbols icon set for Compose.</string>
   <string name="oss_kotlinx_immutable_collections_description">Immutable collection interfaces for Kotlin.</string>
