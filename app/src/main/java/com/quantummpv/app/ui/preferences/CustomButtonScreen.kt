@@ -64,11 +64,13 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -95,12 +97,18 @@ import com.quantummpv.app.ui.icons.Icon
 import com.quantummpv.app.ui.icons.Icons
 import com.quantummpv.app.ui.utils.LocalBackStack
 import com.quantummpv.app.ui.utils.popSafely
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import org.koin.compose.koinInject
 import sh.calvin.reorderable.ReorderableItem
 import sh.calvin.reorderable.rememberReorderableLazyListState
+import java.io.IOException
+import java.io.InputStream
 import java.util.UUID
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -131,6 +139,43 @@ data class CustomButtonSlots(
   val slots: List<CustomButton?> = List(8) { null },
 )
 
+private val EMPTY_SLOTS: List<CustomButton?> = List(8) { null }
+private const val MAX_IMPORT_BYTES = 1 shl 20
+private val savedButtonsJson = Json { ignoreUnknownKeys = true }
+
+/**
+ * Decodes the saved payload: the slot format, or the legacy plain list. Blank means nothing saved.
+ * Returns null when the payload is not blank but cannot be read, so callers can keep it intact.
+ */
+internal fun decodeCustomButtonSlots(raw: String): List<CustomButton?>? {
+  if (raw.isBlank()) return EMPTY_SLOTS
+  val slots =
+    runCatching { savedButtonsJson.decodeFromString<CustomButtonSlots>(raw).slots }.getOrNull()
+      ?: runCatching { savedButtonsJson.decodeFromString<List<CustomButton>>(raw) }.getOrNull()
+      ?: return null
+  return List(8) { slots.getOrNull(it) }
+}
+
+internal fun readBoundedText(
+  input: InputStream,
+  limit: Int,
+): String {
+  val bytes = input.readNBytesCompat(limit + 1)
+  if (bytes.size > limit) throw IOException("File is larger than $limit bytes")
+  return bytes.toString(Charsets.UTF_8)
+}
+
+private fun InputStream.readNBytesCompat(max: Int): ByteArray {
+  val out = java.io.ByteArrayOutputStream()
+  val buffer = ByteArray(8192)
+  while (out.size() < max) {
+    val n = read(buffer, 0, minOf(buffer.size, max - out.size()))
+    if (n < 0) break
+    out.write(buffer, 0, n)
+  }
+  return out.toByteArray()
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Main Screen
 // ─────────────────────────────────────────────────────────────────────────────
@@ -144,8 +189,25 @@ object CustomButtonScreen : Screen {
     val backstack = LocalBackStack.current
     val preferences = koinInject<PlayerPreferences>()
 
-    // 8 slots — order = left 0-3, right 4-7
-    val buttonSlots = remember { mutableStateListOf<CustomButton?>(*Array(8) { null }) }
+    val scope = rememberCoroutineScope()
+
+    // 8 slots — order = left 0-3, right 4-7. Loaded before the first frame so nothing can be saved
+    // over data that has not been read yet.
+    val rawSaved = remember { preferences.customButtons.get() }
+    val decodedSaved = remember { decodeCustomButtonSlots(rawSaved) }
+    val buttonSlots = remember { mutableStateListOf<CustomButton?>(*(decodedSaved ?: EMPTY_SLOTS).toTypedArray()) }
+    // What is on disk as far as this screen knows; an unreadable payload counts as empty slots, so
+    // opening the screen never writes.
+    var savedSlots by remember { mutableStateOf(decodedSaved ?: EMPTY_SLOTS) }
+    val unreadable = decodedSaved == null
+
+    fun persist() {
+      val current = buttonSlots.toList()
+      if (current == savedSlots) return
+      if (unreadable) preferences.customButtonsUnreadableBackup.set(rawSaved)
+      preferences.customButtons.set(Json.encodeToString(CustomButtonSlots(current)))
+      savedSlots = current
+    }
 
     // Import dialog state
     var showImportDialog by remember { mutableStateOf(false) }
@@ -158,27 +220,32 @@ object CustomButtonScreen : Screen {
         contract = ActivityResultContracts.CreateDocument("text/xml"),
       ) { uri ->
         uri?.let {
-          runCatching {
-            val xmlContent = buildXmlExport(buttonSlots.toList())
-            context.contentResolver.openOutputStream(it)?.use { output ->
-              output.write(xmlContent.toByteArray())
+          val slots = buttonSlots.toList()
+          scope.launch {
+            runCatching {
+              withContext(Dispatchers.IO) {
+                val output = context.contentResolver.openOutputStream(it) ?: throw IOException("Cannot open destination")
+                output.use { stream -> stream.write(buildXmlExport(slots).toByteArray()) }
+              }
+            }.onSuccess {
+              Toast
+                .makeText(
+                  context,
+                  context.getString(com.quantummpv.app.R.string.ui_buttons_exported_successfully),
+                  Toast.LENGTH_SHORT,
+                ).show()
+            }.onFailure { e ->
+              if (e is CancellationException) throw e
+              Toast
+                .makeText(
+                  context,
+                  context.getString(
+                    R.string.pref_export_failed_toast,
+                    e.message ?: context.getString(R.string.generic_unknown_error),
+                  ),
+                  Toast.LENGTH_LONG,
+                ).show()
             }
-            Toast
-              .makeText(
-                context,
-                context.getString(com.quantummpv.app.R.string.ui_buttons_exported_successfully),
-                Toast.LENGTH_SHORT,
-              ).show()
-          }.onFailure { e ->
-            Toast
-              .makeText(
-                context,
-                context.getString(
-                  R.string.pref_export_failed_toast,
-                  e.message ?: context.getString(R.string.generic_unknown_error),
-                ),
-                Toast.LENGTH_LONG,
-              ).show()
           }
         }
       }
@@ -189,69 +256,54 @@ object CustomButtonScreen : Screen {
         contract = ActivityResultContracts.OpenDocument(),
       ) { uri ->
         uri?.let {
-          runCatching {
-            val xmlContent =
-              context.contentResolver.openInputStream(it)?.use { input ->
-                input.bufferedReader().readText()
-              } ?: ""
-
-            val parsed = parseXmlImport(xmlContent)
-            importedSlots = parsed
-
-            // Pre-select all non-null slots
-            selectedImportSlots = parsed.indices.filter { index -> parsed[index] != null }.toSet()
-
-            showImportDialog = true
-          }.onFailure { e ->
-            Toast
-              .makeText(
-                context,
-                context.getString(
-                  R.string.toast_failed_to_read_file,
-                  e.message ?: context.getString(R.string.generic_unknown_error),
-                ),
-                Toast.LENGTH_LONG,
-              ).show()
+          scope.launch {
+            runCatching {
+              withContext(Dispatchers.IO) {
+                val input = context.contentResolver.openInputStream(it) ?: throw IOException("Cannot open file")
+                val parsed = parseXmlImport(input.use { stream -> readBoundedText(stream, MAX_IMPORT_BYTES) })
+                if (parsed.all { slot -> slot == null }) throw IOException(context.getString(R.string.pref_custom_buttons_import_empty))
+                parsed
+              }
+            }.onSuccess { parsed ->
+              importedSlots = parsed
+              // Pre-select all non-null slots
+              selectedImportSlots = parsed.indices.filter { index -> parsed[index] != null }.toSet()
+              showImportDialog = true
+            }.onFailure { e ->
+              if (e is CancellationException) throw e
+              Toast
+                .makeText(
+                  context,
+                  context.getString(
+                    R.string.toast_failed_to_read_file,
+                    e.message ?: context.getString(R.string.generic_unknown_error),
+                  ),
+                  Toast.LENGTH_LONG,
+                ).show()
+            }
           }
         }
       }
 
-    // Load saved data
-    LaunchedEffect(Unit) {
-      val jsonString = preferences.customButtons.get()
-      if (jsonString.isNotBlank()) {
-        runCatching {
-          val loaded = Json.decodeFromString<CustomButtonSlots>(jsonString)
-          val slots = loaded.slots.take(8).toMutableList()
-          while (slots.size < 8) slots.add(null)
-          buttonSlots.clear()
-          buttonSlots.addAll(slots)
-        }.onFailure {
-          runCatching {
-            val old: List<CustomButton> = Json.decodeFromString(jsonString)
-            val slots = MutableList<CustomButton?>(8) { null }
-            old.forEachIndexed { i, b -> if (i < 8) slots[i] = b }
-            buttonSlots.clear()
-            buttonSlots.addAll(slots)
-          }
-        }
+    if (unreadable) {
+      LaunchedEffect(Unit) {
+        Toast.makeText(context, context.getString(R.string.pref_custom_buttons_unreadable), Toast.LENGTH_LONG).show()
       }
     }
 
-    // Persist on every change
-    LaunchedEffect(buttonSlots.toList()) {
-      preferences.customButtons.set(Json.encodeToString(CustomButtonSlots(buttonSlots.toList())))
-    }
+    // Persist user changes; the disposal save covers a screen closed in the same frame as an edit.
+    LaunchedEffect(buttonSlots.toList()) { persist() }
+    DisposableEffect(Unit) { onDispose { persist() } }
 
     // Reorderable list state
     val lazyListState = rememberLazyListState()
     val settingsHighlight =
       rememberSettingsSearchHighlight(CustomButtonScreen, lazyListState, MaterialTheme.colorScheme.primary)
-    val NON_SLOT_ITEMS_BEFORE = 1 // the Spacer item()
+    val nonSlotItemsBefore = 1 // the Spacer item()
     val reorderState =
       rememberReorderableLazyListState(lazyListState) { from, to ->
-        val fromIdx = (from.index - NON_SLOT_ITEMS_BEFORE).coerceIn(0, buttonSlots.lastIndex)
-        val toIdx = (to.index - NON_SLOT_ITEMS_BEFORE).coerceIn(0, buttonSlots.lastIndex)
+        val fromIdx = (from.index - nonSlotItemsBefore).coerceIn(0, buttonSlots.lastIndex)
+        val toIdx = (to.index - nonSlotItemsBefore).coerceIn(0, buttonSlots.lastIndex)
         val moved = buttonSlots.removeAt(fromIdx)
         buttonSlots.add(toIdx.coerceIn(0, buttonSlots.size), moved)
       }
@@ -1317,7 +1369,7 @@ fun ImportSelectionScreen(
 // XML Import/Export helpers
 // ─────────────────────────────────────────────────────────────────────────────
 
-private fun buildXmlExport(slots: List<CustomButton?>): String {
+internal fun buildXmlExport(slots: List<CustomButton?>): String {
   val sb = StringBuilder()
   sb.appendLine("<?xml version=\"1.0\" encoding=\"UTF-8\"?>")
   sb.appendLine("<customButtons>")
@@ -1340,7 +1392,7 @@ private fun buildXmlExport(slots: List<CustomButton?>): String {
   return sb.toString()
 }
 
-private fun parseXmlImport(xmlContent: String): List<CustomButton?> {
+internal fun parseXmlImport(xmlContent: String): List<CustomButton?> {
   val slots = MutableList<CustomButton?>(8) { null }
 
   // Simple XML parsing using regex (for basic structure)

@@ -189,6 +189,9 @@ class PlayerPreferences(
   // Custom Buttons - JSON List
   val customButtons = preferenceStore.getString("custom_buttons_json", "[]")
 
+  // Raw copy of a saved payload that could not be decoded, kept before it is first overwritten.
+  val customButtonsUnreadableBackup = preferenceStore.getString("custom_buttons_json_unreadable_backup", "")
+
   // Ambience Mode
   val ambientStyle = preferenceStore.getEnum("ambient_style", AmbientStyle.Glow)
   val ambientBlurSamples = preferenceStore.getInt("ambient_blur_samples", 12)

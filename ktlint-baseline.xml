@@ -635,9 +635,6 @@
         <error line="584" column="121" source="standard:max-line-length" />
         <error line="585" column="121" source="standard:max-line-length" />
     </file>
-    <file name="src/main/java/com/quantummpv/app/ui/preferences/CustomButtonScreen.kt">
-        <error line="250" column="9" source="standard:property-naming" />
-    </file>
     <file name="src/main/java/com/quantummpv/app/ui/preferences/GesturePreferencesScreen.kt">
         <error line="175" column="121" source="standard:max-line-length" />
         <error line="412" column="121" source="standard:max-line-length" />
