@@ -59,7 +59,7 @@ googleCast = "22.3.1"
 androidxBiometric = "1.4.0-alpha07"
 leakcanary = "2.14"
 libtorrent4j = "2.1.0-39"
-libarchiveAndroid = "1.1.6"
+libarchiveAndroid = "1.1.7"
 ktlint = "14.2.0"
 zxing = "3.5.4"
 
