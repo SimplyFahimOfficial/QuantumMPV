@@ -85,18 +85,29 @@ class ThemeReveal {
   internal var window: Window? = null
   internal var reduceMotion = false
   private var capturing = false
+
+  // Changes requested while the old frame is still being copied; applied in order once it is.
+  private val pending = ArrayList<() -> Unit>()
   internal var snapshot by mutableStateOf<Bitmap?>(null)
   internal var origin by mutableStateOf(Offset.Zero)
   var progress by mutableFloatStateOf(0f)
     internal set
   val isAnimating get() = snapshot != null
 
-  /** Runs [change] (which applies the new theme) once the old screen is captured; origin is in window pixels. */
+  /**
+   * Applies [change] (the new theme preference) and plays the reveal when it can; origin is in window
+   * pixels. Every change is applied, in request order: one that arrives while a reveal is already
+   * running takes effect at once, and one that arrives during the window copy waits for it.
+   */
   fun start(
     origin: Offset,
     change: () -> Unit,
   ) {
-    if (isAnimating || capturing) return
+    if (capturing) {
+      pending += change
+      return
+    }
+    if (isAnimating) return change()
     val target = window
     if (reduceMotion || target == null) return change()
     val decor = target.decorView
@@ -106,7 +117,7 @@ class ThemeReveal {
     // PixelCopy reads the composited window, so blur, glass and video surfaces are in the copy.
     capturing = true
     runCatching {
-      PixelCopy.request(target, bitmap, { result ->
+      copyWindow(target, bitmap) { result ->
         capturing = false
         if (result == PixelCopy.SUCCESS) {
           progress = 0f
@@ -115,13 +126,23 @@ class ThemeReveal {
         } else {
           bitmap.recycle()
         }
-        change()
-      }, Handler(Looper.getMainLooper()))
+        applyWithPending(change)
+      }
     }.onFailure {
       capturing = false
       bitmap.recycle()
-      change()
+      applyWithPending(change)
     }
+  }
+
+  /** Seam for tests; [done] is called on the main thread with a [PixelCopy] result code. */
+  internal var copyWindow: (Window, Bitmap, (Int) -> Unit) -> Unit = { window, bitmap, done ->
+    PixelCopy.request(window, bitmap, { done(it) }, Handler(Looper.getMainLooper()))
+  }
+
+  private fun applyWithPending(change: () -> Unit) {
+    change()
+    while (pending.isNotEmpty()) pending.removeAt(0)()
   }
 
   internal fun finish() {
