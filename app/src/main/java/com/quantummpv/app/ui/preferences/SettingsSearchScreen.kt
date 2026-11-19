@@ -109,15 +109,10 @@ object SettingsSearchScreen : Screen {
     val preferenceStore = org.koin.compose.koinInject<com.quantummpv.app.preferences.preference.PreferenceStore>()
     val searchHistoryPref = remember { preferenceStore.getString("settings_search_history", "") }
     val searchHistoryRaw by searchHistoryPref.collectAsState()
-    val searchHistory =
-      remember(searchHistoryRaw) {
-        if (searchHistoryRaw.isEmpty()) emptyList() else searchHistoryRaw.split("|")
-      }
+    val searchHistory = remember(searchHistoryRaw) { SettingsSearchHistory.parse(searchHistoryRaw) }
 
     fun removeSearchHistory(query: String) {
-      val current = searchHistory.toMutableList()
-      current.remove(query)
-      searchHistoryPref.set(current.joinToString("|"))
+      searchHistoryPref.set(SettingsSearchHistory.remove(searchHistoryPref.get(), query))
     }
 
     fun clearSearchHistory() {
@@ -364,19 +359,7 @@ object SettingsSearchScreen : Screen {
                   keyboardController?.hide()
                   val currentQuery = searchQuery.trim()
                   if (currentQuery.isNotEmpty()) {
-                    val currentHistory =
-                      searchHistoryPref
-                        .get()
-                        .split(
-                          "|",
-                        ).filter { it.isNotEmpty() }
-                        .toMutableList()
-                    currentHistory.remove(currentQuery)
-                    currentHistory.add(0, currentQuery)
-                    if (currentHistory.size > 10) {
-                      currentHistory.removeAt(currentHistory.lastIndex)
-                    }
-                    searchHistoryPref.set(currentHistory.joinToString("|"))
+                    searchHistoryPref.set(SettingsSearchHistory.add(searchHistoryPref.get(), currentQuery))
                   }
                   SettingsSearchNavigation.open(result.preference)
                   backstack.navigateTo(result.preference.screen)
