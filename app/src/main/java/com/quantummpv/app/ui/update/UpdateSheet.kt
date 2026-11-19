@@ -289,6 +289,7 @@ private fun MetaItem(
 
 @Composable
 private fun DownloadProgressSection(progress: Float) {
+  val percent = downloadPercent(progress)
   Column(modifier = Modifier.fillMaxWidth()) {
     Row(
       modifier = Modifier.fillMaxWidth(),
@@ -299,19 +300,30 @@ private fun DownloadProgressSection(progress: Float) {
         style = MaterialTheme.typography.bodySmall,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
       )
-      Text(
-        text = stringResource(R.string.update_progress_percent, progress.toInt()),
-        style = MaterialTheme.typography.bodySmall,
-        color = MaterialTheme.colorScheme.primary,
-      )
+      if (percent != null) {
+        Text(
+          text = stringResource(R.string.update_progress_percent, percent),
+          style = MaterialTheme.typography.bodySmall,
+          color = MaterialTheme.colorScheme.primary,
+        )
+      }
     }
     Spacer(modifier = Modifier.height(8.dp))
-    LinearProgressIndicator(
-      progress = { if (progress >= 0) progress / 100f else 0f },
-      modifier = Modifier.fillMaxWidth(),
-      color = MaterialTheme.colorScheme.primary,
-      trackColor = MaterialTheme.colorScheme.surfaceVariant,
-    )
+    if (percent != null) {
+      LinearProgressIndicator(
+        progress = { percent / 100f },
+        modifier = Modifier.fillMaxWidth(),
+        color = MaterialTheme.colorScheme.primary,
+        trackColor = MaterialTheme.colorScheme.surfaceVariant,
+      )
+    } else {
+      // The server did not report a size, so there is nothing to measure against.
+      LinearProgressIndicator(
+        modifier = Modifier.fillMaxWidth(),
+        color = MaterialTheme.colorScheme.primary,
+        trackColor = MaterialTheme.colorScheme.surfaceVariant,
+      )
+    }
     Spacer(modifier = Modifier.height(8.dp))
   }
 }
@@ -329,3 +341,7 @@ private fun formatDate(dateString: String): String {
     dateString
   }
 }
+
+/** Whole percent for a known download, or null when the total size is unknown (negative or not a number). */
+internal fun downloadPercent(progress: Float): Int? =
+  if (progress.isNaN() || progress < 0f) null else progress.coerceAtMost(100f).toInt()
