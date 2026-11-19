@@ -803,7 +803,7 @@ fun FileSystemBrowserScreen(path: String? = null) {
                 itemsWereDeletedOrMoved = itemsWereDeletedOrMoved,
                 showSubtitleIndicator = showSubtitleIndicator,
                 navigationBarHeight = navigationBarHeight,
-                onRefresh = { viewModel.refresh() },
+                onRefresh = { viewModel.refreshAndAwait() },
                 onFolderClick = { folder ->
                   if (isInSelectionMode) {
                     selectionManager.toggle(folder)
@@ -1450,6 +1450,8 @@ private fun FileSystemBrowserContent(
         isRefreshing = isRefreshing,
         onRefresh = onRefresh,
         listState = listState,
+        // onRefresh already waits for the scan to publish, so no extra hold on the indicator.
+        delayAfterRefresh = 0L,
         modifier = modifier.fillMaxSize(),
       ) {
         Box(

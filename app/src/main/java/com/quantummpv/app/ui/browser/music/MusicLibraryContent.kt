@@ -227,7 +227,6 @@ fun MusicLibraryContent(
   val coverArtSizeDp by browserPreferences.musicCoverArtSize.collectAsState()
   val gridCoverArtSizeDp by browserPreferences.musicGridCoverArtSize.collectAsState()
 
-  val isRefreshing = remember { mutableStateOf(false) }
   var isSearchActive by remember { mutableStateOf(false) }
   val topBarSearchAction =
     com.quantummpv.app.ui.browser.mainTabSearchAction(isSearchActive) {
@@ -876,11 +875,7 @@ fun MusicLibraryContent(
         .fillMaxSize()
         .padding(innerPadding)
     ) {
-      PullRefreshBox(
-        isRefreshing = isRefreshing,
-        onRefresh = { musicViewModel.refreshLibrary(context) },
-        modifier = Modifier.fillMaxSize()
-      ) {
+      Box(modifier = Modifier.fillMaxSize()) {
         if (isLoading && songs.isEmpty()) {
           Box(
             modifier = Modifier.fillMaxSize(),
@@ -896,6 +891,14 @@ fun MusicLibraryContent(
             beyondViewportPageCount = 1,
           ) { page ->
             val activeTab = visibleTabs.getOrNull(page) ?: MusicTab.SONGS
+            // Page-local gesture state; Folders is excluded because FolderListScreen owns its own
+            // wrapper, and two nested wrappers would translate the same content twice.
+            PullRefreshBox(
+              isRefreshing = remember { mutableStateOf(false) },
+              onRefresh = { musicViewModel.refreshLibrary(context) },
+              enabled = activeTab != MusicTab.FOLDERS,
+              modifier = Modifier.fillMaxSize(),
+            ) {
             when (activeTab) {
               MusicTab.SONGS -> SongsTabContent(
                 songs = songs,
@@ -987,6 +990,7 @@ fun MusicLibraryContent(
                 embedded = true,
                 searchQuery = searchQuery,
               )
+            }
             }
           }
         }

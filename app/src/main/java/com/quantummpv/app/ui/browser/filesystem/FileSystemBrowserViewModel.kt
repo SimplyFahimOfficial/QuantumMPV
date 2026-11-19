@@ -30,6 +30,7 @@ import com.quantummpv.app.utils.sort.SortUtils
 import com.quantummpv.app.utils.storage.FileTypeUtils
 import com.quantummpv.app.utils.storage.FolderViewScanner
 import com.quantummpv.app.utils.storage.TreeViewScanner
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -218,17 +219,35 @@ class FileSystemBrowserViewModel(
    * Equivalent to Fossify's refreshFragment() callback
    */
   override fun refresh() {
+    startRefresh()
+  }
+
+  /**
+   * Pull-to-refresh entry point. Returns once this refresh has published its first visible result
+   * (items or error), not after metadata enrichment. The scan keeps running if the caller stops waiting.
+   */
+  suspend fun refreshAndAwait() {
+    startRefresh().await()
+  }
+
+  private fun startRefresh(): CompletableDeferred<Unit> {
     Log.d(TAG, "Hard refreshing current directory: ${_currentPath.value}")
 
     _isLoading.value = true
 
+    val published = CompletableDeferred<Unit>()
     viewModelScope.launch(Dispatchers.IO) {
-      MediaFileRepository.clearCache()
-      FolderViewScanner.clearCache()
-      TreeViewScanner.clearCache()
-      triggerMediaScan()
-      loadCurrentDirectoryInternal(forceFileSystemCheck = true)
+      try {
+        MediaFileRepository.clearCache()
+        FolderViewScanner.clearCache()
+        TreeViewScanner.clearCache()
+        triggerMediaScan()
+        loadCurrentDirectoryInternal(forceFileSystemCheck = true, published = published)
+      } finally {
+        published.complete(Unit)
+      }
     }
+    return published
   }
 
   /**
@@ -424,7 +443,10 @@ class FileSystemBrowserViewModel(
     }
   }
 
-  private suspend fun loadCurrentDirectoryInternal(forceFileSystemCheck: Boolean = false) {
+  private suspend fun loadCurrentDirectoryInternal(
+    forceFileSystemCheck: Boolean = false,
+    published: CompletableDeferred<Unit>? = null,
+  ) {
     _isLoading.value = true
     _error.value = null
     // Don't reset the flag here - let navigation handle it
@@ -442,6 +464,7 @@ class FileSystemBrowserViewModel(
         _videoFilesWithPlayback.value = emptyMap()
         _newVideoIds.value = emptySet()
         _watchedVideoIds.value = emptySet()
+        published?.complete(Unit)
         Log.d(TAG, "Loaded ${roots.size} storage roots")
       } else {
         // Update breadcrumbs for real paths
@@ -459,6 +482,8 @@ class FileSystemBrowserViewModel(
             showAllFileTypes = false,
             forceFileSystemCheck = forceFileSystemCheck,
           ).onSuccess { items ->
+            // The directory is fixed when the request starts; never publish a stale scan elsewhere.
+            if (_currentPath.value != path) return@onSuccess
             // Get previous count for this path
             val previousCount = itemCountByPath[path] ?: 0
 
@@ -475,6 +500,7 @@ class FileSystemBrowserViewModel(
             itemCountByPath[path] = items.size
 
             _unsortedItems.value = items
+            published?.complete(Unit)
 
             val folderCount = items.filterIsInstance<FileSystemItem.Folder>().size
             val videoCount = items.filterIsInstance<FileSystemItem.VideoFile>().size
@@ -523,6 +549,7 @@ class FileSystemBrowserViewModel(
             _videoFilesWithPlayback.value = emptyMap()
             _newVideoIds.value = emptySet()
             _watchedVideoIds.value = emptySet()
+            published?.complete(Unit)
             Log.e(TAG, "Error loading directory: $path", error)
           }
       }
