@@ -47,7 +47,9 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -61,6 +63,7 @@ import com.quantummpv.app.R
 import com.quantummpv.app.domain.download.AppDownload
 import com.quantummpv.app.domain.download.AppDownloadManager
 import com.quantummpv.app.domain.download.AppDownloadStatus
+import com.quantummpv.app.domain.download.DownloadLocations
 import com.quantummpv.app.domain.download.YtdlpDownloadEngine
 import com.quantummpv.app.presentation.Screen
 import com.quantummpv.app.ui.browser.states.EmptyState
@@ -69,6 +72,9 @@ import com.quantummpv.app.ui.icons.Icons
 import com.quantummpv.app.ui.utils.LocalBackStack
 import com.quantummpv.app.ui.utils.popSafely
 import com.quantummpv.app.utils.media.MediaUtils
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import kotlinx.serialization.Serializable
 import org.koin.compose.koinInject
 import java.io.File
@@ -100,18 +106,34 @@ object DownloadsScreen : Screen {
       }
     }
 
+    val scope = rememberCoroutineScope()
+
+    // Resolved off the main thread: composing this screen must not touch the filesystem.
+    var locationStatus by remember { mutableStateOf<DownloadLocations.Status?>(null) }
+    suspend fun refreshLocation() {
+      locationStatus = withContext(Dispatchers.IO) { downloadManager.locations.status() }
+    }
+    LaunchedEffect(Unit) { refreshLocation() }
+
     val locationPicker =
       rememberLauncherForActivityResult(ActivityResultContracts.OpenDocumentTree()) { uri: Uri? ->
         if (uri == null) return@rememberLauncherForActivityResult
-        runCatching {
-          context.contentResolver.takePersistableUriPermission(
-            uri,
-            Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION,
-          )
-        }
-        val resolved = downloadManager.locations.setLocationFromTree(uri)
-        if (resolved == null) {
-          Toast.makeText(context, R.string.downloads_location_invalid, Toast.LENGTH_LONG).show()
+        scope.launch {
+          // Resolving the picked tree touches the filesystem.
+          val resolved =
+            withContext(Dispatchers.IO) {
+              runCatching {
+                context.contentResolver.takePersistableUriPermission(
+                  uri,
+                  Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION,
+                )
+              }
+              downloadManager.locations.setLocationFromTree(uri)
+            }
+          if (resolved == null) {
+            Toast.makeText(context, R.string.downloads_location_invalid, Toast.LENGTH_LONG).show()
+          }
+          refreshLocation()
         }
       }
 
@@ -121,6 +143,12 @@ object DownloadsScreen : Screen {
     val completedDownloads = downloads.filter { it.isCompleted }
     val activeYtdlp = ytdlpJobs.filter { it.state != YtdlpDownloadEngine.JobState.SUCCESS }
     val completedYtdlp = ytdlpJobs.filter { it.state == YtdlpDownloadEngine.JobState.SUCCESS }
+
+    // Which finished files still exist, checked on IO; null (not yet known) shows rows as playable.
+    val existingFiles by produceState<Set<String>?>(null, completedDownloads, completedYtdlp) {
+      val paths = completedDownloads.map { it.file.path } + completedYtdlp.mapNotNull { it.outputFile }
+      value = withContext(Dispatchers.IO) { paths.filterTo(mutableSetOf()) { File(it).isFile } }
+    }
 
     Scaffold(
       topBar = {
@@ -148,10 +176,12 @@ object DownloadsScreen : Screen {
       ) {
         item(key = "location") {
           DownloadLocationCard(
-            path = downloadManager.locations.root().absolutePath,
-            isCustom = downloadManager.locations.isUsingCustomLocation(),
+            status = locationStatus,
             onPick = { locationPicker.launch(null) },
-            onReset = { downloadManager.locations.clearCustomLocation() },
+            onReset = {
+              downloadManager.locations.clearCustomLocation()
+              scope.launch { refreshLocation() }
+            },
           )
         }
 
@@ -192,15 +222,18 @@ object DownloadsScreen : Screen {
             CompletedRow(
               title = job.title,
               subtitle = job.outputFile?.let { File(it).name }.orEmpty(),
-              playable = job.outputFile?.let { File(it).isFile } == true,
+              playable = job.outputFile?.let { existingFiles?.contains(it) ?: true } == true,
               onPlay = {
                 job.outputFile?.let { path ->
                   MediaUtils.playFile(source = path, context = context, launchSource = "downloads", title = job.title)
                 }
               },
               onDelete = {
-                job.outputFile?.let { path -> runCatching { File(path).delete() } }
-                ytdlpEngine.remove(job.id)
+                val path = job.outputFile
+                scope.launch {
+                  if (path != null) withContext(Dispatchers.IO) { runCatching { File(path).delete() } }
+                  ytdlpEngine.remove(job.id)
+                }
               },
             )
           }
@@ -214,17 +247,20 @@ object DownloadsScreen : Screen {
                   append(formatBytes(download.entity.totalBytes))
                 }
               },
-              playable = download.isPlayable,
+              playable = existingFiles?.contains(download.file.path) ?: true,
               onPlay = {
-                MediaUtils.playFile(
-                  source = download.file.absolutePath,
-                  context = context,
-                  launchSource = "downloads",
-                  title = download.displayTitle,
-                  subtitles = downloadManager.sidecarSubtitles(download).map { Uri.fromFile(it) },
-                  posterUrl = download.entity.posterUrl,
-                  isAudio = download.entity.isAudio,
-                )
+                scope.launch {
+                  val subtitles = withContext(Dispatchers.IO) { downloadManager.sidecarSubtitles(download) }
+                  MediaUtils.playFile(
+                    source = download.file.absolutePath,
+                    context = context,
+                    launchSource = "downloads",
+                    title = download.displayTitle,
+                    subtitles = subtitles.map { Uri.fromFile(it) },
+                    posterUrl = download.entity.posterUrl,
+                    isAudio = download.entity.isAudio,
+                  )
+                }
               },
               onDelete = { pendingDelete = download },
             )
@@ -275,11 +311,11 @@ private fun SectionHeader(title: String) {
 
 @Composable
 private fun DownloadLocationCard(
-  path: String,
-  isCustom: Boolean,
+  status: DownloadLocations.Status?,
   onPick: () -> Unit,
   onReset: () -> Unit,
 ) {
+  val isCustom = status?.isCustom == true
   Card(
     shape = RoundedCornerShape(14.dp),
     colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
@@ -302,13 +338,20 @@ private fun DownloadLocationCard(
           color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
         Text(
-          text = if (isCustom) path else stringResource(R.string.downloads_location_default),
+          text =
+            when {
+              status == null -> ""
+              isCustom -> status.effectivePath
+              status.isConfiguredUnavailable ->
+                stringResource(R.string.downloads_location_unavailable, status.configuredPath.orEmpty())
+              else -> stringResource(R.string.downloads_location_default)
+            },
           style = MaterialTheme.typography.bodySmall,
           maxLines = 2,
           overflow = TextOverflow.Ellipsis,
         )
       }
-      if (isCustom) {
+      if (isCustom || status?.isConfiguredUnavailable == true) {
         IconButton(onClick = onReset) {
           Icon(
             Icons.RoundedFilled.Close,

@@ -2328,6 +2328,7 @@
   <string name="downloads_delete_confirm_message">\"%1$s\" and its subtitle files will be deleted from storage.</string>
   <string name="downloads_location">Download location</string>
   <string name="downloads_location_default">App storage (removed when the app is uninstalled)</string>
+  <string name="downloads_location_unavailable">%1$s is unavailable. Downloads use app storage until it is back or you pick another folder.</string>
   <string name="downloads_location_invalid">This folder can\'t be used for downloads</string>
   <string name="downloads_location_reset">Reset to app storage</string>
   <string name="downloads_queued">Queued</string>

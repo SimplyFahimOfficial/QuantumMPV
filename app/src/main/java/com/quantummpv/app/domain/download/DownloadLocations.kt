@@ -39,6 +39,31 @@ class DownloadLocations(
 
   fun isUsingCustomLocation(): Boolean = resolveConfiguredRoot() != null
 
+  /**
+   * Where downloads go and why, for display. Blocking filesystem checks, so call off the main
+   * thread; unlike [root] it never creates a directory.
+   */
+  data class Status(
+    /** Directory downloads are written to right now. */
+    val effectivePath: String,
+    /** The user's chosen folder, even when it is currently unusable; null when none was chosen. */
+    val configuredPath: String?,
+    val isCustom: Boolean,
+  ) {
+    /** A folder was chosen but is missing or read-only, so downloads fall back to the default. */
+    val isConfiguredUnavailable: Boolean get() = configuredPath != null && !isCustom
+  }
+
+  fun status(): Status {
+    val custom = resolveConfiguredRoot()
+    val chosen = preferences.downloadLocationPath.get().ifBlank { null } ?: preferences.downloadLocationTreeUri.get().takeIf { it.isNotBlank() }
+    return Status(
+      effectivePath = (custom ?: defaultRoot()).absolutePath,
+      configuredPath = chosen,
+      isCustom = custom != null,
+    )
+  }
+
   /** Persist a picked SAF tree; returns the resolved path or null when unusable. */
   fun setLocationFromTree(treeUri: Uri): String? {
     val path = resolveTreeUriToPath(treeUri) ?: return null
