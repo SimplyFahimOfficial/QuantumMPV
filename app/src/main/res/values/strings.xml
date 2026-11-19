@@ -1290,6 +1290,13 @@
   <string name="ui_empty_folder">Empty folder</string>
   <string name="ui_scanning_for_videos">Scanning for videos…</string>
   <string name="ui_no_video_folders_found">No video folders found</string>
+  <string name="video_filter_all">All</string>
+  <string name="video_filter_unwatched">Unwatched</string>
+  <string name="video_filter_in_progress">In progress</string>
+  <string name="video_filter_watched">Watched</string>
+  <string name="video_filter_empty_title">No videos match this filter</string>
+  <string name="video_filter_empty_message">Try another filter or show everything in this folder.</string>
+  <string name="video_filter_reset">Show all</string>
   <string name="ui_no_videos_in_folder">No videos in this folder</string>
   <string name="ui_no_playlists_found">No playlists found</string>
   <string name="ui_recently_played_disabled">Recently Played is disabled</string>

@@ -48,6 +48,9 @@ data class VideoWithPlaybackInfo(
   val progressPercentage: Float? = null, // 0.0 to 1.0
   val isOldAndUnplayed: Boolean = false, // true while the NEW badge is eligible
   val isWatched: Boolean = false, // true once the configured watched threshold is reached
+  // Saved playback of at least 1% (or any saved position when the length is unknown); unlike
+  // progressPercentage it is not hidden near 100%.
+  val hasSavedProgress: Boolean = false,
   // Display title with the downloader id split off; null until built off the main thread.
   val cleanTitle: com.quantummpv.app.utils.media.CleanTitle? = null,
   // Remaining time ("3:20") for an in-progress video, preformatted for the Resume label.
@@ -106,6 +109,7 @@ internal fun buildVideoWithPlaybackInfo(
       },
     isOldAndUnplayed = !isWatched && isWithinNewLabelWindow,
     isWatched = isWatched,
+    hasSavedProgress = progressValue?.let { it >= 0.01f } ?: ((playbackState?.lastPosition ?: 0) > 0),
   )
 }
 
@@ -381,6 +385,7 @@ class VideoListViewModel(
             progressPercentage = null,
             isOldAndUnplayed = item.isOldAndUnplayed && !watched,
             isWatched = watched,
+            hasSavedProgress = false,
           )
         } else {
           item

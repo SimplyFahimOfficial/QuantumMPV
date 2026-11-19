@@ -16,10 +16,13 @@ import android.os.Environment
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.compose.animation.core.spring
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -32,7 +35,9 @@ import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
+import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -189,22 +194,37 @@ data class VideoListScreen(
         }
       }
 
+    // Sort, then filter by watch state, then search; all from the one loaded list.
+    var watchFilter by rememberSaveable { mutableStateOf(WatchFilter.ALL) }
+    // Until playback info has loaded for every video, a watch filter cannot classify them.
+    val playbackInfoReady = videosWithPlaybackInfo.size == videos.size
+    val filterPending = watchFilter != WatchFilter.ALL && !playbackInfoReady
+    val filteredVideosWithInfo =
+      remember(sortedVideosWithInfo, watchFilter, playbackInfoReady) {
+        when {
+          watchFilter == WatchFilter.ALL -> sortedVideosWithInfo
+          !playbackInfoReady -> emptyList()
+          else -> sortedVideosWithInfo.filter { it.matches(watchFilter) }
+        }
+      }
+
     var internalSearchQuery by rememberSaveable { mutableStateOf("") }
     var internalIsSearching by rememberSaveable { mutableStateOf(false) }
     val focusRequester = remember { FocusRequester() }
     val displayedVideosWithInfo =
-      remember(sortedVideosWithInfo, internalSearchQuery, internalIsSearching) {
+      remember(filteredVideosWithInfo, internalSearchQuery, internalIsSearching) {
         if (!internalIsSearching || internalSearchQuery.isBlank()) {
-          sortedVideosWithInfo
+          filteredVideosWithInfo
         } else {
           val matchingVideoIds =
             MediaSearchEngine.searchVideos(
               query = internalSearchQuery,
-              videos = sortedVideosWithInfo.map { it.video },
+              videos = filteredVideosWithInfo.map { it.video },
             ).mapTo(hashSetOf()) { it.id }
-          sortedVideosWithInfo.filter { it.video.id in matchingVideoIds }
+          filteredVideosWithInfo.filter { it.video.id in matchingVideoIds }
         }
       }
+    val displayedVideos = remember(displayedVideosWithInfo) { displayedVideosWithInfo.map { it.video } }
 
     LaunchedEffect(internalIsSearching) {
       if (internalIsSearching) focusRequester.requestFocus()
@@ -213,7 +233,8 @@ data class VideoListScreen(
     // Selection manager
     val selectionManager =
       rememberSelectionManager(
-        items = sortedVideos,
+        // Only what is visible can be selected or acted on; hidden selections are never touched.
+        items = displayedVideos,
         getId = { it.id },
         onDeleteItems = { items, _ -> viewModel.deleteVideos(items) },
         onRenameItem = { video, newName -> viewModel.renameVideo(video, newName) },
@@ -389,7 +410,7 @@ data class VideoListScreen(
             ),
           isInSelectionMode = selectionManager.isInSelectionMode,
           selectedCount = selectionManager.selectedCount,
-          totalCount = sortedVideosWithInfo.size,
+          totalCount = displayedVideosWithInfo.size,
           onBackClick = {
             if (selectionManager.isInSelectionMode) {
               selectionManager.clear()
@@ -446,7 +467,7 @@ data class VideoListScreen(
       floatingActionButton = {
         val navigationBarHeight = com.quantummpv.app.ui.browser.LocalNavigationBarHeight.current
         val miniPlayerClearance = com.quantummpv.app.ui.browser.NavigationBarState.miniPlayerClearance
-        if (sortedVideosWithInfo.isNotEmpty()) {
+        if (filteredVideosWithInfo.isNotEmpty()) {
           val isFabShouldBeVisible =
             showQuickPlayFab && !selectionManager.isInSelectionMode && isFabVisible.value
 
@@ -475,7 +496,7 @@ data class VideoListScreen(
               onClick = {
                 coroutineScope.launch {
                   val folderPath =
-                    sortedVideosWithInfo
+                    filteredVideosWithInfo
                       .firstOrNull()
                       ?.video
                       ?.path
@@ -486,10 +507,11 @@ data class VideoListScreen(
                       File(it.filePath).parent == folderPath
                     }
 
-                  if (lastPlayedInFolder != null) {
+                  // With a watch filter on, play from what is shown rather than a hidden recent file.
+                  if (lastPlayedInFolder != null && watchFilter == WatchFilter.ALL) {
                     MediaUtils.playFile(lastPlayedInFolder.filePath, context, "recently_played_button")
                   } else {
-                    MediaUtils.playFile(sortedVideosWithInfo.first().video, context, "first_video_button")
+                    MediaUtils.playFile(filteredVideosWithInfo.first().video, context, "first_video_button")
                   }
                 }
               },
@@ -509,41 +531,64 @@ data class VideoListScreen(
       val autoScrollToLastPlayed by browserPreferences.autoScrollToLastPlayed.collectAsState()
 
       Box(modifier = Modifier.fillMaxSize().semantics { testTagsAsResourceId = true }.testTag("video_list_screen")) {
-        VideoListContent(
-          folderId = bucketId,
-          videosWithInfo = displayedVideosWithInfo,
-          isLoading = isLoading && videos.isEmpty(),
-          isRefreshing = isRefreshing,
-          recentlyPlayedFilePath = lastPlayedInFolderPath ?: recentlyPlayedFilePath,
-          videosWereDeletedOrMoved = videosWereDeletedOrMoved,
-          autoScrollToLastPlayed = autoScrollToLastPlayed,
-          onRefresh = { viewModel.refresh() },
-          selectionManager = selectionManager,
-          onVideoClick = { video ->
-            if (selectionManager.isInSelectionMode) {
-              selectionHaptics.tick()
-              selectionManager.toggle(video)
-            } else {
-              // Always use MediaUtils.playFile which lets PlayerActivity auto-generate playlist
-              // This avoids TransactionTooLargeException from passing large playlists
-              // PlayerActivity will auto-generate playlist from folder if playlistMode is enabled
-              MediaUtils.playFile(video, context, "video_list")
+        Column(modifier = Modifier.padding(padding)) {
+          if (!isAudio && (sortedVideosWithInfo.isNotEmpty() || watchFilter != WatchFilter.ALL)) {
+            WatchFilterRow(
+              selected = watchFilter,
+              onSelect = {
+                watchFilter = it
+                selectionManager.clear()
+              },
+            )
+          }
+          if (watchFilter != WatchFilter.ALL && playbackInfoReady && filteredVideosWithInfo.isEmpty() && sortedVideosWithInfo.isNotEmpty()) {
+            Box(modifier = Modifier.weight(1f).fillMaxWidth(), contentAlignment = Alignment.Center) {
+              EmptyState(
+                icon = Icons.RoundedFilled.VideoLibrary,
+                title = androidx.compose.ui.res.stringResource(com.quantummpv.app.R.string.video_filter_empty_title),
+                message = androidx.compose.ui.res.stringResource(com.quantummpv.app.R.string.video_filter_empty_message),
+                actionLabel = androidx.compose.ui.res.stringResource(com.quantummpv.app.R.string.video_filter_reset),
+                onAction = { watchFilter = WatchFilter.ALL },
+              )
             }
-          },
-          onVideoLongClick = { video ->
-            if (selectionManager.isInSelectionMode) selectionHaptics.tick() else selectionHaptics.confirm()
-            selectionManager.handleLongClick(video)
-          },
-          onWatchedChange = viewModel::setWatched,
-          onRename = { video -> swipeRenameVideo = video },
-          onDelete = { video -> swipeDeleteVideo = video },
-          isFabVisible = isFabVisible,
-          modifier = Modifier.padding(padding),
-          showFloatingBottomBar = showFloatingBottomBar,
-          mediaLayoutMode = mediaLayoutMode,
-          isAudio = isAudio,
-          musicCoverArtSize = musicCoverArtSize,
-        )
+          } else {
+            VideoListContent(
+              folderId = bucketId,
+              videosWithInfo = displayedVideosWithInfo,
+              isLoading = (isLoading && videos.isEmpty()) || filterPending,
+              isRefreshing = isRefreshing,
+              recentlyPlayedFilePath = lastPlayedInFolderPath ?: recentlyPlayedFilePath,
+              videosWereDeletedOrMoved = videosWereDeletedOrMoved,
+              autoScrollToLastPlayed = autoScrollToLastPlayed,
+              onRefresh = { viewModel.refresh() },
+              selectionManager = selectionManager,
+              onVideoClick = { video ->
+                if (selectionManager.isInSelectionMode) {
+                  selectionHaptics.tick()
+                  selectionManager.toggle(video)
+                } else {
+                  // Always use MediaUtils.playFile which lets PlayerActivity auto-generate playlist
+                  // This avoids TransactionTooLargeException from passing large playlists
+                  // PlayerActivity will auto-generate playlist from folder if playlistMode is enabled
+                  MediaUtils.playFile(video, context, "video_list")
+                }
+              },
+              onVideoLongClick = { video ->
+                if (selectionManager.isInSelectionMode) selectionHaptics.tick() else selectionHaptics.confirm()
+                selectionManager.handleLongClick(video)
+              },
+              onWatchedChange = viewModel::setWatched,
+              onRename = { video -> swipeRenameVideo = video },
+              onDelete = { video -> swipeDeleteVideo = video },
+              isFabVisible = isFabVisible,
+              modifier = Modifier.weight(1f),
+              showFloatingBottomBar = showFloatingBottomBar,
+              mediaLayoutMode = mediaLayoutMode,
+              isAudio = isAudio,
+              musicCoverArtSize = musicCoverArtSize,
+            )
+          }
+        }
 
         // Floating Material 3 Button Group overlay with animation
         // Play Store gating is intentionally bypassed here.
@@ -1376,3 +1421,26 @@ private val Video.stableListKey: String
   get() = "$id:$path"
 
 private const val THUMBNAIL_SCROLL_SETTLE_MILLIS = 100L
+
+@Composable
+private fun WatchFilterRow(
+  selected: WatchFilter,
+  onSelect: (WatchFilter) -> Unit,
+) {
+  Row(
+    modifier =
+      Modifier
+        .fillMaxWidth()
+        .horizontalScroll(rememberScrollState())
+        .padding(horizontal = 12.dp, vertical = 4.dp),
+    horizontalArrangement = Arrangement.spacedBy(8.dp),
+  ) {
+    WatchFilter.entries.forEach { filter ->
+      FilterChip(
+        selected = filter == selected,
+        onClick = { onSelect(filter) },
+        label = { Text(androidx.compose.ui.res.stringResource(filter.label)) },
+      )
+    }
+  }
+}
