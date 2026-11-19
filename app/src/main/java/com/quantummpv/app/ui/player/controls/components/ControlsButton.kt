@@ -94,7 +94,7 @@ fun ControlsButton(
   icon: AppIcon,
   onClick: () -> Unit,
   modifier: Modifier = Modifier,
-  onLongClick: () -> Unit = {},
+  onLongClick: (() -> Unit)? = null,
   title: String? = null,
   color: Color? = null,
   enabled: Boolean = true,
@@ -139,10 +139,15 @@ fun ControlsButton(
             clickEvent()
             onClick()
           },
-          onLongClick = {
-            clickEvent()
-            onLongClick()
-          },
+          // Null registers no long-click, so a plain button neither swallows a long press nor offers a
+          // "long click" action to accessibility services.
+          onLongClick =
+            onLongClick?.let { action ->
+              {
+                clickEvent()
+                action()
+              }
+            },
           interactionSource = interactionSource,
           indication = ripple(),
           role = Role.Button,
