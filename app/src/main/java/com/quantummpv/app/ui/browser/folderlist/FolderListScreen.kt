@@ -110,6 +110,7 @@ import com.quantummpv.app.ui.browser.medialibrary.MediaLibraryContent
 import com.quantummpv.app.ui.browser.search.MediaSearchBody
 import com.quantummpv.app.ui.browser.search.MediaSearchScreen
 import com.quantummpv.app.ui.browser.search.rememberMediaSearchViewModel
+import com.quantummpv.app.ui.browser.selection.deleteResultMessage
 import com.quantummpv.app.ui.browser.selection.rememberSelectionManager
 import com.quantummpv.app.ui.browser.sheets.PlayLinkSheet
 import com.quantummpv.app.ui.browser.states.EmptyState
@@ -130,8 +131,10 @@ import com.quantummpv.app.utils.media.MediaUtils
 import com.quantummpv.app.utils.media.OpenDocumentTreeContract
 import com.quantummpv.app.utils.permission.PermissionUtils
 import com.quantummpv.app.utils.sort.SortUtils
-import com.quantummpv.app.utils.storage.FileTypeUtils
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import kotlinx.serialization.Serializable
 import org.koin.compose.koinInject
 import java.io.File
@@ -286,62 +289,41 @@ object FolderListScreen : Screen {
     val filteredFolders = sortedFolders
 
     suspend fun deleteFolders(folders: List<VideoFolder>): Pair<Int, Int> {
-      var deleted = 0
-      var failed = 0
       val deleteAll = browserPreferences.deleteFolderAllContents.get()
       // The audio-only folder browser must always be able to delete the audio files it shows,
       // regardless of the general "include audio in browser" preference (which only governs the
       // regular video browser). The regular (video) browser keeps its existing preference-driven behavior.
       val includeAudio = audioOnly || browserPreferences.includeAudioBrowser.get()
-      for (folder in folders) {
-        try {
-          if (deleteAll) {
-            val ids = setOf(folder.bucketId)
-            val videos =
-              com.quantummpv.app.repository.MediaFileRepository
-                .getVideosForBuckets(context, ids, includeAudioOverride = if (audioOnly) true else null)
-            if (videos.isNotEmpty()) {
-              val (d, f) = viewModel.deleteVideos(videos)
-              deleted += d
-              failed += f
-            }
-            val dir = java.io.File(folder.path)
-            if (dir.exists()) {
-              if (dir.deleteRecursively()) {
-                deleted++
-              } else {
-                failed++
-              }
-            }
-          } else {
-            var deletedAny = false
-            val dir = java.io.File(folder.path)
-            if (dir.exists()) {
-              dir.listFiles()?.forEach { file ->
-                if (file.isFile) {
-                  val ext = file.extension.lowercase()
-                  // In the audio-only browser, only touch audio files - never delete video files
-                  // that might live alongside them in the same on-disk folder.
-                  val isVideo = !audioOnly && ext in FileTypeUtils.VIDEO_EXTENSIONS
-                  val isAudio = includeAudio && ext in FileTypeUtils.AUDIO_EXTENSIONS
-                  if (isVideo || isAudio) {
-                    if (file.delete()) deletedAny = true
-                  }
+      // Directory walks and deletes block; keep them off the main thread.
+      return withContext(Dispatchers.IO) {
+        folders
+          .mapNotNull { folder ->
+            try {
+              val dir = java.io.File(folder.path)
+              if (deleteAll) {
+                val ids = setOf(folder.bucketId)
+                val videos =
+                  com.quantummpv.app.repository.MediaFileRepository
+                    .getVideosForBuckets(context, ids, includeAudioOverride = if (audioOnly) true else null)
+                val (filesDeleted, filesFailed) = if (videos.isNotEmpty()) viewModel.deleteVideos(videos) else 0 to 0
+                if (!dir.exists() && videos.isEmpty()) {
+                  null // nothing to delete, as before
+                } else {
+                  wholeFolderOutcome(filesDeleted, filesFailed, dirRemoved = dir.deleteRecursively() && !dir.exists())
                 }
+              } else {
+                // In the audio-only browser, only touch audio files - never delete video files
+                // that might live alongside them in the same on-disk folder.
+                deleteMediaFilesIn(dir, includeVideo = !audioOnly, includeAudio = includeAudio)
               }
+            } catch (e: CancellationException) {
+              throw e
+            } catch (e: Exception) {
+              Log.e("FolderListScreen", "Error deleting folder ${folder.path}", e)
+              FolderDeleteOutcome.FAILED
             }
-            if (deletedAny) {
-              deleted++
-            } else {
-              failed++
-            }
-          }
-        } catch (e: Exception) {
-          Log.e("FolderListScreen", "Error deleting folder ${folder.path}", e)
-          failed++
-        }
+          }.toDeleteCounts()
       }
-      return Pair(deleted, failed)
     }
 
     // Selection manager
@@ -1042,20 +1024,10 @@ object FolderListScreen : Screen {
           coroutineScope.launch {
             runCatching {
               val (deleted, failed) = deleteFolders(foldersToDelete)
-              if (deleted > 0) {
+              deleteResultMessage(deleted, failed, announceSuccess = true)?.let {
                 android.widget.Toast
-                  .makeText(
-                    context,
-                    context.getString(com.quantummpv.app.R.string.ui_deleted_successfully),
-                    android.widget.Toast.LENGTH_SHORT,
-                  ).show()
-              } else if (failed > 0) {
-                android.widget.Toast
-                  .makeText(
-                    context,
-                    context.getString(com.quantummpv.app.R.string.ui_failed_to_delete),
-                    android.widget.Toast.LENGTH_SHORT,
-                  ).show()
+                  .makeText(context, context.getString(it), android.widget.Toast.LENGTH_SHORT)
+                  .show()
               }
             }.onFailure {
               android.widget.Toast

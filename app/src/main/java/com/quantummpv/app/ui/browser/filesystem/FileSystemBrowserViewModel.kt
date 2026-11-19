@@ -327,7 +327,10 @@ class FileSystemBrowserViewModel(
    * Delete folders (and their contents)
    * Based on Fossify's deleteFiles() logic with folder support
    */
-  fun deleteFolders(folders: List<FileSystemItem.Folder>): Pair<Int, Int> {
+  suspend fun deleteFolders(folders: List<FileSystemItem.Folder>): Pair<Int, Int> =
+    kotlinx.coroutines.withContext(Dispatchers.IO) { deleteFoldersBlocking(folders) }
+
+  private fun deleteFoldersBlocking(folders: List<FileSystemItem.Folder>): Pair<Int, Int> {
     var successCount = 0
     var failureCount = 0
     val deleteAll = browserPreferences.deleteFolderAllContents.get()

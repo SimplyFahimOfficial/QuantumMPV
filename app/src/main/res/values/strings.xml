@@ -1574,6 +1574,7 @@
   <string name="ui_rename_failed">Rename failed</string>
   <string name="ui_deleted_successfully">Deleted successfully</string>
   <string name="ui_failed_to_delete">Failed to delete</string>
+  <string name="ui_delete_partial">Some items could not be deleted</string>
   <string name="ui_play_recently_played_or_first_video">Play recently played or first video</string>
   <string name="ui_videos">Videos</string>
   <string name="ui_audio_tab">Audio</string>

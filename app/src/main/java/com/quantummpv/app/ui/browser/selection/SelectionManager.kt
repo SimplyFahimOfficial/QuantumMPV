@@ -136,20 +136,8 @@ class SelectionManager<T, ID>(
     scope.launch {
       runCatching {
         val (deleted, failed) = onDeleteItems(selected, deleteFiles)
-        if (deleted > 0 && announceDeleteSuccess) {
-          Toast
-            .makeText(
-              context,
-              context.getString(com.quantummpv.app.R.string.ui_deleted_successfully),
-              Toast.LENGTH_SHORT,
-            ).show()
-        } else if (failed > 0 && (deleted == 0 || !announceDeleteSuccess)) {
-          Toast
-            .makeText(
-              context,
-              context.getString(com.quantummpv.app.R.string.ui_failed_to_delete),
-              Toast.LENGTH_SHORT,
-            ).show()
+        deleteResultMessage(deleted, failed, announceDeleteSuccess)?.let {
+          Toast.makeText(context, context.getString(it), Toast.LENGTH_SHORT).show()
         }
       }.onFailure {
         Toast
@@ -339,3 +327,19 @@ fun <T, ID> rememberSelectionManager(
     )
   }
 }
+
+/**
+ * Toast text for a delete result, or null when there is nothing to say. Anything that was deleted
+ * next to anything that failed is reported as partial instead of as a plain success.
+ */
+internal fun deleteResultMessage(
+  deleted: Int,
+  failed: Int,
+  announceSuccess: Boolean,
+): Int? =
+  when {
+    deleted > 0 && failed > 0 && announceSuccess -> R.string.ui_delete_partial
+    deleted > 0 && announceSuccess -> R.string.ui_deleted_successfully
+    failed > 0 && (deleted == 0 || !announceSuccess) -> R.string.ui_failed_to_delete
+    else -> null
+  }
