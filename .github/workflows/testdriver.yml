@@ -37,7 +37,7 @@ jobs:
         api-key: ${{ secrets.TD_API_KEY }}
 
     - name: Run TestDriver.ai tests
-      run: vitest run
+      run: npx vitest run
 
     - name: Upload test results
       if: always()
