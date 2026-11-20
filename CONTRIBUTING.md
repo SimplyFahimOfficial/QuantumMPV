@@ -6,7 +6,7 @@ the app and what we expect in a pull request.
 ## Build requirements
 
 - JDK 17 (Temurin recommended)
-- Android SDK platform `android-37.0`, build tools `37.0.0`
+- Android SDK platform `android-37.2`, build tools `37.0.0`
 - Android NDK `27.3.13750724`
 - CMake `3.22.1`
 - Git with full history (some build steps read tags)
