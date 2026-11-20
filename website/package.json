@@ -6,7 +6,7 @@
   },
   "dependencies": {
     "@lucide/astro": "1.72.0",
-    "blume": "1.6.3",
+    "blume": "2.2.7",
     "simple-icons": "16.37.0"
   },
   "overrides": {
