@@ -41,7 +41,7 @@ jobs:
         run: |
           set -euo pipefail
           yes | sdkmanager --licenses >/dev/null || true
-          sdkmanager --install "platforms;android-37.0" "build-tools;37.0.0" "cmake;3.22.1"
+          sdkmanager --install "platforms;android-37.2" "build-tools;37.0.0" "cmake;3.22.1"
 
       - name: Fetch and verify pinned native artifacts
         run: python3 tools/verify_native_artifacts.py --download

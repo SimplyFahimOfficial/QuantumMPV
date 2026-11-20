@@ -44,7 +44,9 @@ plugins {
 
 android {
   namespace = "com.quantummpv.app"
-  compileSdk = 37
+  compileSdk {
+    version = release(37) { minorApiLevel = 2 }
+  }
   ndkVersion = "27.3.13750724"
 
   defaultConfig {
