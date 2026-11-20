@@ -31,23 +31,19 @@ export default defineConfig({
     repo: true,
   },
   search: {
-    provider: "orama",
     popular: [
       { href: "/docs/getting-started/installation", icon: "download", label: "Install mpvRx" },
       { href: "/docs/playback/controls-and-gestures", icon: "gamepad-2", label: "Player controls" },
       { href: "/docs/customization/custom-commands", icon: "terminal", label: "Scripting API" },
     ],
   },
-  ai: {
+  agents: {
     api: true,
     llmsTxt: {
       enabled: true,
       details:
         "mpvRx is an Android media player built on libmpv. Use these docs for installation, playback, libraries, streaming, configuration, and the Lua/JavaScript bridge.",
     },
-  },
-  deployment: {
-    output: "static",
   },
   github: {
     owner: "Riteshp2001",
