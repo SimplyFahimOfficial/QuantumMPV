@@ -1,7 +1,7 @@
 # CI/CD architecture
 
 QuantumMPV is a single-module Android app (`:app`, Kotlin, Jetpack Compose, AGP 9.x,
-Gradle wrapper 9.6, JDK 17, compileSdk 37, targetSdk 36, minSdk 26) with native
+Gradle wrapper 9.6, JDK 17, compileSdk 37.2, targetSdk 36, minSdk 26) with native
 libmpv/FFmpeg AARs fetched from pinned, checksummed GitHub releases
 (`native-artifacts.json`). It ships three product flavors (`standard`, `noVulkan`,
 `fongmi`) and three build types (`debug`, `preview`, `release`). Releases publish signed APKs and a signed Standard-flavor AAB on GitHub. The AAB is used for Google Play.

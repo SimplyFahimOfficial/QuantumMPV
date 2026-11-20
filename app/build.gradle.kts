@@ -44,7 +44,9 @@ plugins {
 
 android {
   namespace = "com.quantummpv.app"
-  compileSdk = 37
+  compileSdk {
+    version = release(37) { minorApiLevel = 2 }
+  }
   ndkVersion = "27.3.13750724"
 
   defaultConfig {
@@ -281,7 +283,7 @@ dependencies {
     add("implementation", "io.netty:netty-codec:4.2.19.Final")
     add("implementation", "org.bouncycastle:bcprov-jdk18on:1.86")
     add("implementation", "org.bouncycastle:bcpkix-jdk18on:1.86")
-    add("implementation", "org.bouncycastle:bcutil-jdk18on:1.86")
+    add("implementation", "org.bouncycastle:bcutil-jdk18on:1.87")
     add("implementation", "org.apache.commons:commons-lang3:3.18.0")
     add("implementation", "org.apache.httpcomponents:httpclient:4.5.14")
     add("implementation", "org.bitbucket.b_c:jose4j:0.9.6")
