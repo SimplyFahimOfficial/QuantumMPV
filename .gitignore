@@ -162,3 +162,7 @@ graft/
 # Local AI-agent tooling (hooks and MCP servers execute code; keep them out of the repo)
 .claude/
 .mcp.json
+
+# Python bytecode
+__pycache__/
+*.pyc
