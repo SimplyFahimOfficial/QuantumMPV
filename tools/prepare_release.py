@@ -17,7 +17,20 @@ SUPPORTED_MAJOR_VERSIONS = {1, 2}
 # allowing a later patch/minor release to produce a smaller Android versionCode.
 MINOR_PATCH_RADIX = 100
 MAJOR_RADIX = 10_000
-MAX_RELEASE_CODE = 214_747
+VERSION_CODE_BAND = 10_000
+MAX_ABI_DIGIT = 4
+# Google Play rejects version codes above 2,100,000,000 (below Kotlin's Int maximum).
+MAX_VERSION_CODE = 2_100_000_000
+
+
+def max_emitted_version_code(release_code: int) -> int:
+    """Largest versionCode app/build.gradle.kts can emit for a release code.
+
+    Stable builds use release_code * band + (band - 1); preview builds use the next band, up to
+    (release_code + 1) * band + (band - 2). Each is then multiplied by 10 and given an ABI digit.
+    """
+    preview = (release_code + 1) * VERSION_CODE_BAND + VERSION_CODE_BAND - 2
+    return preview * 10 + MAX_ABI_DIGIT
 
 
 def encode_version_code(major: int, minor: int, patch: int) -> int:
@@ -26,8 +39,11 @@ def encode_version_code(major: int, minor: int, patch: int) -> int:
             f"minor and patch components must each be below {MINOR_PATCH_RADIX}",
         )
     release_code = major * MAJOR_RADIX + minor * MINOR_PATCH_RADIX + patch
-    if release_code > MAX_RELEASE_CODE:
-        raise SystemExit("semantic version is too large for the Android versionCode encoding")
+    if max_emitted_version_code(release_code) > MAX_VERSION_CODE:
+        raise SystemExit(
+            f"version {major}.{minor}.{patch} would produce Android versionCodes above Google Play's "
+            f"limit of {MAX_VERSION_CODE}",
+        )
     return release_code
 
 
