@@ -44,6 +44,12 @@ jobs:
           vulnerability-check: false
           license-check: true
           warn-only: true
+          # These packages declare the valid license text "apache-2.0" (lowercase), which the
+          # action cannot parse as an SPDX identifier and reports as an error even with
+          # warn-only. Their published LICENSE.md is the Apache License 2.0 (checked for
+          # @pierre/diffs 1.6.4, highlights 0.4.0 and theming 1.0.2).
+          allow-dependencies-licenses: >-
+            pkg:npm/@pierre/diffs, pkg:npm/@pierre/highlights, pkg:npm/@pierre/theming
           allow-licenses: >-
             Apache-2.0, MIT, BSD-2-Clause, BSD-3-Clause, ISC, 0BSD, Zlib, BSL-1.0,
             Unlicense, CC0-1.0, MPL-2.0, LGPL-2.1-only, LGPL-2.1-or-later,
