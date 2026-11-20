@@ -216,6 +216,14 @@ class MusicLibraryViewModel : ViewModel(), KoinComponent {
   }.flowOn(Dispatchers.Default)
     .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
+  /**
+   * Pull-to-refresh entry. The scan runs in [viewModelScope] because it flips [isLoading], which can
+   * remove the pulled page from composition and would otherwise cancel the scan with it.
+   */
+  suspend fun refreshLibraryFromPull(context: Context) {
+    viewModelScope.launch { refreshLibrary(context.applicationContext) }.join()
+  }
+
   suspend fun refreshLibrary(context: Context) {
     scanMutex.withLock {
       _isLoading.value = true

@@ -30,6 +30,8 @@ import com.quantummpv.app.di.PreferencesModule
 import com.quantummpv.app.preferences.AudioPreferences
 import com.quantummpv.app.preferences.DecoderPreferences
 import com.quantummpv.app.preferences.PlayerPreferences
+import com.quantummpv.app.preferences.SettingsPromoPreferences
+import com.quantummpv.app.preferences.resolve
 import com.quantummpv.app.presentation.crash.CrashActivity
 import com.quantummpv.app.presentation.crash.CrashReportStore
 import com.quantummpv.app.repository.NetworkRepository
@@ -138,6 +140,11 @@ class App :
         com.quantummpv.app.di.domainModule,
         com.quantummpv.app.di.DownloadModule,
       )
+    }
+    // Settings opens with its cards already resolved, so they never flash in or out.
+    applicationScope.launch(Dispatchers.IO) {
+      runCatching { getKoin().get<SettingsPromoPreferences>().resolve(this@App) }
+        .onFailure { Log.e(TAG, "Failed to resolve Settings promo state", it) }
     }
     if (!BuildConfig.MPV_SUPPORTS_VULKAN) {
       getKoin().get<DecoderPreferences>().useVulkan.set(false)
