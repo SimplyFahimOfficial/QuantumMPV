@@ -9,6 +9,10 @@
 
 package com.quantummpv.app.ui.preferences
 
+import android.content.BroadcastReceiver
+import android.content.Context
+import android.content.Intent
+import android.content.IntentFilter
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -21,12 +25,14 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -40,7 +46,13 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.VerticalDivider
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableLongStateOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshots.Snapshot
 import androidx.compose.ui.Alignment
@@ -49,15 +61,23 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.core.content.ContextCompat
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.navigation3.runtime.NavBackStack
 import androidx.navigation3.runtime.rememberNavBackStack
 import com.quantummpv.app.R
 import com.quantummpv.app.preferences.SecureFolderPreferences
+import com.quantummpv.app.preferences.SettingsPromo
+import com.quantummpv.app.preferences.SettingsPromoPreferences
 import com.quantummpv.app.preferences.preference.collectAsState
+import com.quantummpv.app.preferences.resolve
 import com.quantummpv.app.presentation.Screen
 import com.quantummpv.app.ui.icons.AppIcon
 import com.quantummpv.app.ui.icons.Icon
@@ -71,10 +91,15 @@ import com.quantummpv.app.ui.theme.LocalEmphasizedTypography
 import com.quantummpv.app.ui.utils.LocalBackStack
 import com.quantummpv.app.ui.utils.LocalShowSettingsBackArrow
 import com.quantummpv.app.ui.utils.ScreenNavDisplay
+import com.quantummpv.app.ui.utils.appItemMotion
 import com.quantummpv.app.ui.utils.navigateTo
 import com.quantummpv.app.ui.utils.popSafely
 import com.quantummpv.app.ui.utils.sharedNavBounds
 import com.quantummpv.app.ui.utils.staggeredEntrance
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import kotlinx.serialization.Serializable
 import org.koin.compose.koinInject
 
@@ -109,20 +134,21 @@ object PreferencesScreen : Screen {
       @Suppress("UNCHECKED_CAST")
       val detailBackstack = rememberNavBackStack(AppearancePreferencesScreen) as NavBackStack<Screen>
       val selectedScreen = detailBackstack.first()
+      val replaceDetail = { screen: Screen ->
+        // Replace the category atomically without ever exposing an empty stack.
+        Snapshot.withMutableSnapshot {
+          detailBackstack[0] = screen
+          while (detailBackstack.size > 1) detailBackstack.removeAt(detailBackstack.lastIndex)
+        }
+      }
+      val selectDetail = { screen: Screen -> if (screen != selectedScreen) replaceDetail(screen) }
       Row(modifier = Modifier.fillMaxSize()) {
         Box(modifier = Modifier.weight(0.4f).tvFocusGroup()) {
           SettingsPane(
             sections = sections,
             selectedScreen = selectedScreen,
-            onScreenSelected = { screen ->
-              if (screen != selectedScreen) {
-                // Replace the category atomically without ever exposing an empty stack.
-                Snapshot.withMutableSnapshot {
-                  detailBackstack[0] = screen
-                  while (detailBackstack.size > 1) detailBackstack.removeAt(detailBackstack.lastIndex)
-                }
-              }
-            },
+            onScreenSelected = selectDetail,
+            onPromoClick = replaceDetail,
           )
         }
         VerticalDivider(
@@ -148,6 +174,11 @@ object PreferencesScreen : Screen {
           com.quantummpv.app.ui.utils.SharedNavigation.activeKey = com.quantummpv.app.ui.utils.SharedNavigation.screenKey(it)
           backstack.navigateTo(it)
         },
+        onPromoClick = {
+          // Not a tap on the permanent row, so no container transform from it.
+          com.quantummpv.app.ui.utils.SharedNavigation.activeKey = null
+          backstack.navigateTo(it)
+        },
       )
     }
   }
@@ -158,11 +189,13 @@ object PreferencesScreen : Screen {
     sections: List<SettingsSection>,
     selectedScreen: Screen?,
     onScreenSelected: (Screen) -> Unit,
+    onPromoClick: (Screen) -> Unit,
   ) {
     val backstack = LocalBackStack.current
+    val promos = rememberSettingsPromos()
     val colorScheme = MaterialTheme.colorScheme
     val emphasizedTypography = LocalEmphasizedTypography.current
-    val initialFocusRequester = rememberTvInitialFocusRequester()
+    val initialFocusRequester = rememberTvInitialFocusRequester(enabled = promos.visible != null)
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
     val stagger =
       com.quantummpv.app.ui.utils.rememberEntranceStagger(
@@ -198,6 +231,8 @@ object PreferencesScreen : Screen {
         )
       },
     ) { padding ->
+      // Wait for the promo state so a dismissed or expired card never flashes and Appearance never jumps.
+      val visiblePromos = promos.visible ?: return@Scaffold
       LazyColumn(
         modifier =
           Modifier
@@ -214,6 +249,26 @@ object PreferencesScreen : Screen {
               Modifier
                 .padding(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 18.dp)
                 .tvInitialFocus(initialFocusRequester),
+          )
+        }
+
+        items(visiblePromos, key = { "promo-${it.name}" }) { promo ->
+          val (title, icon, destination, dismissLabel) = promoContent(promo)
+          val colors = MaterialTheme.colorScheme
+          val (container, onContainer) =
+            when (promo) {
+              SettingsPromo.HELP_SUPPORT -> colors.primaryContainer to colors.onPrimaryContainer
+              SettingsPromo.SUPPORT -> colors.tertiaryContainer to colors.onTertiaryContainer
+            }
+          SettingsPromoCard(
+            title = title,
+            icon = icon,
+            dismissLabel = dismissLabel,
+            container = container,
+            onContainer = onContainer,
+            onOpen = { onPromoClick(destination) },
+            onDismiss = { promos.dismiss(promo) },
+            modifier = appItemMotion().padding(horizontal = 16.dp),
           )
         }
 
@@ -633,5 +688,134 @@ private fun SettingsDestinationRow(
       modifier = Modifier.size(24.dp),
       tint = if (highlighted) summaryColor else MaterialTheme.colorScheme.outline,
     )
+  }
+}
+
+private data class PromoContent(
+  val title: String,
+  val icon: AppIcon,
+  val destination: Screen,
+  val dismissLabel: String,
+)
+
+@Composable
+private fun promoContent(promo: SettingsPromo): PromoContent =
+  when (promo) {
+    SettingsPromo.HELP_SUPPORT ->
+      PromoContent(
+        title = stringResource(R.string.help_support_title),
+        icon = Icons.RoundedFilled.HelpOutline,
+        destination = HelpSupportScreen,
+        dismissLabel = stringResource(R.string.settings_promo_dismiss_help_support),
+      )
+    SettingsPromo.SUPPORT ->
+      PromoContent(
+        title = stringResource(R.string.support_title),
+        icon = Icons.RoundedFilled.Favorite,
+        destination = SupportScreen,
+        dismissLabel = stringResource(R.string.settings_promo_dismiss_support),
+      )
+  }
+
+private class SettingsPromos(
+  /** Null until the state is resolved; the list waits for it. */
+  val visible: List<SettingsPromo>?,
+  val dismiss: (SettingsPromo) -> Unit,
+)
+
+/**
+ * The cards to show now. Rechecked on resume and wall-clock change, plus one timer for the moment
+ * the earliest visible card expires; there is no polling.
+ */
+@Composable
+private fun rememberSettingsPromos(): SettingsPromos {
+  val context = LocalContext.current
+  val prefs = koinInject<SettingsPromoPreferences>()
+  val scope = rememberCoroutineScope()
+  var snapshot by remember { mutableStateOf(prefs.cached) }
+  var resolved by remember { mutableStateOf(prefs.cached != null) }
+  var now by remember { mutableLongStateOf(System.currentTimeMillis()) }
+
+  suspend fun recheck() {
+    withContext(Dispatchers.IO) { prefs.resolve(context) }
+    // Read after the hop: a dismissal made meanwhile is already in the cache, the resolve result may not be.
+    snapshot = prefs.cached
+    now = System.currentTimeMillis()
+    resolved = true
+  }
+
+  // Also runs for the initial resume, which covers the first resolve when App has not prewarmed.
+  LifecycleEventEffect(Lifecycle.Event.ON_RESUME) { scope.launch { recheck() } }
+  DisposableEffect(context) {
+    val receiver =
+      object : BroadcastReceiver() {
+        override fun onReceive(context: Context, intent: Intent) {
+          scope.launch { recheck() }
+        }
+      }
+    ContextCompat.registerReceiver(context, receiver, IntentFilter(Intent.ACTION_TIME_CHANGED), ContextCompat.RECEIVER_NOT_EXPORTED)
+    onDispose { context.unregisterReceiver(receiver) }
+  }
+
+  val visible = if (resolved) snapshot?.visible(now).orEmpty() else null
+  val end = snapshot?.end
+  LaunchedEffect(end, visible.isNullOrEmpty(), now) {
+    if (end != null && !visible.isNullOrEmpty()) {
+      delay(end - now)
+      recheck()
+    }
+  }
+
+  return SettingsPromos(visible) { promo ->
+    snapshot?.let { snapshot = prefs.dismiss(it.version, promo) ?: it }
+  }
+}
+
+/** A compact tonal card: the open and dismiss actions are siblings so each has its own target and focus. */
+@Composable
+private fun SettingsPromoCard(
+  title: String,
+  icon: AppIcon,
+  dismissLabel: String,
+  container: Color,
+  onContainer: Color,
+  onOpen: () -> Unit,
+  onDismiss: () -> Unit,
+  modifier: Modifier = Modifier,
+) {
+  Surface(
+    modifier = modifier.fillMaxWidth(),
+    shape = MaterialTheme.shapes.medium,
+    color = container,
+    contentColor = onContainer,
+  ) {
+    Row(verticalAlignment = Alignment.CenterVertically) {
+      Row(
+        modifier =
+          Modifier
+            .weight(1f)
+            .heightIn(min = 48.dp)
+            .tvFocusHighlight(MaterialTheme.shapes.medium, focusedScale = 1.01f)
+            .clickable(role = Role.Button, onClick = onOpen)
+            .padding(start = 16.dp, top = 8.dp, bottom = 8.dp),
+        verticalAlignment = Alignment.CenterVertically,
+      ) {
+        Icon(imageVector = icon, contentDescription = null, modifier = Modifier.size(24.dp), tint = onContainer)
+        Spacer(modifier = Modifier.width(12.dp))
+        Text(
+          text = title,
+          style = MaterialTheme.typography.titleMedium,
+          fontWeight = FontWeight.SemiBold,
+          maxLines = 2,
+          overflow = TextOverflow.Ellipsis,
+        )
+      }
+      IconButton(
+        onClick = onDismiss,
+        modifier = Modifier.size(48.dp).tvFocusHighlight(CircleShape),
+      ) {
+        Icon(Icons.RoundedFilled.Close, contentDescription = dismissLabel, modifier = Modifier.size(20.dp), tint = onContainer)
+      }
+    }
   }
 }

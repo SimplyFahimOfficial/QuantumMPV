@@ -165,8 +165,8 @@
         <error line="672" column="121" source="standard:max-line-length" />
     </file>
     <file name="src/main/java/com/quantummpv/app/ui/browser/filesystem/FileSystemBrowserViewModel.kt">
-        <error line="60" column="15" source="standard:property-naming" />
-        <error line="73" column="15" source="standard:backing-property-naming" />
+        <error line="61" column="15" source="standard:property-naming" />
+        <error line="74" column="15" source="standard:backing-property-naming" />
     </file>
     <file name="src/main/java/com/quantummpv/app/ui/browser/folderlist/FolderListScreen.kt">
         <error line="245" column="121" source="standard:max-line-length" />
@@ -178,7 +178,7 @@
         <error line="1260" column="121" source="standard:max-line-length" />
     </file>
     <file name="src/main/java/com/quantummpv/app/ui/browser/folderlist/FolderListViewModel.kt">
-        <error line="59" column="15" source="standard:backing-property-naming" />
+        <error line="61" column="15" source="standard:backing-property-naming" />
         <error line="294" column="121" source="standard:max-line-length" />
     </file>
     <file name="src/main/java/com/quantummpv/app/ui/browser/jellyfin/AddJellyfinServerDialog.kt">

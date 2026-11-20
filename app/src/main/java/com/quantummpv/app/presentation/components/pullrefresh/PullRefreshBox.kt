@@ -28,7 +28,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
@@ -43,6 +42,8 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -81,7 +82,7 @@ fun PullRefreshBox(
 
   val maxTranslationPx = with(density) { refreshThreshold.toPx() }
 
-  val activeJob = remember { mutableStateOf<Job?>(null) }
+  val singleFlight = remember { SingleFlight() }
 
   // The pull state already follows the finger and animates itself to the threshold while refreshing
   // and back to zero afterwards, so content and indicator read it directly in the draw phase:
@@ -118,18 +119,16 @@ fun PullRefreshBox(
         isRefreshing = isRefreshing.value,
         state = state,
         enabled = enabled,
+        threshold = refreshThreshold,
         onRefresh = {
-          activeJob.value?.cancel()
-          isRefreshing.value = true
-          activeJob.value =
-            coroutineScope.launch {
-              try {
-                onRefresh()
-                delay(delayAfterRefresh)
-              } finally {
-                isRefreshing.value = false
-              }
-            }
+          singleFlight.launch(
+            scope = coroutineScope,
+            onStart = { isRefreshing.value = true },
+            onEnd = { isRefreshing.value = false },
+          ) {
+            onRefresh()
+            delay(delayAfterRefresh)
+          }
         },
       ),
   ) {
@@ -172,6 +171,34 @@ fun PullRefreshBox(
         )
       }
     }
+  }
+}
+
+/**
+ * Runs at most one refresh at a time. A second request while one is in flight is ignored, so a late
+ * release can neither cancel the running refresh nor let its completion clear a newer one.
+ * [onEnd] runs from the job's completion handler, which also fires when the scope is cancelled
+ * before the body ever started (e.g. the screen leaves composition right after the gesture).
+ */
+internal class SingleFlight {
+  private var current: Job? = null
+
+  fun launch(
+    scope: CoroutineScope,
+    onStart: () -> Unit,
+    onEnd: () -> Unit,
+    body: suspend () -> Unit,
+  ): Boolean {
+    if (current != null) return false
+    onStart()
+    val job = scope.launch(start = CoroutineStart.LAZY) { body() }
+    current = job
+    job.invokeOnCompletion {
+      current = null
+      onEnd()
+    }
+    job.start()
+    return true
   }
 }
 

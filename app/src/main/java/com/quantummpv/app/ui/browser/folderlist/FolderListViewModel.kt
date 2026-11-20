@@ -25,9 +25,11 @@ import com.quantummpv.app.utils.media.MediaLibraryEvents
 import com.quantummpv.app.utils.media.MetadataRetrieval
 import com.quantummpv.app.utils.permission.PermissionUtils.StorageOps
 import com.quantummpv.app.utils.storage.FolderViewScanner
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -93,6 +95,10 @@ class FolderListViewModel(
 
   // Track the current scan job to prevent concurrent scans
   private var currentScanJob: Job? = null
+
+  // Identifies the newest scan. An older scan that is cancelled mid-flight must not write shared
+  // loading/status state after its replacement has started.
+  @Volatile private var scanGeneration = 0
   private var newCountJob: Job? = null
   private var cacheWriteJob: Job? = null
 
@@ -329,6 +335,19 @@ class FolderListViewModel(
   }
 
   override fun refresh() {
+    startRefresh()
+  }
+
+  /**
+   * Pull-to-refresh entry point. Returns once this refresh's own scan has published its first
+   * refreshed folder list (including an empty one), or has failed or been superseded. The scan
+   * itself keeps running in [viewModelScope] if the caller stops waiting.
+   */
+  suspend fun refreshAndAwait() {
+    startRefresh().await()
+  }
+
+  private fun startRefresh(): CompletableDeferred<Unit> {
     Log.d(TAG, "Hard refreshing folder list")
 
     // Set loading state
@@ -339,11 +358,13 @@ class FolderListViewModel(
     FolderViewScanner.clearCache()
 
     // Force the direct hidden index first; MediaScanner cannot see .nomedia trees.
-    loadVideoFolders(forceFileSystemCheck = true)
+    val published = CompletableDeferred<Unit>()
+    loadVideoFolders(forceFileSystemCheck = true, published = published)
 
     // Preserve full Refresh semantics for ordinary files copied by other apps. Completion emits a
     // debounced MediaLibraryEvents update, while this asynchronous pass never blocks hidden results.
     triggerMediaScan()
+    return published
   }
 
   private fun triggerMediaScan() {
@@ -381,8 +402,13 @@ class FolderListViewModel(
   }
 
   /** Publishes MediaStore immediately, then merges indexed .nomedia folders in the background. */
-  private fun loadVideoFolders(forceFileSystemCheck: Boolean = false) {
+  @Synchronized
+  private fun loadVideoFolders(
+    forceFileSystemCheck: Boolean = false,
+    published: CompletableDeferred<Unit>? = null,
+  ) {
     currentScanJob?.cancel()
+    val generation = ++scanGeneration
     _loadFailed.value = false
 
     if (audioOnly) {
@@ -396,19 +422,26 @@ class FolderListViewModel(
                 context = getApplication(),
                 minimumAudioDurationSeconds = browserPreferences.minimumAudioDurationSeconds.get(),
               )
+            ensureActive()
             _allVideoFolders.value = folders
             _isLoading.value = false
             _hasCompletedInitialLoad.value = true
+            published?.complete(Unit)
+          } catch (e: kotlinx.coroutines.CancellationException) {
+            throw e
           } catch (e: Exception) {
             Log.e(TAG, "Error loading audio folders", e)
             _loadFailed.value = _allVideoFolders.value.isEmpty()
             _hasCompletedInitialLoad.value = true
           } finally {
-            _isLoading.value = false
-            _isEnriching.value = false
-            _scanStatus.value = null
+            if (generation == scanGeneration) {
+              _isLoading.value = false
+              _isEnriching.value = false
+              _scanStatus.value = null
+            }
           }
         }
+      completeWhenDone(currentScanJob, published)
       return
     }
 
@@ -432,9 +465,11 @@ class FolderListViewModel(
               includeAudioOverride = browserPreferences.includeAudioBrowser.get(),
             )
           // This is the important latency boundary: never wait for a filesystem walk.
+          ensureActive()
           _allVideoFolders.value = mediaStoreFolders
           _isLoading.value = false
           _hasCompletedInitialLoad.value = true
+          published?.complete(Unit)
 
           val indexedFolders = MediaFileRepository.getIndexedNoMediaFolders()
           var visibleFolders = mergeFolders(mediaStoreFolders, indexedFolders)
@@ -508,11 +543,22 @@ class FolderListViewModel(
           _loadFailed.value = _allVideoFolders.value.isEmpty()
           _hasCompletedInitialLoad.value = true
         } finally {
-          _isLoading.value = false
-          _isEnriching.value = false
-          _scanStatus.value = null
+          if (generation == scanGeneration) {
+            _isLoading.value = false
+            _isEnriching.value = false
+            _scanStatus.value = null
+          }
         }
       }
+    completeWhenDone(currentScanJob, published)
+  }
+
+  /** Completion handlers also run when a job is cancelled before its body starts, where `finally` never does. */
+  private fun completeWhenDone(
+    job: Job?,
+    published: CompletableDeferred<Unit>?,
+  ) {
+    if (published != null) job?.invokeOnCompletion { published.complete(Unit) }
   }
 
   private fun folderKey(folder: VideoFolder): String =

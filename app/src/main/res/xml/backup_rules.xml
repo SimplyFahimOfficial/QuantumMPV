@@ -4,5 +4,6 @@
     <exclude domain="file" path="secure_media/" />
     <exclude domain="sharedpref" path="secure_folder.xml" />
     <exclude domain="sharedpref" path="sftp_known_hosts.xml" />
+    <exclude domain="sharedpref" path="settings_promos.xml" />
     <exclude domain="file" path="thumbnails/" />
 </full-backup-content>
