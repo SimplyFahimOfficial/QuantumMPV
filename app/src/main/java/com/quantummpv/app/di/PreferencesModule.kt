@@ -24,6 +24,7 @@ import com.quantummpv.app.preferences.PlayerPreferences
 import com.quantummpv.app.preferences.SecureFolderPreferences
 import com.quantummpv.app.preferences.SeerrPreferences
 import com.quantummpv.app.preferences.SettingsManager
+import com.quantummpv.app.preferences.SettingsPromoPreferences
 import com.quantummpv.app.preferences.SubtitlesPreferences
 import com.quantummpv.app.preferences.YtdlPreferences
 import com.quantummpv.app.preferences.preference.AndroidPreferenceStore
@@ -86,6 +87,12 @@ val PreferencesModule =
             context.getSharedPreferences(SecureFolderPreferences.FILE_NAME, android.content.Context.MODE_PRIVATE),
           ),
         legacyStore = get(),
+      )
+    }
+    // Its own file, excluded from backups and from settings import/export.
+    single {
+      SettingsPromoPreferences(
+        androidContext().getSharedPreferences(SettingsPromoPreferences.FILE_NAME, android.content.Context.MODE_PRIVATE),
       )
     }
     singleOf(::SeerrPreferences)

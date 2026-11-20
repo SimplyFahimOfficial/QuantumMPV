@@ -771,7 +771,7 @@ object FolderListScreen : Screen {
                   gridState = gridState,
                   isRefreshing = isRefreshing,
                   selectionManager = selectionManager,
-                  onRefresh = { viewModel.refresh() },
+                  onRefresh = { viewModel.refreshAndAwait() },
                   onFolderClick = { folder ->
                     if (selectionManager.isInSelectionMode) {
                       selectionManager.toggle(folder)
@@ -1128,6 +1128,8 @@ private fun FolderListContent(
     isRefreshing = isRefreshing,
     onRefresh = onRefresh,
     listState = listState,
+    // onRefresh already waits for the scan to publish, so no extra hold on the indicator.
+    delayAfterRefresh = 0L,
     modifier = Modifier.fillMaxSize(),
   ) {
     if (showLoading || showEmpty || showLoadError) {
@@ -1275,7 +1277,7 @@ private fun GridContent(
       val pinnedCount = folders.count { it.path in pinnedFolderPaths }
       fun androidx.compose.foundation.lazy.grid.LazyGridScope.section(key: String, title: Int) {
         item(key = key, contentType = SECTION_CONTENT_TYPE, span = { GridItemSpan(maxLineSpan) }) {
-          FolderSectionHeader(stringResource(title), appItemMotion().animateItem())
+          FolderSectionHeader(stringResource(title), appItemMotion())
         }
       }
       for ((sectionStart, sectionEnd) in folderSections(pinnedCount, folders.size)) {
@@ -1299,7 +1301,7 @@ private fun GridContent(
           isInSelectionMode = selectionManager.isInSelectionMode,
           onSelect = { onFolderLongClick(folder) },
           onTogglePin = { onTogglePin(folder) },
-          modifier = appItemMotion().staggeredEntrance(index, stagger).animateItem(),
+          modifier = appItemMotion().staggeredEntrance(index, stagger),
         ) { onLongClick ->
         FolderCard(
           folder = folder,

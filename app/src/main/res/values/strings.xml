@@ -1796,6 +1796,8 @@
   <string name="help_contact_summary">Website, email and personal social links.</string>
   <string name="help_opens_externally">Opens outside the app</string>
   <string name="support_title">Support My Work</string>
+  <string name="settings_promo_dismiss_help_support">Dismiss Help &amp; Support suggestion</string>
+  <string name="settings_promo_dismiss_support">Dismiss Support My Work suggestion</string>
   <string name="support_entry_summary">Optional contributions via UPI and other payment methods.</string>
   <string name="support_intro">Your support helps me maintain existing applications, improve features and continue developing independent open-source projects. Every contribution is voluntary and appreciated.</string>
   <string name="support_section_payment">Payment options</string>
