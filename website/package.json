@@ -5,9 +5,9 @@
     "node": "22.x"
   },
   "dependencies": {
-    "@lucide/astro": "1.69.0",
+    "@lucide/astro": "1.72.0",
     "blume": "1.6.3",
-    "simple-icons": "16.36.0"
+    "simple-icons": "16.37.0"
   },
   "overrides": {
     "argparse": "2.0.1",
