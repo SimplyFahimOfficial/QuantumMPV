@@ -89,6 +89,8 @@ ms. Every transition collapses to a short fade under Reduced motion and to nothi
 | `ScreenNavDisplay` | Honours Reduced / Off motion: Off → no transition, Reduced → cross-fade instead of slide/scale/depth |
 | `ControlsButton` (player HUD, 33 call sites) | Press springs to 0.92 like the dock and menu tiles; layer-phase only, off under Reduced motion |
 | Touch targets | `MoreSheet` info button back to a 48 dp target (was forced to 24 dp); mini-player close container 32 → 40 dp with a 48 dp touch target |
+| Player controls drawer | Uses the 20 dp panel and 16 dp tile shape tokens with shared panel spacing; colors remain derived from the selected theme |
+| Active media-server badges | Uses the shared 4 dp chip shape across all server lists |
 
 Kept deliberately: the audio transport row steps down from the centre (play 44 → seek 34 → skip 28 dp).
 That is the hierarchy rule above, not an inconsistency. The video HUD's 44 dp `ControlsButton` (20 dp
