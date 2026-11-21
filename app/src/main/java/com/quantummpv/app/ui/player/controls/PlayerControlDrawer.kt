@@ -38,7 +38,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -72,6 +71,7 @@ import com.quantummpv.app.ui.player.controls.components.panels.DraggablePanel
 import com.quantummpv.app.ui.player.controls.components.tvFocusGroup
 import com.quantummpv.app.ui.player.controls.components.tvFocusHighlight
 import com.quantummpv.app.ui.theme.AppMotion
+import com.quantummpv.app.ui.theme.AppShapeScale
 import com.quantummpv.app.ui.theme.controlColor
 import com.quantummpv.app.ui.theme.spacing
 
@@ -254,7 +254,6 @@ private fun PlayerControlPanel(
   DraggablePanel(
     modifier = Modifier.fillMaxSize(),
     header = { PlayerControlPanelHeader(onDismissRequest) },
-    shape = RoundedCornerShape(24.dp),
     containerColor = MaterialTheme.colorScheme.surfaceContainer.copy(alpha = 0.94f),
     tonalElevation = 2.dp,
     shadowElevation = 10.dp,
@@ -314,7 +313,12 @@ private fun PlayerControlPanelContent(
     buttons = buttons,
     activeButtons = activeButtons,
     renderButton = renderButton,
-    modifier = Modifier.padding(start = 14.dp, end = 14.dp, bottom = 20.dp),
+    modifier =
+      Modifier.padding(
+        start = MaterialTheme.spacing.medium,
+        end = MaterialTheme.spacing.medium,
+        bottom = MaterialTheme.spacing.large,
+      ),
   )
 }
 
@@ -388,9 +392,9 @@ private fun PlayerControlTile(
   Surface(
     modifier =
       modifier
-        .tvFocusHighlight(RoundedCornerShape(18.dp), focusedScale = 1.02f)
+        .tvFocusHighlight(AppShapeScale.large, focusedScale = 1.02f)
         .height(104.dp),
-    shape = RoundedCornerShape(18.dp),
+    shape = AppShapeScale.large,
     color = containerColor,
     contentColor = contentColor,
     tonalElevation = if (active) 2.dp else 0.dp,

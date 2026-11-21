@@ -21,7 +21,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
@@ -72,6 +71,7 @@ import com.quantummpv.app.ui.browser.navidrome.NavidromeViewModel
 import com.quantummpv.app.ui.icons.Icon
 import com.quantummpv.app.ui.icons.Icons
 import com.quantummpv.app.ui.preferences.components.SwitchPreference
+import com.quantummpv.app.ui.theme.AppShapeScale
 import com.quantummpv.app.ui.utils.LocalBackStack
 import com.quantummpv.app.ui.utils.LocalShowSettingsBackArrow
 import com.quantummpv.app.ui.utils.popSafely
@@ -232,7 +232,7 @@ object MediaServersPreferencesScreen : Screen {
                         )
                         if (isActive) {
                           Surface(
-                            shape = RoundedCornerShape(6.dp),
+                            shape = AppShapeScale.extraSmall,
                             color = MaterialTheme.colorScheme.primary,
                           ) {
                             Text(
@@ -386,7 +386,7 @@ object MediaServersPreferencesScreen : Screen {
                         overflow = TextOverflow.Ellipsis,
                       )
                       Surface(
-                        shape = RoundedCornerShape(6.dp),
+                        shape = AppShapeScale.extraSmall,
                         color = MaterialTheme.colorScheme.primary,
                       ) {
                         Text(
@@ -542,7 +542,7 @@ object MediaServersPreferencesScreen : Screen {
                         )
                         if (isActive) {
                           Surface(
-                            shape = RoundedCornerShape(6.dp),
+                            shape = AppShapeScale.extraSmall,
                             color = MaterialTheme.colorScheme.primary,
                           ) {
                             Text(
@@ -688,7 +688,7 @@ object MediaServersPreferencesScreen : Screen {
                     title = {
                       Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         Text(server.name, style = MaterialTheme.typography.titleMedium, fontWeight = if (isActive) FontWeight.Bold else FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                        if (isActive) Surface(shape = RoundedCornerShape(6.dp), color = MaterialTheme.colorScheme.primary) {
+                        if (isActive) Surface(shape = AppShapeScale.extraSmall, color = MaterialTheme.colorScheme.primary) {
                           Text(stringResource(R.string.pref_server_active), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onPrimary, modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp))
                         }
                       }
