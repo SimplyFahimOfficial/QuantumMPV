@@ -70,8 +70,8 @@ jobs:
         if: matrix.language == 'java-kotlin'
         run: |
           yes | sdkmanager --licenses >/dev/null || true
-          sdkmanager --install "platforms;android-37.0" "build-tools;37.0.0" "cmake;3.22.1" "ndk;27.3.13750724"
-          test -d "$ANDROID_HOME/platforms/android-37.0"
+          sdkmanager --install "platforms;android-37.2" "build-tools;37.0.0" "cmake;3.22.1" "ndk;27.3.13750724"
+          test -d "$ANDROID_HOME/platforms/android-37.2"
           test -d "$ANDROID_HOME/ndk/27.3.13750724"
 
       - name: Build Java and Kotlin sources for CodeQL
