@@ -6,25 +6,29 @@
 - **Pick up where you left off**: Home features your latest video with its thumbnail, title, playback position and progress. Tap to resume; dismiss it to hide it until you play something else.
 - **Make Home yours**: Pin folders into a dedicated section, browse cleaner video titles, and see resolution/codec and resume details in the list. Selection, playlist reordering, pull-to-refresh and list updates now have clearer motion and haptic feedback.
 - **More player controls**: New installs get the full portrait and landscape button layout, with rows that scroll when space is limited. Adjust button-background opacity, use the controls drawer, or change playback speed with a two-finger vertical swipe (0.5×–4×); pinch-to-zoom and panning remain available.
+- **Undo and menu customization**: Undo removals from Recents and playlists (permanent file deletions cannot be undone). Customize optional More-menu rows and choose whether to show its menu button.
 - **Music and playback tools**: Edit lyrics in the app, apply AutoEq headphone correction, choose additional Ambient effects, view on-device watching statistics, and optionally keep a status line visible over video. The FongMi build also adds opt-in Dolby Vision direct output.
 - **Help and support**: Find the Telegram community, bug reporting, project site and developer contact in Help & Support. Support My Work has a device-generated UPI QR code, copy/share options and payment links.
 - **Quiet Geometry polish**: A documented design system brings consistent player-panel headers, sheet drag handles, touch feedback, empty states and calmer motion. Reduced motion and Android's animation setting are respected throughout.
-- **Experimental Liquid Glass**: Opt-in glass effects are available for the navigation dock, menu and mini player; a separate player-control option can blur/refract video on Android 12+. Glass is off by default and may use more battery. Player glass can affect video output, so turn it off if playback looks wrong.
+- **Experimental Liquid Glass**: Opt-in glass for the navigation dock, menu and mini player requires Android 12+; lens refraction requires Android 13+. The separate player-control glass option also requires Android 12+. Glass is off by default and may use more battery or affect video output; turn it off if playback looks wrong.
+
+> The visual changes in this release were not visually reviewed on a device. This is separate from the automated and instrumented CI checks.
 
 ### Changes
 
 - **Appearance settings simplified**: Removed the old surface-style picker, glass-opacity control, Cinema mode and Haze-based surfaces. Regular app surfaces are solid; Liquid Glass remains optional for supported floating controls. Older saved glass styles now fall back to solid surfaces.
 - **Player layout migration**: New installs use the full button layout. Existing installs saved with the earlier compact default move to the full layout; other custom layouts are preserved. Reset to default restores the full layout, while Use recommended layout selects the compact preset.
-- **Thumbnail source**: Choose Native (default), Auto (MediaStore then Native) or MediaStore only. Switching sources clears the thumbnail cache; existing Native thumbnails are retained.
+- **Thumbnail source**: Choose Native (default), Auto (MediaStore then Native) or MediaStore only. Switching sources clears the thumbnail cache, including existing Native thumbnails; they are regenerated as needed.
 - **Audio focus**: The optional Play with other apps setting lets other apps keep audio focus while QuantumMPV plays. It is off by default; unplugging headphones still pauses playback.
 - **Player controls**: Button-background opacity defaults to 55%. Two-finger speed adjustment is on by default and can be disabled in Gestures.
 
 ### Fixes and refinements
 
 - **Opening and playing media**: Fixed filenames containing `#`, additional video/audio MIME types shared by other apps, external playback positions, track state, yt-dlp quality choices and inherited `mpv.conf` HTTP headers. Aspect-ratio changes now reset manual zoom and pan, while restoring a saved ratio preserves them.
-- **Library and storage**: Failed thumbnail scans can be retried; duplicate storage volumes no longer cause picker key collisions; Music avoids rescanning on every tab visit. Large artwork is decoded at reduced size, remote images are capped, and interrupted downloads no longer cache broken thumbnails.
+- **Library and storage**: Incomplete metadata probes no longer leave a missing duration cached as final; entries already stored without a duration are probed again. Duplicate storage volumes no longer cause picker key collisions, and Music avoids rescanning on every tab visit. Large artwork is decoded at reduced size, remote images are capped, and interrupted downloads no longer cache broken thumbnails.
 - **Network and casting**: Local casting advertises the address reachable by the Cast device without listening on other interfaces. Network playback now handles decomposed Unicode filenames, common on macOS.
 - **Player reliability**: Fixed PiP window hints, screenshot-write timing, runtime application of player options, saved-subtitle selection, secondary-subtitle styling and ambient vignette rendering. TheIntroDB requests now use its v4 API.
+- **Rotation and opening-video stability**: Music playback's automatic orientation now respects Android's rotation lock. Initial video-orientation metadata is read off the main thread, reducing freezes and ANRs with large files and cloud/SAF providers.
 - **Performance and privacy**: Reduced unnecessary playback/UI work, improved music artwork caching and startup preparation, and corrected the bundled Baseline Profile package. Release builds omit debug logs; sensitive tokens and keys are no longer included in relevant error logs.
 - **Accessibility and motion**: Added TalkBack labels to key settings and player actions, restored the system navigation contrast scrim, improved touch targets, and made player/screen transitions honor Reduced motion and disabled system animations.
 - **Website**: Fixed missing showcase images and their layout, improved keyboard-focus and touch behavior, and added standard security headers. Navigation and theme switching are more reliable, including when browser storage is unavailable.

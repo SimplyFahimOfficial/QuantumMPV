@@ -64,7 +64,7 @@ Screen title `titleLarge`; section `titleMedium`/emphasised; body `bodyLarge`/`b
 metadata `labelMedium` `onSurfaceVariant`; **all changing numbers use tabular figures (`tnum`)**.
 
 **Shape** (`AppShapeScale`; concentric)
-4 chip/badge · 8 thumbnail inner · 12 menu tile · 16 card · 20 menu panel · 28 sheet/dialog · full
+4 chip/badge · 8 thumbnail inner · 12 menu tile · 16 card and player-control grid tile (shared by the drawer and More sheet) · 20 menu panel · 28 sheet/dialog · full
 circle = action. New code must not introduce off-scale radii.
 
 **Spacing** (`MaterialTheme.spacing`): 4 · 8 · 12 · 16 · 24 · 32 · 48 · 64.
@@ -89,7 +89,7 @@ ms. Every transition collapses to a short fade under Reduced motion and to nothi
 | `ScreenNavDisplay` | Honours Reduced / Off motion: Off → no transition, Reduced → cross-fade instead of slide/scale/depth |
 | `ControlsButton` (player HUD, 33 call sites) | Press springs to 0.92 like the dock and menu tiles; layer-phase only, off under Reduced motion |
 | Touch targets | `MoreSheet` info button back to a 48 dp target (was forced to 24 dp); mini-player close container 32 → 40 dp with a 48 dp touch target |
-| Player controls drawer | Uses the 20 dp panel and 16 dp tile shape tokens with shared panel spacing; colors remain derived from the selected theme |
+| Player controls drawer | Keeps the shared 28 dp `DraggablePanel` shape; its 16 dp player-control grid tiles are also used by More sheet. Grid insets are 16 dp horizontally and 24 dp at the bottom, with no additional top inset; colors remain theme-derived |
 | Active media-server badges | Uses the shared 4 dp chip shape across all server lists |
 
 Kept deliberately: the audio transport row steps down from the centre (play 44 → seek 34 → skip 28 dp).

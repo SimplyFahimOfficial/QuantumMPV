@@ -254,7 +254,6 @@ private fun PlayerControlPanel(
   DraggablePanel(
     modifier = Modifier.fillMaxSize(),
     header = { PlayerControlPanelHeader(onDismissRequest) },
-    shape = AppShapeScale.largeIncreased,
     containerColor = MaterialTheme.colorScheme.surfaceContainer.copy(alpha = 0.94f),
     tonalElevation = 2.dp,
     shadowElevation = 10.dp,
