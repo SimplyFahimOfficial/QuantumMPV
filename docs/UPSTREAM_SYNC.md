@@ -4,10 +4,11 @@ QuantumMPV is an independent project with its own release identity. Upstream mpv
 
 ## Version policy
 
-The current QuantumMPV release line is **1.x**:
+QuantumMPV maintains its own release lines; the v2.0.0 major release starts the
+**2.x** line alongside the historical **1.x** line:
 
 ```text
-v1.0.0 -> v1.1.0 -> v1.2.0
+v1.0.0 -> v1.1.0 -> v1.2.0 -> v1.4.5 -> v2.0.0
 ```
 
 An upstream release such as `mpvRx v2.6.0` may be synchronized into QuantumMPV, but the resulting application keeps a QuantumMPV version such as `v1.1.0`. Upstream Android version codes must not be copied into QuantumMPV.

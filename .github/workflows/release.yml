@@ -16,14 +16,15 @@ name: Make release
 on:
   push:
     tags:
-      - 'v[0-9]+.[0-9]+.[0-9]+'
-      - '!v[0-9]+.[0-9]+.[0-9]+-preview.[0-9]+'
+      - 'v1.*.*'
+      - 'v2.*.*'
+      - '!*-preview.*'
   # Run manually from the tag itself ("Use workflow from" -> Tags -> vX.Y.Z),
   # so the production environment's tag deployment policy applies.
   workflow_dispatch:
     inputs:
       tag_name:
-        description: Optional; must equal the selected tag (for example v1.2.0)
+        description: Optional; must equal the selected tag (for example v2.0.0)
         required: false
         type: string
 
@@ -80,8 +81,8 @@ jobs:
             exit 1
           fi
 
-          if [[ ! "$tag_name" =~ ^v1\.[0-9]+\.[0-9]+$ ]]; then
-            echo "::error::Invalid stable release tag '${tag_name}'. Expected v1.MINOR.PATCH (QuantumMPV uses the v1.x line; preview tags use pre-release.yml)."
+          if [[ ! "$tag_name" =~ ^v[12]\.[0-9]+\.[0-9]+$ ]]; then
+            echo "::error::Invalid stable release tag '${tag_name}'. Expected v1.MINOR.PATCH or v2.MINOR.PATCH (preview tags use pre-release.yml)."
             exit 1
           fi
 
@@ -295,7 +296,7 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 20
     # Holds the production signing secrets. Configure required reviewers and a
-    # deployment policy allowing only tags v1.*.* (docs/RELEASE.md).
+    # deployment policy allowing tags v1.*.* and v2.*.* (docs/RELEASE.md).
     environment: production
     permissions: {}
     env:

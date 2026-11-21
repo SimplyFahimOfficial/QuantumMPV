@@ -1,5 +1,5 @@
 # Changelog
-## Unreleased
+## 2.0.0
 
 ### What's New
 

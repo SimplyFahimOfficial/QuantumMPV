@@ -136,4 +136,4 @@ jobs:
             --base master \
             --head "$BRANCH" \
             --title "Review upstream ${UPSTREAM_TAG} for QuantumMPV" \
-            --body "## Review-only upstream synchronization\n\nSource: [$UPSTREAM_TAG]($UPSTREAM_URL)\n\nThis PR does not publish a release automatically. Review conflicts and preserve QuantumMPV branding, updater asset names, the 1.x release line, Jellyfin HTTP safeguards, migrations, and release workflows before merging.\n\nAfter review, choose the next QuantumMPV version separately."
+            --body "## Review-only upstream synchronization\n\nSource: [$UPSTREAM_TAG]($UPSTREAM_URL)\n\nThis PR does not publish a release automatically. Review conflicts and preserve QuantumMPV branding, updater asset names, the 1.x/2.x release lines, Jellyfin HTTP safeguards, migrations, and release workflows before merging.\n\nAfter review, choose the next QuantumMPV version separately."
