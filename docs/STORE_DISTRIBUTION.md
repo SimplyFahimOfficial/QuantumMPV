@@ -4,6 +4,8 @@
 
 The stable `.github/workflows/release.yml` pipeline builds and signs the Standard-flavor App Bundle as `QuantumMPV-standard-vX.Y.Z.aab`. It uses the same release certificate as the APK variants and verifies that the certificates match. FongMi and No-Vulkan APK variants remain available for direct distribution; the Play listing uses the Standard bundle.
 
+AGP 9.5.1 requires the App Bundle build to run without ABI APK splits (see [issue 402800800](https://issuetracker.google.com/402800800)). For a local unsigned bundle, use `./gradlew -PbundleWithoutAbiSplits=true bundleStandardRelease`; build APKs separately without that property. Release CI checks the AAB package ID, version name/code, all four native ABIs, and native library bytes against the pinned standard AAR before signing.
+
 One-time setup:
 
 1. Create the Play Console app with package name `com.quantummpv.app`. Complete the initial app setup and make the first manual upload if Play Console requires it.

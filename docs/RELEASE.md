@@ -11,8 +11,9 @@
 - Android `versionCode` bands guarantee upgrades. A stable release uses
   `releaseVersionCode * 10000 + 9999`. Previews use the next band plus the commit
   count. Each APK multiplies by 10 and adds an ABI code (universal 0,
-  armeabi-v7a 1, arm64-v8a 2, x86 3, x86_64 4). The release workflow verifies the
-  exact `versionCode` of every APK.
+  armeabi-v7a 1, arm64-v8a 2, x86 3, x86_64 4). The standard AAB uses suffix 9,
+  so its code is higher than every same-release APK but lower than the next
+  preview band. The release workflow verifies exact APK codes and the AAB code.
 - Preview and stable builds share the application ID `com.quantummpv.app` and
   must be signed with the **same key**. Otherwise users cannot move between
   channels or update.
@@ -92,6 +93,7 @@ The release fails safely, and nothing is published, if any of these is true:
 - a required check is missing or failed;
 - an instrumented test fails;
 - an APK is missing, debuggable or has an unexpected `versionCode`;
+- the AAB is missing, has an unexpected package/version code or native payload;
 - a signing secret is missing;
 - the APKs are not all signed with the same certificate;
 - `RELEASE_SIGNING_CERT_SHA256` is unset or not a SHA-256 digest (checked

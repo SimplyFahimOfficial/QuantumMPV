@@ -1,10 +1,13 @@
 #!/usr/bin/env python3
 """Regression checks for deterministic native artifact packaging and subtitle fonts."""
 from hashlib import sha256
+import importlib.util
 import json
 from pathlib import Path
 import re
 import subprocess
+from tempfile import TemporaryDirectory
+from zipfile import ZipFile
 
 root = Path(__file__).resolve().parents[1]
 manifest = json.loads((root / 'native-artifacts.json').read_text())
@@ -41,6 +44,21 @@ for workflow in ('build.yml', 'ci.yml', 'pre-release.yml', 'preview.yml', 'relea
     text = (root / '.github/workflows' / workflow).read_text()
     assert 'verify_native_artifacts.py --download' in text, workflow
 
+release_code = int(re.search(r'^val releaseVersionCode = (\d+)$', app_gradle, re.MULTILINE).group(1))
+band_size = int(re.search(r'^val versionCodeBandSize = ([\d_]+)$', app_gradle, re.MULTILINE).group(1).replace('_', ''))
+stable_base = release_code * band_size + band_size - 1
+apk_codes = [stable_base * 10 + abi for abi in range(5)]
+aab_code = stable_base * 10 + 9
+preview_min = ((release_code + 1) * band_size + 1) * 10
+next_stable_min = ((release_code + 1) * band_size + band_size - 1) * 10
+assert max(apk_codes) < aab_code < preview_min < next_stable_min
+assert 'val stableBundleVersionCode = stableVersionCode * 10 + 9' in app_gradle
+assert 'versionCode = if (bundleWithoutAbiSplits) stableBundleVersionCode else stableVersionCode' in app_gradle
+release_workflow = (root / '.github/workflows/release.yml').read_text()
+assert 'verify_native_artifacts.py --aab "$play_bundle"' in release_workflow
+assert 'verify_native_artifacts.py --aab "$aab"' in release_workflow
+assert 'bundletool-all-1.18.3.jar' in release_workflow
+
 font = root / 'app/src/main/assets/subtitle-fonts/GoNotoCurrent-Regular.ttf'
 font_license = root / 'app/src/main/assets/subtitle-fonts/OFL.txt'
 installer = root / 'app/src/main/java/com/quantummpv/app/ui/player/SubtitleFontInstaller.kt'
@@ -54,4 +72,69 @@ assert font_license.is_file() and 'SIL OPEN FONT LICENSE Version 1.1' in font_li
 assert 'ASSET_PATH = "subtitle-fonts/GoNotoCurrent-Regular.ttf"' in installer_text
 assert 'SubtitleFontInstaller.install(context.applicationContext)' in player_text
 assert 'SHA-256' in installer_text and 'sub-fonts-dir' in player_text
+
+# Exercise the AAB verifier with a synthetic App Bundle and pinned AAR fixture.
+module_spec = importlib.util.spec_from_file_location('verify_native_artifacts', root / 'tools/verify_native_artifacts.py')
+assert module_spec and module_spec.loader
+verifier = importlib.util.module_from_spec(module_spec)
+module_spec.loader.exec_module(verifier)
+artifact_spec = {
+    'file': 'standard.aar',
+    'artifact_revision': 'fixture-artifact',
+    'source_revision': 'fixture-source',
+    'mpv_revision': 'fixture-mpv',
+    'ffmpeg_revision': 'fixture-ffmpeg',
+    'yt_dlp_revision': 'fixture-yt-dlp',
+    'quickjs_revision': 'fixture-quickjs',
+}
+fixture_manifest = {'artifacts': {'standard': artifact_spec}}
+metadata = '\n'.join(f'standard.{key}={value}' for key, value in artifact_spec.items() if key != 'file')
+
+with TemporaryDirectory() as temporary:
+    fixture_dir = Path(temporary)
+    verifier.LIBS = fixture_dir
+    aar_path = fixture_dir / artifact_spec['file']
+    with ZipFile(aar_path, 'w') as aar:
+        for abi in verifier.ABI_DIRS:
+            for library in verifier.REQUIRED_NATIVE:
+                aar.writestr(f'jni/{abi}/{library}', f'{abi}/{library}'.encode())
+
+    def write_package(path: Path, bundle: bool, omit_abi: str | None = None, corrupt: tuple[str, str] | None = None) -> None:
+        prefix = 'base/' if bundle else ''
+        with ZipFile(path, 'w') as package:
+            package.writestr(f'{prefix}assets/native-build-metadata.properties', metadata)
+            abis = verifier.ABI_DIRS - ({omit_abi} if omit_abi else set())
+            for abi in abis:
+                for library in verifier.REQUIRED_NATIVE:
+                    contents = f'{abi}/{library}'.encode()
+                    if corrupt == (abi, library):
+                        contents = b'not-the-pinned-native-library'
+                    package.writestr(f'{prefix}lib/{abi}/{library}', contents)
+
+    valid_aab = fixture_dir / 'QuantumMPV-standard-fixture.aab'
+    write_package(valid_aab, bundle=True)
+    verifier.verify_native_package(fixture_manifest, valid_aab, is_bundle=True)
+
+    incomplete_aab = fixture_dir / 'QuantumMPV-standard-incomplete.aab'
+    write_package(incomplete_aab, bundle=True, omit_abi='x86_64')
+    try:
+        verifier.verify_native_package(fixture_manifest, incomplete_aab, is_bundle=True)
+    except SystemExit as error:
+        assert 'AAB ABI set' in str(error)
+    else:
+        raise AssertionError('AAB verifier accepted a missing ABI')
+
+    altered_aab = fixture_dir / 'QuantumMPV-standard-altered.aab'
+    write_package(altered_aab, bundle=True, corrupt=('arm64-v8a', 'libmpv.so'))
+    try:
+        verifier.verify_native_package(fixture_manifest, altered_aab, is_bundle=True)
+    except SystemExit as error:
+        assert 'differs from pinned' in str(error)
+    else:
+        raise AssertionError('AAB verifier accepted a changed native library')
+
+    apk = fixture_dir / 'QuantumMPV-arm64-v8a-fixture.apk'
+    write_package(apk, bundle=False, omit_abi='armeabi-v7a')
+    verifier.verify_native_package(fixture_manifest, apk, is_bundle=False)
+
 print('native artifact and subtitle font regression checks passed')
