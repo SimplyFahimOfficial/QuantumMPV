@@ -210,10 +210,12 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          # AGP's AAB pre-bundle task expects one shrunk-resources output. Build the AAB without
+          # ABI APK splits first; the APK builds below keep the normal split/universal outputs.
+          ./gradlew -PbundleWithoutAbiSplits=true bundleStandardRelease --stacktrace --no-daemon --max-workers=1
           ./gradlew assembleStandardRelease --stacktrace --no-daemon --max-workers=1
           ./gradlew assembleFongmiRelease --stacktrace --no-daemon --max-workers=1
           ./gradlew assembleNoVulkanRelease --stacktrace --no-daemon --max-workers=1
-          ./gradlew bundleStandardRelease --stacktrace --no-daemon --max-workers=1
 
       - name: Stage and validate unsigned APKs
         shell: bash

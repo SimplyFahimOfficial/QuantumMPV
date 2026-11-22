@@ -24,6 +24,7 @@ val activeAbis =
   } else {
     listOf("arm64-v8a", "armeabi-v7a") + x86Abis
   }
+val bundleWithoutAbiSplits = project.findProperty("bundleWithoutAbiSplits") == "true"
 val universalOnlyDistributions = setOf("noVulkan", "fongmi")
 val releaseVersionCode = 20000
 val versionCodeBandSize = 10_000
@@ -141,10 +142,12 @@ android {
 
   splits {
     abi {
-      isEnable = true
+      // The Android Gradle Plugin's AAB pre-bundle task requires a single shrunk-resources output.
+      // The release workflow builds the app bundle separately, then builds all split APKs normally.
+      isEnable = !bundleWithoutAbiSplits
       reset()
       include(*activeAbis.toTypedArray())
-      isUniversalApk = activeAbis.size > 1
+      isUniversalApk = !bundleWithoutAbiSplits && activeAbis.size > 1
     }
   }
 
