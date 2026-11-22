@@ -210,10 +210,13 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          # TODO: Remove this workaround when AGP fixes https://issuetracker.google.com/402800800.
+          # AGP 9.5.1's AAB task fails when ABI APK splits create multiple shrunk-resources outputs.
+          # Build the AAB without ABI APK splits first; APK builds below keep their normal outputs.
+          ./gradlew -PbundleWithoutAbiSplits=true bundleStandardRelease --stacktrace --no-daemon --max-workers=1
           ./gradlew assembleStandardRelease --stacktrace --no-daemon --max-workers=1
           ./gradlew assembleFongmiRelease --stacktrace --no-daemon --max-workers=1
           ./gradlew assembleNoVulkanRelease --stacktrace --no-daemon --max-workers=1
-          ./gradlew bundleStandardRelease --stacktrace --no-daemon --max-workers=1
 
       - name: Stage and validate unsigned APKs
         shell: bash
@@ -279,6 +282,38 @@ jobs:
           while IFS= read -r -d '' apk; do
             python3 tools/verify_native_artifacts.py --apk "$apk"
           done < <(find unsigned -type f -name '*.apk' -print0)
+
+      - name: Validate Google Play App Bundle
+        shell: bash
+        run: |
+          set -euo pipefail
+          bundletool="$RUNNER_TEMP/bundletool-all-1.18.3.jar"
+          curl --fail --location --retry 3 --retry-all-errors --silent --show-error \
+            https://github.com/google/bundletool/releases/download/1.18.3/bundletool-all-1.18.3.jar \
+            --output "$bundletool"
+          printf '%s  %s\n' \
+            a099cfa1543f55593bc2ed16a70a7c67fe54b1747bb7301f37fdfd6d91028e29 "$bundletool" \
+            | sha256sum --check --status
+
+          play_bundle="unsigned/QuantumMPV-standard-${VERSION_TAG}.aab"
+          dump_value() {
+            java -jar "$bundletool" dump manifest --bundle="$play_bundle" --xpath="$1"
+          }
+          package_name="$(dump_value /manifest/@package)"
+          version_name="$(dump_value /manifest/@android:versionName)"
+          version_code="$(dump_value /manifest/@android:versionCode)"
+          release_code="$(sed -n 's/^val releaseVersionCode = \([0-9]*\)$/\1/p' app/build.gradle.kts)"
+          [[ "$release_code" =~ ^[0-9]+$ ]] || { echo "::error::Could not read releaseVersionCode"; exit 1; }
+          stable_code=$(( release_code * 10000 + 9999 ))
+          expected_bundle_code=$(( stable_code * 10 + 9 ))
+          [[ "$package_name" == "com.quantummpv.app" ]] || {
+            echo "::error::Unexpected application ID in AAB: ${package_name}"; exit 1; }
+          [[ "$version_name" == "$EXPECTED_VERSION_NAME" ]] || {
+            echo "::error::AAB has versionName ${version_name}, expected ${EXPECTED_VERSION_NAME}"; exit 1; }
+          [[ "$version_code" == "$expected_bundle_code" ]] || {
+            echo "::error::AAB has versionCode ${version_code}, expected ${expected_bundle_code}"; exit 1; }
+          echo "PASS AAB manifest: ${package_name} ${version_name} versionCode=${version_code}"
+          python3 tools/verify_native_artifacts.py --aab "$play_bundle"
 
       - name: Upload unsigned APKs and Play bundle for signing
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
@@ -469,10 +504,9 @@ jobs:
           name: signed-release-artifacts
           path: release-assets
 
-      # Re-checks the APKs after the artifact round trip and signing. The pinned
-      # AARs are needed as the reference, so they are fetched (and their
-      # checksums verified) first.
-      - name: Verify native contents of signed APKs
+      # Re-checks APKs and the AAB after the artifact round trip and signing.
+      # The pinned AARs are fetched and checksum-verified as the reference.
+      - name: Verify native contents of signed APKs and AAB
         shell: bash
         run: |
           set -euo pipefail
@@ -483,6 +517,12 @@ jobs:
             count=$((count + 1))
           done < <(find release-assets -type f -name '*.apk' -print0)
           [[ "$count" -eq "$EXPECTED_APK_COUNT" ]] || { echo "::error::Found ${count} signed APKs, expected ${EXPECTED_APK_COUNT}"; exit 1; }
+          aab_count=0
+          while IFS= read -r -d '' aab; do
+            python3 tools/verify_native_artifacts.py --aab "$aab"
+            aab_count=$((aab_count + 1))
+          done < <(find release-assets -type f -name '*.aab' -print0)
+          [[ "$aab_count" -eq 1 ]] || { echo "::error::Found ${aab_count} signed AABs, expected 1"; exit 1; }
 
       - name: Generate checksums
         shell: bash

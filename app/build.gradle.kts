@@ -24,10 +24,13 @@ val activeAbis =
   } else {
     listOf("arm64-v8a", "armeabi-v7a") + x86Abis
   }
+// Require an explicit =true; an empty or malformed value keeps the normal split build and fails closed.
+val bundleWithoutAbiSplits = project.findProperty("bundleWithoutAbiSplits") == "true"
 val universalOnlyDistributions = setOf("noVulkan", "fongmi")
 val releaseVersionCode = 20000
 val versionCodeBandSize = 10_000
 val stableVersionCode = releaseVersionCode * versionCodeBandSize + (versionCodeBandSize - 1)
+val stableBundleVersionCode = stableVersionCode * 10 + 9
 val previewVersionCode =
   (releaseVersionCode + 1) * versionCodeBandSize +
     (getCommitCount().toIntOrNull() ?: 1).coerceIn(1, versionCodeBandSize - 2)
@@ -54,8 +57,9 @@ android {
     minSdk = 26
     targetSdk = 36
     // Stable occupies the top of its version band. Preview uses the next band's commit-count
-    // offset, so Stable -> Preview -> newer Preview -> next Stable is always an Android upgrade.
-    versionCode = stableVersionCode
+    // offset. AGP takes the AAB code from defaultConfig, so its split-free build gets slot 9 above
+    // the same-release APK codes (suffixes 0–4); onVariants below only changes APK output codes.
+    versionCode = if (bundleWithoutAbiSplits) stableBundleVersionCode else stableVersionCode
     versionName = "2.0.0"
 
     vectorDrawables {
@@ -141,7 +145,10 @@ android {
 
   splits {
     abi {
-      isEnable = true
+      // TODO: Remove this AAB workaround when AGP fixes https://issuetracker.google.com/402800800.
+      // AGP 9.5.1 requires one shrunk-resources output for the bundle; release CI disables ABI
+      // splits only for that invocation, then builds the regular APK outputs separately.
+      isEnable = !bundleWithoutAbiSplits
       reset()
       include(*activeAbis.toTypedArray())
       isUniversalApk = activeAbis.size > 1
@@ -251,9 +258,18 @@ androidComponents {
         output.enabled.set(false)
       }
 
-      val channelVersionCode =
-        if (variant.buildType == "preview") previewVersionCode else (output.versionCode.orNull ?: stableVersionCode)
-      output.versionCode.set(channelVersionCode * 10 + (abiCodes[abi] ?: 0))
+      val fallbackVersionCode =
+        when {
+          variant.buildType == "preview" -> previewVersionCode
+          bundleWithoutAbiSplits -> stableBundleVersionCode
+          else -> stableVersionCode
+        }
+      val channelVersionCode = output.versionCode.orNull ?: fallbackVersionCode
+      if (bundleWithoutAbiSplits) {
+        output.versionCode.set(channelVersionCode)
+      } else {
+        output.versionCode.set(channelVersionCode * 10 + (abiCodes[abi] ?: 0))
+      }
     }
   }
 }

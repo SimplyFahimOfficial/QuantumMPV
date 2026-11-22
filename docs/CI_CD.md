@@ -60,8 +60,8 @@ resolve ──► instrumented (API 30, 34) ──┐
 | --- | --- | --- |
 | `resolve` | `contents: read`, `checks: read` | Validates `v1.MINOR.PATCH` or `v2.MINOR.PATCH`, resolves the tag to a commit, requires that commit to be on `master`, requires `versionName` and the first `CHANGELOG.md` heading to match, and waits for the required checks on that commit (`tools/verify_commit_checks.py`) |
 | `instrumented` | `contents: read` | Calls `instrumented-tests.yml` on the tagged commit |
-| `build` | `contents: read` | Builds the three release flavors without a Gradle cache, checks application ID, `versionName`, the expected `versionCode` per ABI and that no APK is debuggable, verifies native contents, uploads unsigned APKs (1-day retention) |
-| `sign` | none, `production` environment | Fails first if `vars.RELEASE_SIGNING_CERT_SHA256` is unset or malformed, then downloads the unsigned APKs, signs them with `apksigner`, verifies signatures, checks that all APKs share one certificate and that it matches `vars.RELEASE_SIGNING_CERT_SHA256`, uploads signed APKs (1-day retention). No Gradle or repository code runs here. |
+| `build` | `contents: read` | Builds the three release flavors without a Gradle cache, checks application ID, `versionName`, expected APK codes and that no APK is debuggable, verifies APK native contents and the standard AAB manifest/version code/native contents, uploads unsigned artifacts (5-day retention) |
+| `sign` | none, `production` environment | Fails first if `vars.RELEASE_SIGNING_CERT_SHA256` is unset or malformed, then signs APKs with `apksigner` and the AAB with `jarsigner`, verifies signatures, checks that every artifact uses the expected certificate, and uploads signed artifacts (5-day retention). No Gradle or repository code runs here. |
 | `publish` | `contents: write`, `id-token: write`, `attestations: write` | Re-verifies native contents, writes `SHA256SUMS`, exports the SPDX SBOM from the dependency graph, creates build provenance attestations and creates the GitHub release |
 
 Published assets: `QuantumMPV-{universal,arm64-v8a,armeabi-v7a,x86,x86_64}-vX.Y.Z.apk`,
@@ -74,7 +74,10 @@ do not affect it.
 ABI strategy: the build config enables ABI splits for `arm64-v8a`, `armeabi-v7a`,
 `x86` and `x86_64` plus a universal APK for `standard`. `noVulkan` and `fongmi` are
 universal-only (`universalOnlyDistributions`). The pipeline publishes exactly
-those outputs and fails if any is missing.
+those outputs and fails if any is missing. AGP 9.5.1's App Bundle task fails when
+ABI APK splits produce multiple shrunk-resources outputs, so CI builds the AAB
+with `./gradlew -PbundleWithoutAbiSplits=true bundleStandardRelease`, then builds
+APKs normally. The AAB receives version-code suffix 9, above the APK suffixes 0–4.
 
 ## Security hardening applied to all workflows
 

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Fetch pinned mpvlib AARs and verify their provenance and final APK contents."""
+"""Fetch pinned mpvlib AARs and verify their provenance and APK/AAB native contents."""
 from __future__ import annotations
 
 import argparse
@@ -70,8 +70,8 @@ def verify_aars(manifest: dict) -> None:
         print(f"PASS AAR {flavor}: {spec['artifact_revision']} {actual}")
 
 
-def expected_flavor(apk: Path) -> str:
-    name = apk.name.lower()
+def expected_flavor(package_path: Path) -> str:
+    name = package_path.name.lower()
     if "fongmi" in name:
         return "fongmi"
     if "novulkan" in name or "no-vulkan" in name:
@@ -79,16 +79,21 @@ def expected_flavor(apk: Path) -> str:
     return "standard"
 
 
-def verify_apk(manifest: dict, apk: Path) -> None:
-    if not apk.is_file():
-        raise SystemExit(f"Missing APK: {apk}")
-    flavor = expected_flavor(apk)
+def verify_native_package(manifest: dict, package_path: Path, is_bundle: bool) -> None:
+    if not package_path.is_file():
+        raise SystemExit(f"Missing {'AAB' if is_bundle else 'APK'}: {package_path}")
+    flavor = expected_flavor(package_path)
+    if is_bundle and flavor != "standard":
+        raise SystemExit(f"{package_path}: only the standard flavor is published as an AAB")
     spec = manifest["artifacts"][flavor]
-    with zipfile.ZipFile(apk) as package:
+    module_prefix = "base/" if is_bundle else ""
+    lib_root = f"{module_prefix}lib/"
+    metadata_name = f"{module_prefix}assets/native-build-metadata.properties"
+
+    with zipfile.ZipFile(package_path) as package:
         names = set(package.namelist())
-        metadata_name = "assets/native-build-metadata.properties"
         if metadata_name not in names:
-            raise SystemExit(f"{apk}: missing {metadata_name}")
+            raise SystemExit(f"{package_path}: missing {metadata_name}")
         metadata = package.read(metadata_name).decode("utf-8")
         required_metadata = {
             "artifact_revision": spec["artifact_revision"],
@@ -100,32 +105,50 @@ def verify_apk(manifest: dict, apk: Path) -> None:
         }
         for key, value in required_metadata.items():
             if f"{flavor}.{key}={value}" not in metadata:
-                raise SystemExit(f"{apk}: metadata does not prove {flavor}.{key}={value}")
-        apk_abis = {name.split("/")[1] for name in names if name.startswith("lib/") and name.count("/") >= 2}
-        if not apk_abis or not apk_abis <= ABI_DIRS:
-            raise SystemExit(f"{apk}: unexpected native ABI entries {sorted(apk_abis)}")
+                raise SystemExit(f"{package_path}: metadata does not prove {flavor}.{key}={value}")
+
+        abi_index = 2 if is_bundle else 1
+        minimum_slashes = 3 if is_bundle else 2
+        package_abis = {
+            name.split("/")[abi_index]
+            for name in names
+            if name.startswith(lib_root) and name.endswith(".so") and name.count("/") >= minimum_slashes
+        }
+        if is_bundle and package_abis != ABI_DIRS:
+            raise SystemExit(f"{package_path}: AAB ABI set {sorted(package_abis)} != {sorted(ABI_DIRS)}")
+        if not package_abis or not package_abis <= ABI_DIRS:
+            raise SystemExit(f"{package_path}: unexpected native ABI entries {sorted(package_abis)}")
+
         aar_path = LIBS / spec["file"]
         with zipfile.ZipFile(aar_path) as aar:
-            for abi in apk_abis:
+            for abi in package_abis:
                 for library in REQUIRED_NATIVE:
-                    apk_bytes = package.read(f"lib/{abi}/{library}")
+                    package_name = f"{lib_root}{abi}/{library}"
+                    if package_name not in names:
+                        raise SystemExit(f"{package_path}: missing {package_name}")
+                    package_bytes = package.read(package_name)
                     aar_bytes = aar.read(f"jni/{abi}/{library}")
-                    if hashlib.sha256(apk_bytes).digest() != hashlib.sha256(aar_bytes).digest():
-                        raise SystemExit(f"{apk}: {abi}/{library} differs from pinned {spec['file']}")
-        print(f"PASS APK {apk}: {flavor} {spec['artifact_revision']} ABIs={','.join(sorted(apk_abis))}")
+                    if hashlib.sha256(package_bytes).digest() != hashlib.sha256(aar_bytes).digest():
+                        raise SystemExit(f"{package_path}: {abi}/{library} differs from pinned {spec['file']}")
+
+    kind = "AAB" if is_bundle else "APK"
+    print(f"PASS {kind} {package_path}: {flavor} {spec['artifact_revision']} ABIs={','.join(sorted(package_abis))}")
 
 
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--download", action="store_true", help="download exact manifest artifacts")
     parser.add_argument("--apk", action="append", type=Path, help="verify a final APK; may be repeated")
+    parser.add_argument("--aab", action="append", type=Path, help="verify a standard App Bundle; may be repeated")
     args = parser.parse_args()
     manifest = load_manifest()
     if args.download:
         fetch_artifacts(manifest)
     verify_aars(manifest)
     for apk in args.apk or []:
-        verify_apk(manifest, apk if apk.is_absolute() else ROOT / apk)
+        verify_native_package(manifest, apk if apk.is_absolute() else ROOT / apk, is_bundle=False)
+    for aab in args.aab or []:
+        verify_native_package(manifest, aab if aab.is_absolute() else ROOT / aab, is_bundle=True)
 
 
 if __name__ == "__main__":
