@@ -258,8 +258,13 @@ androidComponents {
         output.enabled.set(false)
       }
 
-      val channelVersionCode =
-        if (variant.buildType == "preview") previewVersionCode else (output.versionCode.orNull ?: stableVersionCode)
+      val fallbackVersionCode =
+        when {
+          variant.buildType == "preview" -> previewVersionCode
+          bundleWithoutAbiSplits -> stableBundleVersionCode
+          else -> stableVersionCode
+        }
+      val channelVersionCode = output.versionCode.orNull ?: fallbackVersionCode
       if (bundleWithoutAbiSplits) {
         output.versionCode.set(channelVersionCode)
       } else {

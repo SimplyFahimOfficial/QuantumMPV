@@ -300,8 +300,8 @@ jobs:
             java -jar "$bundletool" dump manifest --bundle="$play_bundle" --xpath="$1"
           }
           package_name="$(dump_value /manifest/@package)"
-          version_name="$(dump_value /manifest/@versionName)"
-          version_code="$(dump_value /manifest/@versionCode)"
+          version_name="$(dump_value /manifest/@android:versionName)"
+          version_code="$(dump_value /manifest/@android:versionCode)"
           release_code="$(sed -n 's/^val releaseVersionCode = \([0-9]*\)$/\1/p' app/build.gradle.kts)"
           [[ "$release_code" =~ ^[0-9]+$ ]] || { echo "::error::Could not read releaseVersionCode"; exit 1; }
           stable_code=$(( release_code * 10000 + 9999 ))

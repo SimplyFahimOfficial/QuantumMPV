@@ -58,6 +58,9 @@ release_workflow = (root / '.github/workflows/release.yml').read_text()
 assert 'verify_native_artifacts.py --aab "$play_bundle"' in release_workflow
 assert 'verify_native_artifacts.py --aab "$aab"' in release_workflow
 assert 'bundletool-all-1.18.3.jar' in release_workflow
+assert 'dump_value /manifest/@android:versionName' in release_workflow
+assert 'dump_value /manifest/@android:versionCode' in release_workflow
+assert 'expected_bundle_code=$(( stable_code * 10 + 9 ))' in release_workflow
 
 font = root / 'app/src/main/assets/subtitle-fonts/GoNotoCurrent-Regular.ttf'
 font_license = root / 'app/src/main/assets/subtitle-fonts/OFL.txt'
