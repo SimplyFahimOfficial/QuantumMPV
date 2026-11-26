@@ -24,7 +24,7 @@ jobs:
     timeout-minutes: 15
     steps:
       - name: Block vulnerable dependency changes
-        uses: actions/dependency-review-action@a1d282b36b6f3519aa1f3fc636f609c47dddb294 # v5.0.0
+        uses: actions/dependency-review-action@bbc44d14a204704ccc493733616cd1e93a0321ec # v5.0.1
         with:
           # High and critical advisories block the merge. Moderate and low
           # advisories are listed in the job summary for triage.
@@ -39,7 +39,7 @@ jobs:
       # blocking allow-list would produce false failures. Review any license this
       # step reports before merging; QuantumMPV is distributed under AGPL-3.0.
       - name: Report licenses outside the AGPL-compatible allow-list
-        uses: actions/dependency-review-action@a1d282b36b6f3519aa1f3fc636f609c47dddb294 # v5.0.0
+        uses: actions/dependency-review-action@bbc44d14a204704ccc493733616cd1e93a0321ec # v5.0.1
         with:
           vulnerability-check: false
           license-check: true
